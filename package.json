@@ -14,6 +14,7 @@
   "scripts": {
     "test": "vitest run",
     "gen:plan": "tsx tools/src/gen-plan.ts",
+    "inspect": "tsx tools/src/cli.ts inspect",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json"
   },
   "devDependencies": {
