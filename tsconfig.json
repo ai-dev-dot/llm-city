@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "types": ["node"],
+    "lib": ["ES2022"]
+  },
+  "include": ["lib/**/*.ts", "tools/src/**/*.ts", "cities/**/*.ts"],
+  "exclude": ["node_modules", "web"]
+}
