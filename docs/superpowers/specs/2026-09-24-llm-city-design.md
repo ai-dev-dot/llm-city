@@ -165,6 +165,8 @@ interface BuildCtx {
 | R8 | 不 import 其他建筑 | 建筑间互相独立，归属清晰 |
 | R9 | 执行超时 | `build()` 无头执行超过 10 秒即失败（防死循环挂死校验器与 CI） |
 
+R6 的静态扫描是**尽力而为**的防线（字符串拼接等混淆可绕过），真正的最终防线是城主 push 前的人工 diff 审查（见 §9 交付流）。
+
 ### 6.4 官方积木库（一期清单）
 
 参数化函数，全部接受材质/尺寸参数，风格统一（由官方调色板约束）：
@@ -193,7 +195,7 @@ interface BuildCtx {
 
 对单栋（缺省全部）建筑执行 R1–R8，输出报告：每条规则 PASS/FAIL + 具体数值（如「包围盒 20.8m 超出地块 0.8m」）。通过时把 `mesh_stats` 回写登记行。
 
-实现要点：esbuild 编译到 ESM；`three` 在 Node 中 import 建筑模块并执行 `build(ctx)`（无头，只构建 scene graph 不上屏），遍历统计三角形与包围盒。`build()` 抛出的任何异常都被捕获并报告（建筑名 + 异常栈，记为 R1 失败）；执行超过 10 秒强制终止（R9）。输出双格式：人读表格 + JSON（CI 聚合用）。
+实现要点：esbuild 编译到 ESM；`three` 在 Node 中 import 建筑模块并执行 `build(ctx)`（无头，只构建 scene graph 不上屏），遍历统计三角形与包围盒。`build()` 抛出的任何异常都被捕获并报告（建筑名 + 异常栈，记为 R1 失败）；执行超过 10 秒强制终止（R9，以 **worker_threads + `worker.terminate()`** 实现——同步死循环会占死主线程，软超时无效；三角形统计与包围盒计算在 worker 内完成后只传回数值）。输出双格式：人读表格 + JSON（CI 聚合用）。
 
 ### 8.2 `npm run state`
 
@@ -218,7 +220,7 @@ interface BuildCtx {
 
 - **技术**：Vite + TypeScript + Three.js 静态站，构建 base 设为 GitHub Pages 子路径（`/llm-city/`）；
 - **数据**：构建脚本从 `registry.jsonl` + `plan.json` 生成静态城市数据（打包进前端）；
-- **加载**：每栋建筑经 esbuild 预编译为独立懒加载 chunk（动态 import），视野/距离加载，城市大了不卡；建筑 chunk 加载失败 → 显示灰色占位盒 + 建筑名（「烂尾」态）；
+- **加载**：每栋建筑经 esbuild 预编译为独立懒加载 chunk（动态 import），**`three` 一律设为 external，建筑 chunk 运行时与主应用共享同一个 three 实例**（避免每栋楼各打包一份 three 的体积爆炸，以及双实例导致的 `instanceof` 失效与材质系统分裂）；视野/距离加载，城市大了不卡；建筑 chunk 加载失败 → 显示灰色占位盒 + 建筑名（「烂尾」态）；
 - **场景底色**（官方统一）：地面、道路网格、雾、昼夜光照、统一调色板——保证整城调性，建筑再个性也不乱；
 - **交互**：
   - OrbitControls 漫游/缩放/平移；
