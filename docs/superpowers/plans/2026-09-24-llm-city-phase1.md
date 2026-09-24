@@ -517,7 +517,7 @@ export function generatePlanData(): PlanData {
   for (let cz = 0; cz < 9; cz++) {
     for (let cx = 0; cx < 9; cx++) {
       const id = `${COLS[cx]}${cz + 1}`
-      const center: [number, number] = [(cx - 4) * 72, (cz - 4) * 72]
+      const center: [number, number] = [(cx - 4) * 72, (4 - cz) * 72]   // 行号自北(+z)向南递增（spec §5.2：C3 → [-144,144]）
       districts.push({ id, center })
       for (let i = 0; i < 9; i++) {
         const row = Math.floor(i / 3)  // 0=北(+z)
