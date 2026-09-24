@@ -958,7 +958,6 @@ git add -A && git commit -m "feat(lib): 施工上下文——BuildCtx 类型与 
 ```ts
 import * as THREE from 'three'
 import { describe, expect, it } from 'vitest'
-import { mulberry32 } from './ctx'
 import { blocks, PALETTE, stdMaterial } from './blocks'
 
 describe('官方积木库（spec §6.4 十三件）', () => {
@@ -985,10 +984,15 @@ describe('官方积木库（spec §6.4 十三件）', () => {
       expect(countTris(obj), `${names[i]} 应有几何`).toBeGreaterThan(0)
     }
   })
-  it('同种子 tree 两次构建一致（确定性）', () => {
+  it('同种子 tree 两次构建一致（确定性，锁叶形随机量）', () => {
     const a = blocks.tree({ seed: 7 }), b = blocks.tree({ seed: 7 })
-    expect(countTris(a)).toBe(countTris(b))
-    expect(JSON.stringify(a.scale)).toBe(JSON.stringify(b.scale))
+    const leaves = (root: THREE.Object3D) => {
+      const out: string[] = []
+      root.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh && m.geometry?.type === 'IcosahedronGeometry') out.push(`${m.position.x.toFixed(6)},${m.position.y.toFixed(6)},${m.position.z.toFixed(6)},${(m.geometry as THREE.IcosahedronGeometry).parameters.radius}`) })
+      return out
+    }
+    expect(leaves(a).length).toBe(3)
+    expect(leaves(a)).toEqual(leaves(b))
   })
   it('stdMaterial 只产参数化材质（无贴图）', () => {
     const m = stdMaterial('#E8E6E1', { metalness: 0.2, roughness: 0.6 })
