@@ -87,7 +87,7 @@ export async function inspectBuilding(
     const lot = plan.lots.find((l) => l.id === row.lot)
     const head = await runHeadless(outPath, { id: row.lot, size: lot?.size ?? [20, 20], maxHeight: 300 }, hashSeed(row.id))
     if (!head.ok) {
-      results.push(bad('R1', `build() 执行失败：${head.error}`))
+      results.push(bad('R1', `build() 执行失败：${head.error}${head.stack ? `\n${head.stack}` : ''}`))
       results.push(bad('R2', '未执行')); results.push(bad('R3', '未执行')); results.push(bad('R4', '未执行')); results.push(bad('R9', '未执行'))
     } else {
       results.push(ok('R9', '执行在时限内完成'))
@@ -146,8 +146,9 @@ export async function inspectCity(repoRoot: string, cityDir: string): Promise<In
     results: errs.length ? [bad('registry', errs.join('；'))] : [ok('registry', `${rows.length} 行全部一致`)],
   }
 
-  // 逐建筑 R1–R10（并行，控制 CI 时长——spec §8.1）
+  // 逐建筑 R1–R10（并行执行控制 CI 时长；**共享同一 rows 数组作 registryOverride——mesh_stats/completed_at 全部写进内存数组，Promise.all 后集中落盘一次**，避免各建筑各自 loadRegistry 快照并行 writeRegistry 的丢失更新）
   const dirs = rows.map((r) => r.entry.split('/')[1]).filter(Boolean)
-  const dirResults = await Promise.all(dirs.map((d) => inspectBuilding(repoRoot, cityDir, d, {})))
+  const dirResults = await Promise.all(dirs.map((d) => inspectBuilding(repoRoot, cityDir, d, { registryOverride: rows })))
+  if (dirs.length) writeRegistry(cityDir, rows)
   return [structResult, ...dirResults]
 }

@@ -1666,7 +1666,7 @@ git add -A && git commit -m "feat(tools): worker_threads 无头执行 build()—
 - Produces:
   - `interface RuleResult { rule: string; pass: boolean; detail: string }`
   - `interface InspectResult { building: string; city: string; passed: boolean; results: RuleResult[] }`
-  - `inspectBuilding(repoRoot: string, cityId: string, buildingDirName: string, opts: { complete?: boolean; registryOverride?: RegistryRow[] }): Promise<InspectResult>`——对单建筑跑 R1–R10；`registryOverride` 供测试注入临时登记簿（不落盘）；通过且非封存时回写 `mesh_stats`；`complete: true` 时填 `completed_at = localIsoNow()`
+  - `inspectBuilding(repoRoot: string, cityDir: string, buildingDirName: string, opts: { complete?: boolean; registryOverride?: RegistryRow[] }): Promise<InspectResult>`——对单建筑跑 R1–R10；`registryOverride` 供测试注入临时登记簿（不落盘），**inspectCity 也用它传共享 rows 数组实现集中落盘**；通过且非封存时回写 `mesh_stats`；`complete: true` 时填 `completed_at = localIsoNow()`
   - `inspectCity(repoRoot: string, cityId: string): Promise<InspectResult[]>`——全城全量 + **登记簿结构一致性**（行校验 validateRow、id 唯一且跨城唯一、地块无双占、entry 文件存在、孤儿建筑目录检测、mesh_stats 重算一致：封存行重算不符即红）
   - CLI：`npm run inspect -- [建筑目录名] [--json] [--complete]`——目录名缺省全量；`--json` 输出机器可读；非 0 退出码 = 有 FAIL
 - Consumes: Task 2 `resolveModelId/loadIdentityTable`、Task 3 `plan.json`、Task 4 `loadRegistry/writeRegistry/validateRow/localIsoNow`、Task 5 `hashSeed`、Task 7 `compileBuilding/checkAllowedInputs/scanSource/readBuildingSources`、Task 8 `runHeadless`。
@@ -1865,7 +1865,7 @@ export async function inspectBuilding(
     const lot = plan.lots.find((l) => l.id === row.lot)
     const head = await runHeadless(outPath, { id: row.lot, size: lot?.size ?? [20, 20], maxHeight: 300 }, hashSeed(row.id))
     if (!head.ok) {
-      results.push(bad('R1', `build() 执行失败：${head.error}`))
+      results.push(bad('R1', `build() 执行失败：${head.error}${head.stack ? `\n${head.stack}` : ''}`))
       results.push(bad('R2', '未执行')); results.push(bad('R3', '未执行')); results.push(bad('R4', '未执行')); results.push(bad('R9', '未执行'))
     } else {
       results.push(ok('R9', '执行在时限内完成'))
@@ -1924,9 +1924,10 @@ export async function inspectCity(repoRoot: string, cityDir: string): Promise<In
     results: errs.length ? [bad('registry', errs.join('；'))] : [ok('registry', `${rows.length} 行全部一致`)],
   }
 
-  // 逐建筑 R1–R10（并行，控制 CI 时长——spec §8.1）
+  // 逐建筑 R1–R10（并行执行控制 CI 时长；**共享同一 rows 数组作 registryOverride——mesh_stats/completed_at 全部写进内存数组，Promise.all 后集中落盘一次**，避免各建筑各自 loadRegistry 快照并行 writeRegistry 的丢失更新）
   const dirs = rows.map((r) => r.entry.split('/')[1]).filter(Boolean)
-  const dirResults = await Promise.all(dirs.map((d) => inspectBuilding(repoRoot, cityDir, d, {})))
+  const dirResults = await Promise.all(dirs.map((d) => inspectBuilding(repoRoot, cityDir, d, { registryOverride: rows })))
+  if (dirs.length) writeRegistry(cityDir, rows)
   return [structResult, ...dirResults]
 }
 ```
