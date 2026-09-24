@@ -10,7 +10,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     g.add(ctx.blocks.windowStrip({ w: 12.2, h: 1.1, y: i * 3.2 + 1 }))
   }
   g.add(ctx.blocks.flatRoofTop({ w: 12, d: 12, y: floors * 3.2 }))
-  const rng = ctx.rng()
+  const rng = ctx.rng
   for (let i = 0; i < 4; i++) g.add(ctx.blocks.tree({ x: -6 + rng() * 12, z: -6 + rng() * 12, seed: i + 1 }))
   return g
 }
