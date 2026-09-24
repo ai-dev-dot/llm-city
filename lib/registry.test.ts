@@ -38,6 +38,11 @@ describe('validateTimestamp / validateRow', () => {
     expect(validateRow(row, 0)).toEqual([])
     expect(validateRow({ ...row, entry: 'buildings/b-000099-x/index.ts' }, 0)[0]).toMatch(/entry/)
   })
+  it('builder 缺 operator 拦截（fix round 1）', () => {
+    const row = JSON.parse(fx('two-rows.jsonl').split('\n')[0])
+    const builder = { model: row.builder.model, model_id: row.builder.model_id, agent: row.builder.agent }
+    expect(validateRow({ ...row, builder }, 0).join('\n')).toMatch(/builder/)
+  })
 })
 
 describe('checkRegistryEdit 受限编辑（spec §5.4/§14）', () => {
