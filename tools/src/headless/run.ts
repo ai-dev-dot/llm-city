@@ -8,6 +8,7 @@ import type { Lot } from '../../../lib/ctx'
 export interface HeadlessResult {
   ok: boolean
   error?: string
+  stack?: string
   triangles: number
   bboxMin?: [number, number, number]
   bboxMax?: [number, number, number]

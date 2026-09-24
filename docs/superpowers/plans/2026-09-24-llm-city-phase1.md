@@ -1461,7 +1461,7 @@ git add -A && git commit -m "feat(tools): esbuild 编译管线+import 白名单(
 
 **Interfaces:**
 - Produces:
-  - `interface HeadlessResult { ok: boolean; error?: string; triangles: number; bboxMin?: [number, number, number]; bboxMax?: [number, number, number] }`
+  - `interface HeadlessResult { ok: boolean; error?: string; stack?: string; triangles: number; bboxMin?: [number, number, number]; bboxMax?: [number, number, number] }`（stack 由 worker 失败路径回传，Task 9 组装 R1 报告用）
   - `runHeadless(modulePath: string, lot: import('../../lib/ctx').Lot, seed: number, timeoutMs?: number): Promise<HeadlessResult>`——在 worker_threads 中动态 import 编译产物并执行 `build(ctx)`；超时（缺省 10,000ms）`terminate()` 强杀（R9，同步死循环占死主线程软超时无效，spec §8.1）；统计在 worker 内完成只传回数值
   - `ensureWorker(repoRoot: string): string`——确保 worker bundle 存在于 `node_modules/.cache/llm-city/worker.mjs`（esbuild 现场编译，external three），返回其绝对路径；幂等
 - Consumes: `lib/ctx.ts`（mulberry32、Lot）、`lib/blocks`（blocks）、Task 7 的编译产物。
@@ -1586,6 +1586,7 @@ import type { Lot } from '../../../lib/ctx'
 export interface HeadlessResult {
   ok: boolean
   error?: string
+  stack?: string
   triangles: number
   bboxMin?: [number, number, number]
   bboxMax?: [number, number, number]
