@@ -4,5 +4,6 @@
     "types": ["vite/client"],
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "include": ["src/**/*.ts", "../lib/**/*.ts", "../cities/**/*.ts", "scripts/**/*.mjs"]
+  "include": ["src/**/*.ts", "../lib/**/*.ts", "../cities/**/*.ts", "scripts/**/*.mjs"],
+  "exclude": ["node_modules", "dist"]
 }
