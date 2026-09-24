@@ -1,5 +1,6 @@
 import { writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 export interface PlanData {
   version: number
@@ -47,16 +48,19 @@ export function generatePlanData(): PlanData {
 const target = resolve(import.meta.dirname, '../../cities/c1/plan.json')
 const plan = generatePlanData()
 
-if (process.argv.includes('--check')) {
-  if (!existsSync(target)) { console.error('plan.json 不存在，请先运行 gen-plan'); process.exit(1) }
-  const curr = readFileSync(target, 'utf8')
-  const expectJson = JSON.stringify(plan, null, 2) + '\n'
-  if (curr !== expectJson) {
-    console.error('plan.json 与生成结果不一致（规划图被手改或生成器变更）——请运行 npm run gen:plan 重新生成')
-    process.exit(1)
+const isMain = import.meta.url === pathToFileURL(process.argv[1] ?? '').href
+if (isMain) {
+  if (process.argv.includes('--check')) {
+    if (!existsSync(target)) { console.error('plan.json 不存在，请先运行 gen-plan'); process.exit(1) }
+    const curr = readFileSync(target, 'utf8')
+    const expectJson = JSON.stringify(plan, null, 2) + '\n'
+    if (curr !== expectJson) {
+      console.error('plan.json 与生成结果不一致（规划图被手改或生成器变更）——请运行 npm run gen:plan 重新生成')
+      process.exit(1)
+    }
+    console.log('plan.json 一致 ✓')
+  } else {
+    writeFileSync(target, JSON.stringify(plan, null, 2) + '\n')
+    console.log(`已生成 ${target}：${plan.districts.length} 街区 / ${plan.lots.length} 地块`)
   }
-  console.log('plan.json 一致 ✓')
-} else {
-  writeFileSync(target, JSON.stringify(plan, null, 2) + '\n')
-  console.log(`已生成 ${target}：${plan.districts.length} 街区 / ${plan.lots.length} 地块`)
 }
