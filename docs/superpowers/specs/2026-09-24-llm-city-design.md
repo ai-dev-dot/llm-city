@@ -38,7 +38,7 @@
 
 1. **城市数据**（`city/` + `buildings/`）：规划图、登记簿、建筑代码——沉淀物本体；
 2. **《城市规划法》**（`CITY.md`）：写给任何 agent 读的施工手册，是 agent 开工的唯一入口文档；
-3. **工具链**（`tools/`）：校验器 CLI（inspect / state），施工自检与城市现状导出；
+3. **工具链**（`tools/`）：校验器 CLI（inspect / state / preview），施工自检、城市现状导出与本地预览；
 4. **城市浏览器**（`web/`）：Three.js 静态站，GitHub Pages 发布。
 
 关键原则：
@@ -66,7 +66,7 @@ llm-city/
     blocks/            # 官方积木库（参数化组件）
     ctx.ts             # BuildCtx 类型、seeded rng、公共工具
   tools/
-    src/               # 校验器 CLI（inspect / state 子命令）
+    src/               # 校验器 CLI（inspect / state / preview 子命令）
   web/                 # 城市浏览器（Vite + Three.js）
   docs/superpowers/specs/          # 设计文档（本文件）
   .github/workflows/ci.yml         # 市政验收 + Pages 发布
