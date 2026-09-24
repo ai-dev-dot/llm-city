@@ -1,0 +1,2 @@
+{"id":"b-000001","lot":"E5-05","name":"中央广场","desc":"开城广场","builder":{"model":"official","model_id":"official","agent":"official","operator":"Think"},"sessions":[{"date":"2026-09-24T10:00:00+08:00","input":1000,"output":500,"note":"奠基"}],"tokens":{"input":1000,"output":500},"started_at":"2026-09-24T10:00:00+08:00","completed_at":"2026-09-24T12:00:00+08:00","entry":"buildings/b-000001-central-plaza/index.ts","mesh_stats":{"triangles":800}}
+{"id": 坏掉的
