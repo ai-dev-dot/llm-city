@@ -1222,7 +1222,7 @@ git add -A && git commit -m "feat(lib): 官方积木库十三件+调色板+参�
 - Produces:
   - `interface CompileResult { ok: boolean; errors: string[]; outPath: string | null; inputFiles: string[] }`——inputFiles = metafile inputs 相对仓库根路径
   - `compileBuilding(entryAbs: string, repoRoot: string, outAbs: string): Promise<CompileResult>`——esbuild bundle→ESM、`external: ['three']`、产物落在仓库内缓存目录（从那里可向上解析 node_modules/three）
-  - `checkAllowedInputs(inputFiles: string[], buildingDirRel: string): string[]`——R6/R8：除入口外，参与打包的文件只允许 `lib/**` 或 `buildings/<本目录>/**`；其余（其他建筑、web、tools、任何越界路径）返回违规说明
+  - `checkAllowedInputs(inputFiles: string[], buildingDirRel: string, repoRoot: string): string[]`——R6/R8：除入口外，参与打包的文件只允许 `lib/**` 或本建筑目录；其余（其他建筑、web、tools、任何越界路径）返回违规说明
   - `BANNED_SOURCE_PATTERNS: Array<{ rule: 'R5' | 'R6'; re: RegExp; msg: string }>`
   - `scanSource(files: Array<{ path: string; text: string }>): Array<{ rule: string; msg: string; file: string }>`——R5 禁 Math.random/Date.now/performance.now；R6 禁 eval/new Function/fetch/XMLHttpRequest/importScripts/localStorage、动态 import、`node:` 前缀 import/require、`process.env`、`require('fs')`（**R6 静态扫描是尽力而为防线，spec §6.3**）
 - Consumes: esbuild（tools 依赖）。
@@ -1294,11 +1294,11 @@ describe('compileBuilding（R1）', () => {
 describe('checkAllowedInputs（R6/R8）', () => {
   it('好建筑：入口+lib+本目录文件全放行', async () => {
     const r = await compileBuilding(fx('good-tower/index.ts'), root, resolve(cacheDir, 'good-tower-2.mjs'))
-    expect(checkAllowedInputs(r.inputFiles, 'tools/test/fixtures/buildings/good-tower')).toEqual([])
+    expect(checkAllowedInputs(r.inputFiles, 'tools/test/fixtures/buildings/good-tower', root)).toEqual([])
   })
   it('跨建筑 import 被拦（R8）', async () => {
     const r = await compileBuilding(fx('bad-cross-import/index.ts'), root, resolve(cacheDir, 'bad-cross.mjs'))
-    const v = checkAllowedInputs(r.inputFiles, 'tools/test/fixtures/buildings/bad-cross-import')
+    const v = checkAllowedInputs(r.inputFiles, 'tools/test/fixtures/buildings/bad-cross-import', root)
     expect(v.join('\n')).toMatch(/good-tower/)
   })
 })
@@ -1368,15 +1368,18 @@ export async function compileBuilding(entryAbs: string, repoRoot: string, outAbs
   }
 }
 
-/** R6/R8：参与打包的文件只允许 lib/** 与本建筑目录；three 为 external 不出现在 inputs */
-export function checkAllowedInputs(inputFiles: string[], buildingDirRel: string): string[] {
+/** R6/R8：参与打包的文件只允许 lib/** 与本建筑目录；three 为 external 不出现在 inputs。
+ * 比较基準统一为绝对路径：metafile inputs 相对 absWorkingDir，先 path.resolve 还原再比（对临时目录中的测试城跨盘路径同样成立）。 */
+export function checkAllowedInputs(inputFiles: string[], buildingDirRel: string, repoRoot: string): string[] {
   const violations: string[] = []
+  const targetDir = resolve(repoRoot, buildingDirRel).replace(/\\/g, '/')
+  const entry = `${targetDir}/index.ts`
   for (const f of inputFiles) {
-    const norm = f.replace(/\\/g, '/')
-    if (norm === buildingDirRel.replace(/\\/g, '/') + '/index.ts') continue   // 入口自身
-    if (norm.startsWith('lib/')) continue
-    if (norm.startsWith(buildingDirRel.replace(/\\/g, '/') + '/')) continue
-    violations.push(`R6/R8：${norm} 不在 import 白名单（仅允许 three、lib/* 与本建筑目录）`)
+    const norm = resolve(repoRoot, f).replace(/\\/g, '/')
+    if (norm === entry) continue   // 入口自身
+    if (norm.startsWith(`${resolve(repoRoot, 'lib').replace(/\\/g, '/')}/`)) continue
+    if (norm.startsWith(`${targetDir}/`)) continue
+    violations.push(`R6/R8：${f} 不在 import 白名单（仅允许 three、lib/* 与本建筑目录）`)
   }
   return violations
 }
@@ -1705,7 +1708,9 @@ beforeAll(() => {
   cpSync(resolve(root, 'tools/test/fixtures/buildings/bad-tris'), resolve(cityDir, 'buildings/b-000004-bad-tris'), { recursive: true })
   cpSync(resolve(root, 'tools/test/fixtures/buildings/bad-random'), resolve(cityDir, 'buildings/b-000005-bad-random'), { recursive: true })
   cpSync(resolve(root, 'tools/test/fixtures/buildings/bad-cross-import'), resolve(cityDir, 'buildings/b-000006-bad-cross'), { recursive: true })
-  // bad-cross-import 的 index.ts import '../good-tower/index'——复制后要指向同临时城的兄弟目录，直接复制即可命中白名单违规（路径不含 bad-cross 前缀）
+  cpSync(resolve(root, 'tools/test/fixtures/buildings/good-tower'), resolve(cityDir, 'buildings/good-tower'), { recursive: true })
+  // bad-cross-import 的 index.ts import '../good-tower/index'——上面额外复制一份**原名** good-tower 供其解析
+  // （无登记行的目录：inspectBuilding 不做孤儿检测，只有 inspectCity 查）
 })
 
 afterAll(() => rmSync(cityDir, { recursive: true, force: true }))
@@ -1766,7 +1771,7 @@ Expected: FAIL。
 
 ```ts
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { relative, resolve } from 'node:path'
 import { loadIdentityTable, resolveModelId } from '../../lib/identity'
 import { localIsoNow, loadRegistry, validateRow, writeRegistry, type RegistryRow } from '../../lib/registry'
 import { hashSeed } from '../../lib/ctx'
@@ -1819,9 +1824,9 @@ export async function inspectBuilding(
   const compiled = await compileBuilding(entry, repoRoot, outPath)
   results.push(compiled.ok ? ok('R1', 'esbuild 编译通过') : bad('R1', `编译失败：${compiled.errors.join('；')}`))
 
-  // R6b/R8：import 白名单
-  const dirRel = `${cityId}/buildings/${buildingDirName}`
-  const importViolations = checkAllowedInputs(compiled.inputFiles, dirRel)
+  // R6b/R8：import 白名单（dirRel 以物理路径计算——对真实城等于 c1/buildings/<dir>，对测试临时城跨盘也成立）
+  const dirRel = relative(repoRoot, buildingDir).replace(/\\/g, '/')
+  const importViolations = checkAllowedInputs(compiled.inputFiles, dirRel, repoRoot)
   if (!r6a.length) {
     const cross = importViolations.filter((v) => v.startsWith('R6/R8'))
     results.push(cross.length ? bad('R6', cross.join('；')) : ok('R6', 'import 白名单通过（three、lib/*、本目录）'))
@@ -2354,10 +2359,13 @@ git add -A && git commit -m "feat(tools): check-history——登记簿受限编�
 ```ts
 import { defineConfig } from 'vite'
 import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const webDir = fileURLToPath(new URL('./', import.meta.url))   // ESM 下无 __dirname
 
 export default defineConfig({
   base: '/llm-city/',
-  server: { port: 5173, fs: { allow: [resolve(__dirname, '../..')] } },   // 允许 import cities/ 与 lib/
+  server: { port: 5173, fs: { allow: [resolve(webDir, '../..')] } },   // 允许 import cities/ 与 lib/
   build: { outDir: 'dist', chunkSizeWarningLimit: 1500 },
 })
 ```
@@ -2464,7 +2472,7 @@ writeFileSync(resolve(outDir, 'city-data.ts'), out)
 console.log(`gen:city → ${buildings.length} 栋建筑（${cityId}），plan ${plan.lots.length} 地块`)
 ```
 
-root package.json scripts 加：`"gen:city": "node web/scripts/gen-city.mjs"`。
+root package.json scripts 加：`"gen:city": "node web/scripts/gen-city.mjs"`、`"preview": "npm run gen:city && npm -w web run dev"`、`"build:web": "npm run gen:city && npm -w web run build"`。
 
 - [ ] **Step 3: 写场景底色 scene.ts 与 main.ts**
 
@@ -2601,7 +2609,7 @@ npm run gen:city && npm -w web run dev -- --port 5173 &
 sleep 3 && curl -s http://localhost:5173/llm-city/ | head -5
 ```
 
-root package.json scripts 加 `"preview": "npm run gen:city && npm -w web run dev"`。浏览器打开 `http://localhost:5173/llm-city/`——应看到：中性地面 + 道路网格 + 雾 + 可 OrbitControls 漫游的空城（白天基调）。杀掉 dev 进程。
+root package.json scripts 加 `"preview": "npm run gen:city && npm -w web run dev"` 与 `"build:web": "npm run gen:city && npm -w web run build"`。浏览器打开 `http://localhost:5173/llm-city/`——应看到：中性地面 + 道路网格 + 雾 + 可 OrbitControls 漫游的空城（白天基调）。杀掉 dev 进程。
 
 - [ ] **Step 5: 写数据层单测并跑全量**
 
@@ -2612,11 +2620,12 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-// 直接测生成产物（gen:city 已在测试前运行）
+// 直接测生成产物（gen:city 已在测试前运行；fresh clone 未生成时整组跳过）
+import { existsSync } from 'node:fs'
 const genPath = resolve(__dirname, '../generated/city-data.ts')
-const text = readFileSync(genPath, 'utf8')
+const text = existsSync(genPath) ? readFileSync(genPath, 'utf8') : ''
 
-describe('gen:city 产物', () => {
+describe.skipIf(!text)('gen:city 产物', () => {
   it('含 city 常量与 buildingLoaders，建筑 id 与 loader 键一致', () => {
     expect(text).toContain('export const city: CityData')
     expect(text).toContain('export const buildingLoaders')
@@ -4307,10 +4316,10 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run gen:city        # web 类型检查与测试依赖生成文件，先产出
       - run: npm run typecheck
       - run: npm test
       - run: npm run gen:plan -- --check
-      - run: npm run gen:city
       - run: npm run inspect
       - name: 受限编辑校验（push：before..HEAD 逐提交；PR：HEAD^）
         if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
