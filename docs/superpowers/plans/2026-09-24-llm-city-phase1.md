@@ -199,7 +199,7 @@ llm-city/                        # 现有：README.md(占位) docs/ .git/
 }
 ```
 
-`web/tsconfig.json`：
+`web/tsconfig.json`（显式覆盖 exclude——继承根配置的 `exclude: ["web"]` 会把 web 源文件静默排除出类型检查）：
 
 ```json
 {
@@ -208,7 +208,8 @@ llm-city/                        # 现有：README.md(占位) docs/ .git/
     "types": ["vite/client"],
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "include": ["src/**/*.ts", "../lib/**/*.ts", "../cities/**/*.ts", "scripts/**/*.mjs"]
+  "include": ["src/**/*.ts", "../lib/**/*.ts", "../cities/**/*.ts", "scripts/**/*.mjs"],
+  "exclude": ["node_modules", "dist"]
 }
 ```
 
@@ -1274,7 +1275,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { BANNED_SOURCE_PATTERNS, checkAllowedInputs, compileBuilding, scanSource } from '../src/compile'
 
-const root = resolve(__dirname, '../../..')
+const root = resolve(__dirname, '../..')
 const fx = (...p: string[]) => resolve(root, 'tools/test/fixtures/buildings', ...p)
 const cacheDir = resolve(root, 'node_modules/.cache/llm-city/buildings')
 
@@ -1473,7 +1474,7 @@ import { describe, expect, it } from 'vitest'
 import { compileBuilding } from '../src/compile'
 import { ensureWorker, runHeadless } from '../src/headless/run'
 
-const root = resolve(__dirname, '../../..')
+const root = resolve(__dirname, '../..')
 const fx = (...p: string[]) => resolve(root, 'tools/test/fixtures/buildings', ...p)
 const lot = { id: 'C3-05', size: [20, 20] as [number, number], maxHeight: 300 }
 
@@ -1687,7 +1688,7 @@ import { resolve } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { inspectBuilding } from '../src/inspect'
 
-const root = resolve(__dirname, '../../..')
+const root = resolve(__dirname, '../..')
 let cityDir: string   // 临时城市：真实 plan.json + 临时 registry + fixtures 建筑
 
 const row = (id: string, lot: string, entry: string, model = 'GLM-5.3') => ({
@@ -2030,7 +2031,7 @@ import { resolve } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { buildStateReport } from '../src/state'
 
-const root = resolve(__dirname, '../../..')
+const root = resolve(__dirname, '../..')
 let citiesRoot: string
 
 beforeAll(() => {
