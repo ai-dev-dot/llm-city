@@ -239,7 +239,7 @@ tools/.cache/
 .DS_Store
 ```
 
-（`web/src/generated/` 为 gen:city 产物，不入仓；CI 构建前先跑 gen。）
+（`web/src/generated/` 为 gen:city 产物，不入仓；CI 构建前先跑 gen。Task 3/4 会另行追加 `.gitattributes` 锁定生成文件与 CRLF fixture 的行尾。）
 
 - [ ] **Step 5: 写冒烟测试**
 
@@ -791,7 +791,7 @@ export function validateRow(row: RegistryRow, rowIndex: number): string[] {
   else if (row.id && m[1] !== row.id) errs.push(`${at}entry 目录 (${m[1]}) 与行 id 不一致`)
   if (!validateTimestamp(row.started_at ?? '')) errs.push(`${at}started_at 不是带时区偏移的合法时间戳`)
   if (row.completed_at !== null && !validateTimestamp(row.completed_at)) errs.push(`${at}completed_at 非法`)
-  if (!row.builder?.model || !row.builder?.model_id || !row.builder?.agent) errs.push(`${at}builder 字段缺失`)
+  if (!row.builder?.model || !row.builder?.model_id || !row.builder?.agent || !row.builder?.operator) errs.push(`${at}builder 字段缺失`)
   if (!Array.isArray(row.sessions)) errs.push(`${at}sessions 必须是数组`)
   if (!row.tokens || typeof row.tokens !== 'object') errs.push(`${at}tokens 缺失`)
   return errs
