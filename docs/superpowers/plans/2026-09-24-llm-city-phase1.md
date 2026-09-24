@@ -199,13 +199,13 @@ llm-city/                        # 现有：README.md(占位) docs/ .git/
 }
 ```
 
-`web/tsconfig.json`（显式覆盖 exclude——继承根配置的 `exclude: ["web"]` 会把 web 源文件静默排除出类型检查）：
+`web/tsconfig.json`（显式覆盖 exclude——继承根配置的 `exclude: ["web"]` 会把 web 源文件静默排除出类型检查；types 必须同时含 `vite/client` 与 `node`——lib/** 被 include，丢 `node` 会报 TS2591）：
 
 ```json
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "types": ["vite/client"],
+    "types": ["vite/client", "node"],
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["src/**/*.ts", "../lib/**/*.ts", "../cities/**/*.ts", "scripts/**/*.mjs"],
