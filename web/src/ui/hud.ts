@@ -74,6 +74,9 @@ export function mountHud(
 
   const FILTER_LABEL: Record<FilterMode, string> = { off: '', model: '滤镜：按模型', vendor: '滤镜：按厂商' }
 
+// mountHud 可重入（main.ts restored 重挂）：window keydown 监听须先摘旧再挂新，否则重挂后快捷键会触发多次
+let activeKeyHandler: ((e: KeyboardEvent) => void) | null = null
+
   // 快捷键
   const onKey = (e: KeyboardEvent) => {
     if (e.target instanceof HTMLInputElement) return
@@ -85,6 +88,8 @@ export function mountHud(
     if (e.key === 'p' || e.key === 'P') hooks.onPhoto()
     if (e.key === 't' || e.key === 'T') hooks.onTour()
   }
+  if (activeKeyHandler) window.removeEventListener('keydown', activeKeyHandler)
+  activeKeyHandler = onKey
   window.addEventListener('keydown', onKey)
 
   const handle: HudHandle = {

@@ -5,7 +5,8 @@ import { FilterSystem } from './city/filters'
 import { setupPicking } from './city/pick'
 import { mountTooltip } from './ui/tooltip'
 import { showSidebar } from './ui/sidebar'
-import { mountHud } from './ui/hud'
+import { mountHud, type HudHandle } from './ui/hud'
+import { PhotoMode } from './ui/photo'
 import { city, buildingLoaders } from './generated/city-data'
 
 const canvas = document.getElementById('city-canvas') as HTMLCanvasElement
@@ -29,7 +30,7 @@ canvas.addEventListener('webglcontextlost', (e) => {
 })
 canvas.addEventListener('webglcontextrestored', () => {
   bundle.renderer.resetState()
-  document.getElementById('hud')!.innerHTML = ''
+  mountAll()   // 重挂持久 HUD（铭牌/报告条/快捷键）——原先只 innerHTML='' 会让 HUD 永久消失（Task 16 审查 carry-forward）
 })
 
 // 留痕交互（spec §10/§13）：hover 出 tooltip、点击飞向近景并展开侧栏登记详情
@@ -43,8 +44,19 @@ setupPicking(canvas, bundle.camera, bundle.controls, bundle.scene, (id, ev) => {
   showSidebar(hud, bundle.camera, bundle.controls, manager.groupOf(id), b)
 })
 
-// HUD 层（spec §10/§13）：启动铭牌、错误报告条、快捷键（P/T hooks 先接空函数，Task 17/19 填充）
-const hudHandle = mountHud(hud, city, manager, filterSystem, { onPhoto: () => {}, onTour: () => {} })
+// HUD 层（spec §10/§13）：启动铭牌、错误报告条、快捷键（P 接摄影模式 Task 17，T 巡航 Task 19 填充）
+let hudHandle: HudHandle
+// photo 须先于 mountHud 构造（onPhoto hook 依赖它），而 hudHandle 在 mountHud 返回后才存在——
+// 循环引用用 getter 式转发桩解决：桩始终转发到最新 handle（restored 重挂后也自动指向新 handle）
+const photo = new PhotoMode(hud, bundle, {
+  toggleHud: () => hudHandle.toggleHud(),
+  setFilter: (mode) => hudHandle.setFilter(mode),
+})
+// mountHud 可重入：webglcontextrestored 后重调即完整重挂持久 HUD
+const mountAll = () => {
+  hudHandle = mountHud(hud, city, manager, filterSystem, { onPhoto: () => photo.toggle(), onTour: () => {} })
+}
+mountAll()
 
 let last = performance.now()
 bundle.renderer.setAnimationLoop((now: number) => {
