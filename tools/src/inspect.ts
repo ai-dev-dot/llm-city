@@ -15,6 +15,9 @@ const bad = (rule: string, detail: string): RuleResult => ({ rule, pass: false, 
 
 /** R11/R12 品质下限（[city-admin] 修宪 2026-09-25）：官方建筑（model=official）豁免 */
 export const QUALITY_FLOOR = { minTriangles: 50_000, minMeshes: 60, notesMinChars: 200 }
+/** 宪法第 12 条「立项确认」（[city-admin] 立法 2026-09-26）：立法日起新开工的建筑 NOTES 须含「立项」节；
+ *  立法前已开工的在建建筑豁免（法不溯及既往）。started_at 字符串前缀比较即日期比较（时间戳格式统一） */
+const BRIEF_GATE_SINCE = '2026-09-26'
 const isOfficial = (row: RegistryRow) => row.builder.model_id === 'official'
 
 export function loadPlan(cityDir: string): PlanData {
@@ -78,7 +81,7 @@ export async function inspectBuilding(
 
   // R7：地块
   if (!row) {
-    results.push(bad('R7', `登记簿中找不到 id=${id ?? '(目录名不合法)'} 的登记行——请先登记骨架（CITY.md 第 4 步）`))
+    results.push(bad('R7', `登记簿中找不到 id=${id ?? '(目录名不合法)'} 的登记行——请先登记骨架（CITY.md 第 6 步）`))
   } else {
     const lot = plan.lots.find((l) => l.id === row.lot)
     const occupied = rows.some((r) => r.lot === row.lot && r.id !== row.id)
@@ -116,16 +119,19 @@ export async function inspectBuilding(
   }
 
   // R12：设计文档（修宪：施工前比选与预算分配须留痕；官方建筑豁免）
+  // 宪法第 12 条「立项确认」（[city-admin] 立法 2026-09-26）：立法后开工的建筑另须「立项」节（城主确认实录）
   if (row && isOfficial(row)) {
     results.push(ok('R12', '官方建筑豁免设计文档'))
   } else {
     const notesPath = resolve(buildingDir, 'NOTES.md')
     let notes: string | null = null
     if (existsSync(notesPath)) notes = readFileSync(notesPath, 'utf8')
-    if (!notes) results.push(bad('R12', '缺 NOTES.md 设计文档——须含立意、方案比选结论与三角预算分配表（CITY.md 第 2 步）'))
+    const needsBrief = !!row && row.started_at >= BRIEF_GATE_SINCE
+    if (!notes) results.push(bad('R12', '缺 NOTES.md 设计文档——须含立项确认实录、方案比选结论与三角预算分配表（CITY.md 第 4 步）'))
     else if (notes.length < QUALITY_FLOOR.notesMinChars) results.push(bad('R12', `NOTES.md 过短（${notes.length} 字 < ${QUALITY_FLOOR.notesMinChars}）——补齐立意、形制与预算分配`))
     else if (!notes.includes('预算')) results.push(bad('R12', 'NOTES.md 缺三角预算分配（「预算」节）——每类构件的计划面数与实际开销'))
-    else results.push(ok('R12', `设计文档 ${notes.length} 字，含预算分配`))
+    else if (needsBrief && !notes.includes('立项')) results.push(bad('R12', 'NOTES.md 缺「立项」确认节（宪法第 12 条/CITY.md 第 3 步，2026-09-26 立法后开工适用）——记立项提案与城主确认实录（日期+结论）；未获城主同意前不得动工'))
+    else results.push(ok('R12', `设计文档 ${notes.length} 字，含预算分配${needsBrief ? '与立项确认' : ''}`))
   }
 
   // R2/R3/R4/R9：无头执行

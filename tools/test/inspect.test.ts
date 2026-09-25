@@ -101,6 +101,27 @@ describe('inspectBuilding R1–R12（spec §14 坏建筑样本全拦截）', () 
     expect(r12.pass).toBe(false)
     expect(r12.detail).toMatch(/NOTES/)
   })
+  it('R12 立项节（宪法第 12 条 2026-09-26 立法）：立法后开工缺「立项」节红灯、补记转绿；立法前开工豁免', async () => {
+    const dir = 'b-000016-good-tower'
+    cpSync(resolve(root, 'tools/test/fixtures/buildings/good-tower'), resolve(cityDir, 'buildings', dir), { recursive: true })
+    const p = resolve(cityDir, 'buildings', dir, 'index.ts')
+    const libCtxAbs = resolve(root, 'lib/ctx').replace(/\\/g, '/')
+    writeFileSync(p, readFileSync(p, 'utf8').replace('\'../../../../../lib/ctx\'', `'${libCtxAbs}'`))
+    const mk = (started_at: string) => [{ ...row('b-000016', 'C3-05', `buildings/${dir}/index.ts`), started_at }]
+    // 立法前（2026-09-25）开工：NOTES 无「立项」节仍绿——法不溯及既往
+    let r = await inspectBuilding(root, cityDir, dir, { registryOverride: mk('2026-09-25T23:59:00+08:00') })
+    expect(r.results.find((x) => x.rule === 'R12')!.pass).toBe(true)
+    // 立法日（2026-09-26）起开工：缺「立项」节红灯
+    r = await inspectBuilding(root, cityDir, dir, { registryOverride: mk('2026-09-26T00:01:00+08:00') })
+    const r12 = r.results.find((x) => x.rule === 'R12')!
+    expect(r12.pass).toBe(false)
+    expect(r12.detail).toMatch(/立项/)
+    // 补记「立项」确认实录 → 转绿
+    const notesPath = resolve(cityDir, 'buildings', dir, 'NOTES.md')
+    writeFileSync(notesPath, readFileSync(notesPath, 'utf8') + '\n## 立项\n2026-09-26 城主确认实录：立项提案（建什么/在哪/立意）已呈，城主明示同意开工。\n')
+    r = await inspectBuilding(root, cityDir, dir, { registryOverride: mk('2026-09-26T00:01:00+08:00') })
+    expect(r.results.find((x) => x.rule === 'R12')!.pass).toBe(true)
+  })
   it('R13：贴线构件（超出中央 16×16）被拦（[city-admin] 退线法）', async () => {
     const rows = [row('b-000010', 'C3-10', 'buildings/b-000010-bad-setback/index.ts')]
     const r = await inspectBuilding(root, cityDir, 'b-000010-bad-setback', { registryOverride: rows })
