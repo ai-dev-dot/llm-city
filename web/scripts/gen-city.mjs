@@ -28,7 +28,7 @@ const buildings = rows.map((r) => {
       .map((l) => l.replace(/^\s*#{1,6}\s*/, '').replace(/^\s*[-*]\s+/, '').replace(/\*\*/g, '').replace(/\s+/g, ' ').trim())
       .filter(Boolean)
       .join('\n');
-    if (notesExcerpt.length > 500) notesExcerpt = notesExcerpt.slice(0, 500) + '…'
+    if (notesExcerpt.length > 1500) notesExcerpt = notesExcerpt.slice(0, 1500) + '…'
   }
   return {
     id: r.id, lot: r.lot, name: r.name, desc: r.desc ?? '',
