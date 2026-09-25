@@ -1,0 +1,49 @@
+name: ci
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # check-history 需要 before..after 的提交历史
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run gen:city        # web 类型检查与测试依赖生成文件，先产出
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run gen:plan -- --check
+      - run: npm run inspect
+      - name: 受限编辑校验（push：before..HEAD 逐提交；PR：HEAD^）
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        run: npm run check-history -- --from=${{ github.event.before }} --to=HEAD
+      - name: 受限编辑校验（PR）
+        if: github.event_name == 'pull_request'
+        run: npm run check-history -- --from=HEAD^ --to=HEAD
+      - run: npm run build:web
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: verify
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
