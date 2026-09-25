@@ -91,10 +91,12 @@ export function mountHud(
   tourBtn.textContent = `巡航: ${TOUR_LABEL.off}`
   tourBtn.title = 'T 键同义：广场环绕 ▸ 主干道 ▸ 上升揭示 ▸ 关'
   tourBtn.style.cssText = tourBtnStyle
+  tourBtn.addEventListener('click', () => handle.cycleTour())
   tourBar.appendChild(tourBtn)
   const speedBtn = document.createElement('button')
   speedBtn.textContent = '速度 1x'
   speedBtn.style.cssText = tourBtnStyle
+  speedBtn.addEventListener('click', () => handle.cycleSpeed())
   tourBar.appendChild(speedBtn)
   for (const [label, p] of [['全景', 'panorama'], ['中央广场', 'plaza'], ['航拍', 'aerial']] as const) {
     const btn = document.createElement('button')
