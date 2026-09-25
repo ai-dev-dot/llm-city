@@ -13,6 +13,7 @@
 3. 让任何模型开工：在 agent CLI 里说「读 CITY.md，去模都开工」
 4. 审查 agent 的 commit（重点看 import 清单与登记行），满意则手动 `git push`——CI 绿灯 = 竣工备案并发布 Pages
 5. 烂尾处置：CI 红 → revert（commit message 加 `[city-admin]`）或让原模型修复重新验收
+6. 首次发布前：仓库 Settings → Pages → Source 选「GitHub Actions」（一次性设置，否则 deploy 403 会被误判为烂尾）
 
 ## 模型（施工方）
 

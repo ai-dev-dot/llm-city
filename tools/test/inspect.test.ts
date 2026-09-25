@@ -91,6 +91,21 @@ describe('inspectBuilding R1–R10（spec §14 坏建筑样本全拦截）', () 
     await inspectBuilding(root, cityDir, 'b-000001-good-tower', { registryOverride: rows, complete: true })
     expect(rows[0].completed_at).not.toBeNull()
   })
+  it('封存行重算不符即红，且不覆写 mesh_stats', async () => {
+    const sealed = {
+      ...row('b-000001', 'C3-05', 'buildings/b-000001-good-tower/index.ts'),
+      completed_at: '2026-09-24T20:40:00+08:00' as string | null,
+      mesh_stats: { triangles: 12400 },   // 故意与真实重算值（>100）不符
+    }
+    const rows = [sealed]
+    const r = await inspectBuilding(root, cityDir, 'b-000001-good-tower', { registryOverride: rows })
+    expect(r.passed).toBe(false)
+    const registryFail = r.results.find((x) => x.rule === 'registry' && !x.pass)
+    expect(registryFail).toBeDefined()
+    expect(registryFail!.detail).toMatch(/重算不符/)
+    expect(registryFail!.detail).toMatch(/12400/)
+    expect(sealed.mesh_stats!.triangles).toBe(12400)   // 封存行未被覆写
+  })
   it('R1：build() 执行异常时报告附异常栈（spec §8.1）', async () => {
     const rows = [row('b-000007', 'C3-07', 'buildings/b-000007-bad-empty/index.ts')]
     const r = await inspectBuilding(root, cityDir, 'b-000007-bad-empty', { registryOverride: rows })

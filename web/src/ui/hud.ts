@@ -4,7 +4,7 @@ import type { FilterSystem, FilterMode } from '../city/filters'
 import type { SceneBundle } from '../city/scene'
 import type { TourRouteId, TourPreset } from '../city/tour'
 import { AMBIENCE_PRESETS, applyAmbience } from '../city/ambience'
-import { formatTokens } from './format'
+import { escapeHtml, formatTokens } from './format'
 
 // mountHud 可重入（main.ts restored 重挂）：window keydown 监听须先摘旧再挂新，否则重挂后快捷键会触发多次。
 // 注意必须放模块顶层——放函数体内每次调用都会重置为 null，旧 handler 引用即丢失。
@@ -120,7 +120,7 @@ export function mountHud(
       const failed = city.buildings.filter((b) => manager.getStatus(b.id).state === 'failed')
       const list = document.createElement('div')
       list.style.cssText = 'margin-top:6px;color:var(--danger);font-size:12px;max-height:180px;overflow-y:auto;'
-      list.innerHTML = failed.map((b) => `<div>${b.id} ${b.name}（${b.lot}）</div>`).join('') || '<div>无</div>'
+      list.innerHTML = failed.map((b) => `<div>${b.id} ${escapeHtml(b.name)}（${b.lot}）</div>`).join('') || '<div>无</div>'
       report.appendChild(list)
     })
   }

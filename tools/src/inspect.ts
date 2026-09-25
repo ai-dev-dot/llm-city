@@ -104,9 +104,15 @@ export async function inspectBuilding(
         ? ok('R4', `三角形 ${head.triangles.toLocaleString()} ≤ 50,000`)
         : bad('R4', `三角形 ${head.triangles.toLocaleString()} 超出 50,000 上限 ${(head.triangles - 50_000).toLocaleString()}`))
 
-      // 回写与竣工（对 override 数组同样生效，测试即验证）
+      // 回写与竣工（对 override 数组同样生效，测试即验证）。
+      // 封存行（completed_at 非空）不回写：重算一致则静默跳过（不重复写封存行）；不符则红——
+      // 竣工封存行整行冻结（spec §9 登记簿受限编辑），mesh_stats 对不上即视为疑似篡改。
       const passed = results.every((r) => r.pass)
-      if (passed) {
+      if (passed && row.completed_at !== null) {
+        if (row.mesh_stats?.triangles !== head.triangles) {
+          results.push(bad('registry', `mesh_stats 重算不符：登记 ${row.mesh_stats?.triangles} ≠ 重算 ${head.triangles}——封存行疑似被篡改`))
+        }
+      } else if (passed) {
         row.mesh_stats = { triangles: head.triangles }
         if (opts.complete) row.completed_at = localIsoNow()
         if (!opts.registryOverride) writeRegistry(cityDir, rows)   // 落盘回写
