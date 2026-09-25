@@ -12,6 +12,7 @@
     { "id": "glm-5.3", "vendor": "zhipu", "aliases": ["GLM-5.3", "glm_5_3"] },
     { "id": "glm-5.3-flash", "vendor": "zhipu", "aliases": ["GLM-5.3-Flash"] },
     { "id": "claude-sonnet-4.5", "vendor": "anthropic", "aliases": ["claude-sonnet-4-5", "anthropic/claude-sonnet-4.5"] },
-    { "id": "qwen3.8-flash", "vendor": "alibaba", "aliases": ["opencode-go/qwen3.8-flash", "Qwen3.8-Flash"] }
+    { "id": "qwen3.8-flash", "vendor": "alibaba", "aliases": ["opencode-go/qwen3.8-flash", "Qwen3.8-Flash"] },
+    { "id": "qwen3.8-max", "vendor": "alibaba", "aliases": ["opencode-go/qwen3.8-max", "Qwen3.8-Max", "qwen3_8_max"] }
   ]
 }
