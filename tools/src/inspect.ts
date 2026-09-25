@@ -72,14 +72,15 @@ export async function inspectBuilding(
     else results.push(ok('R7', `地块 ${row.lot} 合法且未占用`))
   }
 
-  // R10：身份
+  // R10：身份归一 + 施工资格白名单（[city-admin] 修宪 2026-09-25：本城仅接收城主白名单模型）
   if (!row) {
     results.push(bad('R10', '无登记行，无法校验身份'))
   } else {
     const res = resolveModelId(row.builder.model, table)
     if (!res.ok) results.push(bad('R10', res.error))
     else if (res.modelId !== row.builder.model_id) results.push(bad('R10', `builder.model "${row.builder.model}" 归一为 ${res.modelId}，与登记 model_id "${row.builder.model_id}" 不一致`))
-    else results.push(ok('R10', `身份 ${res.modelId} 归一一致`))
+    else if (plan.policy?.allowedModelIds && !plan.policy.allowedModelIds.includes(row.builder.model_id)) results.push(bad('R10', `身份 ${res.modelId} 不在城主施工白名单（plan.json policy.allowedModelIds：${plan.policy.allowedModelIds.join('、')}）——本城不接收白名单外模型开工`))
+    else results.push(ok('R10', `身份 ${res.modelId} 归一一致${plan.policy?.allowedModelIds ? '，且在城主施工白名单内' : ''}`))
   }
 
   // R2/R3/R4/R9：无头执行

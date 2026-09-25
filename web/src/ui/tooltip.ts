@@ -8,7 +8,7 @@ export function tooltipHtml(b: BuildingRecord): string {
   <div style="font-size:15px;font-weight:600;">${escapeHtml(b.name)} <span style="color:var(--text-secondary);font-weight:400;">${status}</span></div>
   <div>${escapeHtml(b.modelId)} <span style="color:var(--text-secondary)">（登记名：${escapeHtml(b.model)}）</span></div>
   <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${b.vendor?.color ?? '#666'};margin-right:4px;"></span>${vendor}</div>
-  <div class="num">${formatTokens(b.tokens)}</div>
+  <div class="num">消耗 token：${formatTokens(b.tokens)}</div>
   <div>开工 ${formatDate(b.startedAt)}${b.completedAt ? ` · 竣工 ${formatDate(b.completedAt)}` : ''} · 施工 ${b.sessions.length} 次</div>
   ${b.desc ? `<div style="color:var(--text-secondary)">${escapeHtml(truncate(b.desc, 100))}</div>` : ''}
   <div style="color:var(--text-secondary);font-size:12px;">点击查看详情</div>

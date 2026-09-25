@@ -60,7 +60,7 @@ export function mountHud(
     <div style="font-size:18px;font-weight:700;letter-spacing:2px;">${city.name} <span style="font-size:12px;color:var(--text-secondary);font-weight:400;">llm-city</span></div>
     <div style="color:var(--text-secondary);">开城 ${city.founded}</div>
     <div class="num" style="margin-top:6px;">${s.buildings} 栋建筑 · ${s.models} 个模型 · ${s.vendors} 家厂商</div>
-    <div class="num" style="color:var(--text-secondary);">累计 token ${s.unknownIn || s.unknownOut ? '≈ ' : ''}${formatTokens({ input: s.tokensIn, output: s.tokensOut })}</div>`
+    <div class="num" style="color:var(--text-secondary);">累计消耗 token ${s.unknownIn || s.unknownOut ? '≈ ' : ''}${formatTokens({ input: s.tokensIn, output: s.tokensOut })}</div>`
   hud.appendChild(plaque)
 
   // 快捷键提示（铭牌上方小字）

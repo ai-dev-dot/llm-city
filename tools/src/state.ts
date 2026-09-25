@@ -11,6 +11,7 @@ export interface StateReport {
     name: string
     founded: string
     occupancy: { occupied: number; total: number; rate: number; suggest_new_city: boolean }
+    builder_policy: { allowedModelIds: string[] } | null
     buildings: Array<{
       id: string
       lot: string
@@ -49,6 +50,7 @@ export function buildStateReport(citiesRoot: string): StateReport {
       .map((l) => l.id)
     return {
       id: cid, name: plan.name, founded: plan.founded,
+      builder_policy: plan.policy ?? null,
       occupancy: {
         occupied: rows.length, total: plan.lots.length,
         rate: Math.round((rows.length / plan.lots.length) * 1000) / 10,

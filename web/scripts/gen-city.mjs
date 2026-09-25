@@ -22,12 +22,18 @@ const buildings = rows.map((r) => {
   const notesPath = resolve(cityDir, entryDir, 'NOTES.md')
   let notesExcerpt = null
   if (existsSync(notesPath)) {
-    notesExcerpt = readFileSync(notesPath, 'utf8').replace(/\s+/g, ' ').trim().slice(0, 500)
+    // 摘录保留行结构（前端按 \n 转 <br>），仅剥离标题#/列表-/加粗**等修饰与行内多余空白
+    notesExcerpt = readFileSync(notesPath, 'utf8')
+      .split(/\r?\n/)
+      .map((l) => l.replace(/^\s*#{1,6}\s*/, '').replace(/^\s*[-*]\s+/, '').replace(/\*\*/g, '').replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+      .join('\n');
+    if (notesExcerpt.length > 500) notesExcerpt = notesExcerpt.slice(0, 500) + '…'
   }
   return {
     id: r.id, lot: r.lot, name: r.name, desc: r.desc ?? '',
     model: r.builder.model, modelId: r.builder.model_id, vendor: vendorOf(r.builder.model_id),
-    agent: r.builder.agent, operator: r.builder.operator,
+    agent: r.builder.agent, operator: r.builder.operator ?? null,
     sessions: r.sessions, tokens: r.tokens,
     startedAt: r.started_at, completedAt: r.completed_at,
     notesExcerpt, entryDir,
@@ -45,7 +51,7 @@ import type { Object3D } from 'three'
 export interface BuildingRecord {
   id: string; lot: string; name: string; desc: string
   model: string; modelId: string; vendor: { id: string; name: string; color: string } | null
-  agent: string; operator: string
+  agent: string; operator: string | null
   sessions: Array<{ date: string; input: number | null; output: number | null; note?: string }>
   tokens: { input: number | null; output: number | null }
   startedAt: string; completedAt: string | null

@@ -9330,5 +9330,11 @@
       ],
       "district": "I9"
     }
-  ]
+  ],
+  "policy": {
+    "allowedModelIds": [
+      "official",
+      "glm-5.3"
+    ]
+  }
 }

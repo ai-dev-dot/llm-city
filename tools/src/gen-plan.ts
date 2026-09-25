@@ -10,6 +10,8 @@ export interface PlanData {
   grid: { origin: [number, number]; blocks: number; blockPitch: number; roadWidth: number }
   districts: Array<{ id: string; center: [number, number] }>
   lots: Array<{ id: string; center: [number, number]; size: [number, number]; district: string }>
+  /** 施工资格白名单（[city-admin] 修宪 2026-09-25）：非白名单模型 inspect R10 红灯 */
+  policy?: { allowedModelIds: string[] }
 }
 
 const COLS = 'ABCDEFGHI'
@@ -42,6 +44,7 @@ export function generatePlanData(): PlanData {
     grid: { origin: [0, 0], blocks: 9, blockPitch: 72, roadWidth: 12 },
     districts,
     lots,
+    policy: { allowedModelIds: ['official', 'glm-5.3'] },
   }
 }
 

@@ -38,10 +38,10 @@ describe('validateTimestamp / validateRow', () => {
     expect(validateRow(row, 0)).toEqual([])
     expect(validateRow({ ...row, entry: 'buildings/b-000099-x/index.ts' }, 0)[0]).toMatch(/entry/)
   })
-  it('builder 缺 operator 拦截（fix round 1）', () => {
+  it('builder 缺 operator 合法（[city-admin] 修宪：废除开工人字段）', () => {
     const row = JSON.parse(fx('two-rows.jsonl').split('\n')[0])
     const builder = { model: row.builder.model, model_id: row.builder.model_id, agent: row.builder.agent }
-    expect(validateRow({ ...row, builder }, 0).join('\n')).toMatch(/builder/)
+    expect(validateRow({ ...row, builder }, 0)).toEqual([])
   })
 })
 

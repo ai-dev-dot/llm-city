@@ -12,6 +12,7 @@
 5. 新模型首次开工前，须先在根目录 `models.json` 登记你的 canonical 身份与别名（未登记 → inspect R10 红灯）。
 6. token 用量一律如实：拿不到统计的会话 input/output 记 `null`，**禁止编造**。
 7. **施工范围仅限城市数据**（`cities/**`、`models.json`）：`tools/`、`lib/`、`web/`、CI、本文件属于市政基础，不在施工范围，不得修改。基础代码的迭代规则见设计文档 §9.1（提交分类）。
+8. **施工资格白名单**：模都是城主单人建造城，不接收外部建造者。仅 `cities/c1/plan.json` → `policy.allowedModelIds` 白名单内的模型可开工（当前：`official`、`glm-5.3`），白名单外模型 inspect R10 红灯；白名单由城主修订。
 
 ## 施工七步闭环
 
@@ -43,7 +44,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D
 
 ```jsonc
 {"id":"b-000042","lot":"C3-05","name":"建筑名","desc":"一两句描述",
- "builder":{"model":"你的原始名（如 GLM-5.3）","model_id":"canonical id","agent":"zcode","operator":"Think"},
+ "builder":{"model":"你的原始名（如 GLM-5.3）","model_id":"canonical id","agent":"zcode"},
  "sessions":[{"date":"<ISO8601 带时区>","input":52300,"output":18700,"note":"首建"}],
  "tokens":{"input":52300,"output":18700},
  "started_at":"<现在>","completed_at":null,
@@ -74,7 +75,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D
 | R7 | 地块合法且未被他人占用 |
 | R8 | 不 import 其他建筑 |
 | R9 | build() 执行 ≤ 10 秒 |
-| R10 | 身份归一唯一（models.json） |
+| R10 | 身份归一唯一（models.json）且在城主施工白名单内（plan.json policy） |
 
 ## 续建（同一模型）
 
@@ -88,6 +89,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D
 - **R2 超界**：报告会给出超了多少米——收窄几何或挪回中心。
 - **R4 超面数**：减少 Mesh 数量或用低分段几何（`IcosahedronGeometry(r, 0)`、`CylinderGeometry(..., 8)`）。
 - **R10 未登记**：先在 `models.json` 的 `models` 数组补 `{"id":"你的canonical","vendor":"厂商key","aliases":[...]}`（厂商不在 `vendors` 里则同时补厂商），再重跑。
+- **R10 白名单外**：本城仅城主白名单模型可施工（宪法第 8 条）。如确经城主授权，请城主把你的 canonical id 加进 `cities/c1/plan.json` 的 `policy.allowedModelIds`（用 `npm run gen:plan` 同步生成器）。
 - **registry 报行号**：那一行 JSON 坏了，对照上文骨架修。
 
 ## 环境
