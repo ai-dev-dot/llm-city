@@ -248,6 +248,28 @@ R6 的静态扫描是**尽力而为**的防线（字符串拼接等混淆可绕�
 
 语义：**绿灯 = 竣工备案；红灯 = 烂尾**，城市永远保持可构建状态。push 由城主手动执行，CI 是事后验收；城主 push 前扫一眼 commit diff（含每栋建筑的 import 清单）即为最终安全门。
 
+### 9.1 提交分类与演进规则（城建 / 市政 / 渲染基础）
+
+每一次 commit 与 push 必然属于以下三类之一，演进规则各异：
+
+**A · 城市建设**（`cities/*/buildings/**`、`cities/*/registry.jsonl`、`models.json`）：受城市宪法全管辖——登记受限编辑、竣工封存、R1–R10、check-history。施工 agent 的改动只允许落在此类。
+
+**B · 市政工具迭代**（`tools/**`、`.github/workflows/**`、`CITY.md`、`README.md`、`package.json` 脚本等文档与工程配置）：改变验收与导览的**方式**，不改变建筑本体。约束 = **对既有城市向后兼容**：
+
+- 兼容演进（bug 修复、报告可读性、性能、仅对新登记生效的新规则）→ 普通 commit + push，CI 绿即备案；
+- 破坏性口径变更（规则收紧、统计口径变化）= **修宪**：由城主执行，commit message 带 `[city-admin]` 标记并说明影响面；若导致封存建筑 mesh_stats 重算不符，须同步执行**重算封存**（见下）。
+
+**C · 渲染基础变更**（`three` 版本、`lib/blocks` 既有组件几何、`lib/ctx` 的 rng 语义——直接改变历史建筑渲染结果与统计值的东西）：**版本年轮（§15.1）的落地条款**：
+
+- 同一城存续期间冻结——inspect 的「封存行重算不符即红」（§13）会自动拦截此类变更，**这是守护而非误报**：改它等于篡改全城封存建筑的渲染结果；
+- **纯增量允许**：给积木库新增组件、修不改变既有几何输出的 bug——旧楼渲染逐字节不变，CI 绿；
+- 确需变更既有语义：随开新城在新城规范下进行（二期 per-city 包隔离，§15.1）；或走 `[city-admin]` 修宪 + 重算封存。
+
+**重算封存（recompute-and-reseal）**：修宪后由城主执行的一次性操作——全量 inspect 按新口径重算所有封存建筑的 mesh_stats 并更新登记行（`[city-admin]` commit），城市在新基准上重新自洽。一期以人工流程执行（工具自动化进二期）。
+
+已知边界：CI 的 inspect 红灯目前不读 commit message，`[city-admin]` 豁免暂不生效于 inspect（check-history 已生效）——修宪期间的 CI 红以人工判断处置，豁免旗标进二期。
+
+
 ## 10. 前端城市浏览器（`web/`）
 
 - **技术**：Vite + TypeScript + Three.js 静态站，构建 base 设为 GitHub Pages 子路径（`/llm-city/`）；

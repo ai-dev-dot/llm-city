@@ -11,6 +11,7 @@
 4. 官方建筑（`model = "official"`）同等受保护。
 5. 新模型首次开工前，须先在根目录 `models.json` 登记你的 canonical 身份与别名（未登记 → inspect R10 红灯）。
 6. token 用量一律如实：拿不到统计的会话 input/output 记 `null`，**禁止编造**。
+7. **施工范围仅限城市数据**（`cities/**`、`models.json`）：`tools/`、`lib/`、`web/`、CI、本文件属于市政基础，不在施工范围，不得修改。基础代码的迭代规则见设计文档 §9.1（提交分类）。
 
 ## 施工七步闭环
 
