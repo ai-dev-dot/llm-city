@@ -3,7 +3,7 @@ import { relative, resolve } from 'node:path'
 import { loadIdentityTable, resolveModelId } from '../../lib/identity'
 import { localIsoNow, loadRegistry, validateRow, writeRegistry, type RegistryRow } from '../../lib/registry'
 import { hashSeed } from '../../lib/ctx'
-import { checkAllowedInputs, compileBuilding, readBuildingSources, scanSource } from './compile'
+import { checkAllowedInputs, compileBuilding, readDirSources, scanSource, rel } from './compile'
 import { runHeadless } from './headless/run'
 import type { PlanData } from './gen-plan'
 
@@ -43,8 +43,14 @@ export async function inspectBuilding(
   const plan = loadPlan(cityDir)
   const table = loadIdentityTable(repoRoot)
 
-  // R5/R6a：源码静态扫描（不依赖编译，最先跑，坏代码也能给出可读报告）
-  const sources = readBuildingSources(buildingDir)
+  // R5/R6a：源码静态扫描（不依赖编译，最先跑，坏代码也能给出可读报告）。
+  // 扫描范围 = 建筑目录 + 本人自建积木目录全部 .ts（[city-admin] 立法 R14 2026-09-25：
+  // 防把 Math.random/fetch 等黑名单原语藏进积木绕过安检；本人积木库有脏件即本模型建筑红灯，属资产自负）
+  const selfBlocksDir = row ? resolve(cityDir, 'blocks', row.builder.model_id) : null
+  const sources = [
+    ...readDirSources(buildingDir),
+    ...(selfBlocksDir && existsSync(selfBlocksDir) ? readDirSources(selfBlocksDir) : []),
+  ]
   const hits = scanSource(sources)
   const r5 = hits.filter((h) => h.rule === 'R5')
   results.push(r5.length ? bad('R5', r5.map((h) => `${h.file}：${h.msg}`).join('；')) : ok('R5', `黑名单零命中（${sources.length} 个源文件）`))
@@ -56,13 +62,18 @@ export async function inspectBuilding(
   const compiled = await compileBuilding(entry, repoRoot, outPath)
   results.push(compiled.ok ? ok('R1', 'esbuild 编译通过') : bad('R1', `编译失败：${compiled.errors.join('；')}`))
 
-  // R6b/R8：import 白名单（dirRel 以物理路径计算——对真实城等于 c1/buildings/<dir>，对测试临时城跨盘也成立）
+  // R6b/R8/R14：import 白名单（dirRel 以物理路径计算——对真实城等于 c1/buildings/<dir>，对测试临时城跨盘也成立）
   const dirRel = relative(repoRoot, buildingDir).replace(/\\/g, '/')
-  const importViolations = checkAllowedInputs(compiled.inputFiles, dirRel, repoRoot)
+  const selfBlocksDirRel = selfBlocksDir ? rel(selfBlocksDir, repoRoot) : undefined
+  const importViolations = checkAllowedInputs(compiled.inputFiles, dirRel, repoRoot, { selfBlocksDirRel })
   if (!r6a.length) {
-    const cross = importViolations.filter((v) => v.startsWith('R6/R8'))
-    results.push(cross.length ? bad('R6', cross.join('；')) : ok('R6', 'import 白名单通过（three、lib/*、本目录）'))
-    results.push(cross.length ? bad('R8', `跨建筑引用：${cross.join('；')}`) : ok('R8', '无跨建筑 import'))
+    const cross = importViolations.filter((v) => v.tag === 'R6/R8')
+    const crossBlock = importViolations.filter((v) => v.tag === 'R14')
+    results.push(cross.length ? bad('R6', cross.map((v) => v.msg).join('；')) : ok('R6', 'import 白名单通过（three、lib/*、本目录、本人积木库）'))
+    results.push(cross.length ? bad('R8', `跨建筑引用：${cross.map((v) => v.msg).join('；')}`) : ok('R8', '无跨建筑 import'))
+    results.push(crossBlock.length
+      ? bad('R14', `使用了他模型自建积木：${crossBlock.map((v) => v.msg).join('；')}`)
+      : ok('R14', `未引用他模型积木（${selfBlocksDirRel ? `本人积木库 ${selfBlocksDirRel} 可用` : '无登记行，按无自建积木校验'}）`))
   }
 
   // R7：地块
@@ -190,9 +201,31 @@ export async function inspectCity(repoRoot: string, cityDir: string): Promise<In
     results: errs.length ? [bad('registry', errs.join('；'))] : [ok('registry', `${rows.length} 行全部一致`)],
   }
 
+  // 自建积木库（[city-admin] 立法 R14 2026-09-25）：子目录名必须是已登记 model_id；
+  // 全部积木源码过静态安检（含暂无建筑引用的孤儿积木——防藏黑名单原语等日后被 import）
+  const blocksRootDir = resolve(cityDir, 'blocks')
+  const blockErrs: string[] = []
+  if (existsSync(blocksRootDir)) {
+    const knownIds = new Set(loadIdentityTable(repoRoot).models.map((m) => m.id))
+    for (const d of readdirSync(blocksRootDir, { withFileTypes: true })) {
+      if (!d.isDirectory()) continue
+      if (!knownIds.has(d.name)) blockErrs.push(`积木目录 blocks/${d.name} 不是 models.json 已登记的 model_id`)
+      for (const h of scanSource(readDirSources(resolve(blocksRootDir, d.name)))) {
+        blockErrs.push(`blocks/${d.name} ${rel(h.file, repoRoot)}：${h.msg}`)
+      }
+    }
+  }
+  const blocksResult: InspectResult = {
+    building: '（自建积木库）', city: cityId,
+    passed: blockErrs.length === 0,
+    results: blockErrs.length
+      ? [bad('R14', blockErrs.join('；'))]
+      : [ok('R14', existsSync(blocksRootDir) ? `积木库安检通过（${readdirSync(blocksRootDir, { withFileTypes: true }).filter((d) => d.isDirectory()).length} 个模型目录）` : '暂无自建积木库')],
+  }
+
   // 逐建筑 R1–R10（并行执行控制 CI 时长；**共享同一 rows 数组作 registryOverride——mesh_stats/completed_at 全部写进内存数组，Promise.all 后集中落盘一次**，避免各建筑各自 loadRegistry 快照并行 writeRegistry 的丢失更新）
   const dirs = rows.map((r) => r.entry.split('/')[1]).filter(Boolean)
   const dirResults = await Promise.all(dirs.map((d) => inspectBuilding(repoRoot, cityDir, d, { registryOverride: rows })))
   if (dirs.length) writeRegistry(cityDir, rows)
-  return [structResult, ...dirResults]
+  return [structResult, blocksResult, ...dirResults]
 }

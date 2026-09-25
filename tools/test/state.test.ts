@@ -44,4 +44,13 @@ describe('buildStateReport（spec §8.2/§14）', () => {
     expect(c2s.occupancy.occupied).toBe(0)
     expect(c2s.free_lot_suggestions[0]).toMatch(/^E5-/)
   })
+  it('custom_blocks：按模型列出各自积木文件；无积木目录时空对象（R14 立法）', () => {
+    mkdirSync(resolve(citiesRoot, 'c1/blocks/glm-5.3'), { recursive: true })
+    writeFileSync(resolve(citiesRoot, 'c1/blocks/glm-5.3/lantern.ts'), 'export {}\n')
+    mkdirSync(resolve(citiesRoot, 'c1/blocks/claude-sonnet-4.5'), { recursive: true })
+    writeFileSync(resolve(citiesRoot, 'c1/blocks/claude-sonnet-4.5/brazier.ts'), 'export {}\n')
+    const r = buildStateReport(citiesRoot)
+    expect(r.cities.find((c) => c.id === 'c1')!.custom_blocks).toEqual({ 'glm-5.3': ['lantern.ts'], 'claude-sonnet-4.5': ['brazier.ts'] })
+    expect(r.cities.find((c) => c.id === 'c2')!.custom_blocks).toEqual({})   // c2 未建积木目录
+  })
 })

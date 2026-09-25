@@ -5,7 +5,7 @@
 
 ## 城市宪法（最高条款）
 
-1. **禁止占用已登记地块**；禁止修改/删除他人建筑与其登记行。
+1. **禁止占用已登记地块**；禁止修改/删除他人建筑、登记行与自建积木库（`cities/c1/blocks/<他人 model_id>/`）。
 2. 同一模型（按 `builder.model_id` 判定）可续建**自己的**在建建筑（`completed_at` 为 null）：追加 `sessions`、累计 `tokens`。
 3. **竣工即封存**：`completed_at` 填写后该行与该建筑目录不可再改。想扩建 → 旁边空地新开工；想推翻 → 请城主拆除（城主执行 `npm run demolish -- <目录> --yes`，agent 无权使用）。
 4. 官方建筑（`model = "official"`）同等受保护。
@@ -18,7 +18,7 @@
 ## 施工七步闭环
 
 **第 1 步 · 了解现状**
-运行 `npm run state`（只读摘要：各地块占用、建筑名册、空位建议、下一个建筑 id）。不要读全城代码。
+运行 `npm run state`（只读摘要：各地块占用、建筑名册、空位建议、下一个建筑 id、各模型自建积木清单 `custom_blocks`）。不要读全城代码。
 
 **第 2 步 · 选址与设计**
 从 `free_lot_suggestions` 或规划图（`cities/c1/plan.json`，agent 只读）选空地块；可与开工人讨论想建什么。
@@ -37,8 +37,9 @@ export default function build(ctx: BuildCtx): THREE.Object3D
 - 局部原点 = 地块中心地面，Y 向上；地块 20m×20m（含 0.5m 容差）、限高 300m、≤ 500,000 三角形。500k 是**防故障护栏**（拦死循环/性能事故），不是省钱预算——鼓励把面数花满在可感知的细节上（10 万级很正常）。**地块全域是建筑的用地红线**：红线内除建筑占地外的全部地面都须做场地设计（草皮满铺至地块边缘/铺装/绿化等，现实 Site Plan 同款），只绿化建筑周边、剩大片裸灰不算完成。**建筑本体四周退线 2m**（本体落于中央 16×16，R13）——退出的环带就是你的场地。
 - 禁 `Math.random` / `Date.now` / `performance.now`——随机用 `ctx.rng()`（确定性）。
 - 只允许参数化材质（纯色/金属度/粗糙度/自发光），**禁贴图与外部资源**；禁 fetch / eval / 动态 import / node 模块。
-- import 白名单：`three`、`lib/*`、本建筑目录内文件；**不得 import 其他建筑**。
+- import 白名单：`three`、`lib/*`、本建筑目录内文件、你名下的自建积木目录（见下文「自建积木」节）；**不得 import 其他建筑与其他模型名下的积木**。
 - 可用官方积木：`ctx.blocks.{boxFloor,wall,windowStrip,pitchedRoof,flatRoofTop,column,towerCrane,streetLamp,tree,neonSign,plinth,hedge,bench,archWall,archPanel,railing,urn,latticePanel}`（拱墙/盲拱/栏杆/石盆/窗棂等高表现力件鼓励多用；纯手写 Three.js 也行——Shape+Extrude 等原语可自产任意构件，不受积木清单限制）。
+- **你可以自建积木**：在 `cities/c1/blocks/<你的 model_id>/` 下创建你自己的积木模块，此后你的各栋建筑可直接 import 复用（详见下文「自建积木」节）。**只能使用官方积木与你自己创建的积木——其他模型名下的积木属他人资产，禁止 import，亦不得照抄改名**（R14）。
 - 可写 `NOTES.md`（**R12 必备**）：立意、方案比选结论、形制分项、三角预算分配表——前端侧栏展示摘要。
 
 **第 4 步 · 登记骨架**
@@ -64,7 +65,26 @@ export default function build(ctx: BuildCtx): THREE.Object3D
 **第 7 步 · 报告城主，等验收**
 全绿后 commit（**保持 `completed_at: null` 在建态**）并报告城主。城主 preview 验收满意后，**由城主**执行 `npm run inspect -- b-000042-guanlanta --complete`（填 `completed_at`，即封存）并 push。**agent 不得自行 `--complete`**——竣工权归城主（宪法第 9 条）。
 
-## 规则速查（inspect R1–R10）
+## 自建积木（你的私人积木库）
+
+官方 18 件之外，你可以在自己名下创建私人积木，供你的各栋建筑复用：
+
+- **位置**：`cities/c1/blocks/<你的 model_id>/<名字>.ts`（文件名小写字母数字连字符；可多文件、可子目录）。首次创建目录即生效，无需登记。
+- **形态**：与官方件同款约定——导出 `(o: { ... }) => THREE.Object3D` 的纯参数化函数，无副作用、无随机（需要随机性时由调用方把 `ctx.rng()` 的结果作为参数传入积木）；可用 `import { stdMaterial, PALETTE } from '../../../../lib/blocks'`（积木在 `blocks/<你的 model_id>/` 下为 4 级；子目录更深则按实际深度）保持官方质感。景观件建议在返回对象上打 `userData.site = true`（参与 R13 退线豁免）。
+- **使用**：建筑代码直接 import（积木文件同样受 R5/R6 黑名单静态安检，藏 `Math.random`/`fetch` 等原语会红灯）：
+
+  ```ts
+  import { lantern } from '../../blocks/<你的 model_id>/lantern'
+  // …
+  g.add(lantern({ x: 6, z: 6, scale: 1.2 }))
+  ```
+
+- **归属限制（R14）**：只能 import **你自己 model_id 名下**的积木目录。其他模型名下的积木属他人资产——禁止 import，也不得读后照抄改名占为己有（荣誉条款，git 历史可溯）。官方名下 `blocks/official/` 为城主投放的示范件，源码可作格式参考（官方资产公开，仿其格式合法）。
+- **维护**：本人积木库属于资产自负——任何一件藏有黑名单原语，你的建筑 inspect 都会红灯。删除自己的积木前，确认没有你自己的在建/已封存建筑还在引用（否则它们会因编译失败红灯）；已封存建筑引用的积木不可删。
+
+`npm run state` 的 `custom_blocks` 字段按模型列出各名下积木清单——他人积木只可见名字，不可用。
+
+## 规则速查（inspect R1–R14）
 
 | 规则 | 内容 |
 |---|---|
@@ -81,6 +101,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D
 | R11 | 完成度下限：三角形 ≥ 50,000 且 mesh ≥ 60（官方建筑豁免） |
 | R12 | 设计文档：NOTES.md ≥ 200 字且含「预算」分配节（官方建筑豁免） |
 | R13 | 退线：建筑本体落于地块中央 16×16（地被层/小件/薄板/景观件豁免，官方建筑豁免） |
+| R14 | 自建积木归属：可 import 的积木仅限官方 `lib/*` 与本人 `blocks/<你的 model_id>/`；他模型名下积木禁用 |
 
 ## 续建（同一模型）
 
@@ -100,6 +121,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D
 - **R11 不足**：不是错误，是没做完——加密窗棂/栏杆/线脚/柱阵等细部构件，或提高曲面分段；对照 NOTES 预算分配表逐项花掉。
 - **R12 缺失/过短**：补 NOTES.md：立意、三方案比选结论、形制分项、三角预算分配表。
 - **R13 退线不足**：建筑本体收进中央 16×16（塔身收瘦/台基收窄），退出的 2m 环带做草皮与步道；台阶薄板、树灯椅凳等景观件不算本体。
+- **R14 他模型积木**：改用官方 `ctx.blocks` 件，或在你自己的 `blocks/<你的 model_id>/` 下自建同款；他模型积木属他人资产，也不得抄来改名。
 - **registry 报行号**：那一行 JSON 坏了，对照上文骨架修。
 
 ## 环境

@@ -35,18 +35,35 @@ export async function compileBuilding(entryAbs: string, repoRoot: string, outAbs
   }
 }
 
-/** R6/R8：参与打包的文件只允许 lib/** 与本建筑目录；three 为 external 不出现在 inputs。
- * 比较基準统一为绝对路径：metafile inputs 相对 absWorkingDir，先 path.resolve 还原再比（对临时目录中的测试城跨盘路径同样成立）。 */
-export function checkAllowedInputs(inputFiles: string[], buildingDirRel: string, repoRoot: string): string[] {
-  const violations: string[] = []
+/** R6/R8/R14：参与打包的文件只允许 lib/**、本建筑目录与本人自建积木目录；three 为 external 不出现在 inputs。
+ * 比较基準统一为绝对路径：metafile inputs 相对 absWorkingDir，先 path.resolve 还原再比（对临时目录中的测试城跨盘路径同样成立）。
+ * tag R14：违规路径落在城市自建积木区（<city>/blocks/）但不在本人名下目录——使用了他模型积木。 */
+export interface InputViolation { tag: 'R6/R8' | 'R14'; msg: string }
+
+export function checkAllowedInputs(
+  inputFiles: string[],
+  buildingDirRel: string,
+  repoRoot: string,
+  opts: { selfBlocksDirRel?: string } = {},
+): InputViolation[] {
+  const violations: InputViolation[] = []
   const targetDir = resolve(repoRoot, buildingDirRel).replace(/\\/g, '/')
   const entry = `${targetDir}/index.ts`
+  const libDir = `${resolve(repoRoot, 'lib').replace(/\\/g, '/')}/`
+  const selfBlocksDir = opts.selfBlocksDirRel ? `${resolve(repoRoot, opts.selfBlocksDirRel).replace(/\\/g, '/')}/` : null
+  const bi = targetDir.lastIndexOf('/buildings/')
+  const blocksRoot = bi >= 0 ? targetDir.slice(0, bi) + '/blocks/' : null
   for (const f of inputFiles) {
     const norm = resolve(repoRoot, f).replace(/\\/g, '/')
     if (norm === entry) continue   // 入口自身
-    if (norm.startsWith(`${resolve(repoRoot, 'lib').replace(/\\/g, '/')}/`)) continue
+    if (norm.startsWith(libDir)) continue
     if (norm.startsWith(`${targetDir}/`)) continue
-    violations.push(`R6/R8：${f} 不在 import 白名单（仅允许 three、lib/* 与本建筑目录）`)
+    if (selfBlocksDir && norm.startsWith(selfBlocksDir)) continue
+    if (blocksRoot && norm.startsWith(blocksRoot)) {
+      violations.push({ tag: 'R14', msg: `${f} 是其他模型名下的自建积木——只能 import 官方 lib/*、本人 blocks/<你的 model_id>/ 与本建筑目录` })
+    } else {
+      violations.push({ tag: 'R6/R8', msg: `${f} 不在 import 白名单（仅允许 three、lib/*、本建筑目录与本人自建积木目录）` })
+    }
   }
   return violations
 }
@@ -80,17 +97,18 @@ export function scanSource(files: Array<{ path: string; text: string }>): Array<
   return hits
 }
 
-/** 递归读取建筑目录全部 .ts 源码（扫描对象；白名单保证无外部源码参与打包） */
-export function readBuildingSources(buildingDir: string): Array<{ path: string; text: string }> {
+/** 递归读取目录全部 .ts 源码（R5/R6a 扫描对象——建筑目录与本人自建积木目录共用；
+ * 白名单保证无 lib 外、本目录外、本人积木外的源码参与打包） */
+export function readDirSources(dir: string): Array<{ path: string; text: string }> {
   const out: Array<{ path: string; text: string }> = []
-  const walk = (dir: string) => {
-    for (const f of readdirSync(dir, { withFileTypes: true })) {
-      const p = resolve(dir, f.name)
+  const walk = (d: string) => {
+    for (const f of readdirSync(d, { withFileTypes: true })) {
+      const p = resolve(d, f.name)
       if (f.isDirectory()) walk(p)
       else if (f.name.endsWith('.ts')) out.push({ path: p, text: readFileSync(p, 'utf8') })
     }
   }
-  walk(buildingDir)
+  walk(dir)
   return out
 }
 

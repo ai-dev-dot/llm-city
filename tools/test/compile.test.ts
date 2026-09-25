@@ -20,7 +20,7 @@ describe('compileBuilding（R1）', () => {
   })
 })
 
-describe('checkAllowedInputs（R6/R8）', () => {
+describe('checkAllowedInputs（R6/R8/R14）', () => {
   it('好建筑：入口+lib+本目录文件全放行', async () => {
     const r = await compileBuilding(fx('good-tower/index.ts'), root, resolve(cacheDir, 'good-tower-2.mjs'))
     expect(checkAllowedInputs(r.inputFiles, 'tools/test/fixtures/buildings/good-tower', root)).toEqual([])
@@ -28,7 +28,19 @@ describe('checkAllowedInputs（R6/R8）', () => {
   it('跨建筑 import 被拦（R8）', async () => {
     const r = await compileBuilding(fx('bad-cross-import/index.ts'), root, resolve(cacheDir, 'bad-cross.mjs'))
     const v = checkAllowedInputs(r.inputFiles, 'tools/test/fixtures/buildings/bad-cross-import', root)
-    expect(v.join('\n')).toMatch(/good-tower/)
+    expect(v.length).toBeGreaterThan(0)
+    expect(v.every((x) => x.tag === 'R6/R8')).toBe(true)
+    expect(v.map((x) => x.msg).join('\n')).toMatch(/good-tower/)
+  })
+  it('本人自建积木目录放行；同一积木在他人名下白名单中变 R14 违规', async () => {
+    const r = await compileBuilding(fx('good-custom-block/index.ts'), root, resolve(cacheDir, 'good-custom-block.mjs'))
+    // builder 是 glm-5.3：本人积木目录 → 零违规
+    expect(checkAllowedInputs(r.inputFiles, 'tools/test/fixtures/buildings/good-custom-block', root, { selfBlocksDirRel: 'tools/test/fixtures/blocks/glm-5.3' })).toEqual([])
+    // 假装 builder 是 claude-sonnet-4.5：glm-5.3 的 lantern 落在 blocks 根内但不在本人目录 → 全部挂 R14
+    const v = checkAllowedInputs(r.inputFiles, 'tools/test/fixtures/buildings/good-custom-block', root, { selfBlocksDirRel: 'tools/test/fixtures/blocks/claude-sonnet-4.5' })
+    expect(v.length).toBeGreaterThan(0)
+    expect(v.every((x) => x.tag === 'R14')).toBe(true)
+    expect(v.map((x) => x.msg).join('\n')).toMatch(/lantern/)
   })
 })
 
