@@ -13,6 +13,9 @@
   ],
   "scripts": {
     "test": "vitest run",
+    "gen:city": "node web/scripts/gen-city.mjs",
+    "preview": "npm run gen:city && npm -w web run dev",
+    "build:web": "npm run gen:city && npm -w web run build",
     "gen:plan": "tsx tools/src/gen-plan.ts",
     "inspect": "tsx tools/src/cli.ts inspect",
     "state": "tsx tools/src/cli.ts state",

@@ -1,0 +1,19 @@
+:root {
+  --font-cn: 'Noto Sans SC', 'Source Han Sans SC', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  --num: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  --panel-bg: rgba(17, 20, 28, 0.72);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --text-primary: #F3F4F6;
+  --text-secondary: #9CA3AF;
+  --accent: #3B82F6;
+  --danger: #EF4444;
+  --radius: 10px;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+html, body { margin: 0; height: 100%; overflow: hidden; background: #DFE3E8; font-family: var(--font-cn); }
+#app { position: relative; width: 100vw; height: 100vh; }
+#city-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#hud { position: absolute; inset: 0; pointer-events: none; }
+#hud > * { pointer-events: auto; }
+.num { font-family: var(--num); font-variant-numeric: tabular-nums; }
+.panel { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: var(--radius); box-shadow: var(--shadow); color: var(--text-primary); backdrop-filter: blur(6px); }
