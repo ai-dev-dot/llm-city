@@ -52,7 +52,11 @@ export function setupPicking(
     hoverId = castAt(ev)
     onHover(hoverId, ev)
   })
+  // 拖拽判定：pointerdown 记起点，位移 > 5px 视为 OrbitControls 拖拽，抑制误触发（主导航手段是拖拽旋转）
+  let downX = 0, downY = 0
+  canvas.addEventListener('pointerdown', (ev) => { downX = ev.clientX; downY = ev.clientY })
   canvas.addEventListener('click', (ev) => {
+    if (Math.hypot(ev.clientX - downX, ev.clientY - downY) > 5) return
     const id = castAt(ev)
     if (id) onClick(id)
   })
