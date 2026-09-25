@@ -14,7 +14,7 @@ const ok = (rule: string, detail: string): RuleResult => ({ rule, pass: true, de
 const bad = (rule: string, detail: string): RuleResult => ({ rule, pass: false, detail })
 
 /** R11/R12 品质下限（[city-admin] 修宪 2026-09-25）：官方建筑（model=official）豁免 */
-export const QUALITY_FLOOR = { minTriangles: 12_000, minMeshes: 60, notesMinChars: 200 }
+export const QUALITY_FLOOR = { minTriangles: 25_000, minMeshes: 60, notesMinChars: 200 }
 const isOfficial = (row: RegistryRow) => row.builder.model_id === 'official'
 
 export function loadPlan(cityDir: string): PlanData {
@@ -103,7 +103,7 @@ export async function inspectBuilding(
   // R2/R3/R4/R9：无头执行
   if (compiled.ok && !r6a.length && !importViolations.length && row) {
     const lot = plan.lots.find((l) => l.id === row.lot)
-    const head = await runHeadless(outPath, { id: row.lot, size: lot?.size ?? [20, 20], maxHeight: 300 }, hashSeed(row.id))
+    const head = await runHeadless(outPath, { id: row.lot, size: lot?.size ?? [20, 20], maxHeight: 1000 }, hashSeed(row.id))
     if (!head.ok) {
       results.push(bad('R1', `build() 执行失败：${head.error}${head.stack ? `\n${head.stack}` : ''}`))
       results.push(bad('R2', '未执行')); results.push(bad('R3', '未执行')); results.push(bad('R4', '未执行')); results.push(bad('R9', '未执行'))
@@ -115,12 +115,12 @@ export async function inspectBuilding(
       results.push(Math.max(overX, overZ) <= 0
         ? ok('R2', `包围盒 ${ (maxX - minX).toFixed(1) }m × ${ (maxZ - minZ).toFixed(1) }m（含 0.5m 容差内）`)
         : bad('R2', `水平投影超界 ${Math.max(overX, overZ).toFixed(2)}m（包围盒 ${(maxX - minX).toFixed(1)}×${(maxZ - minZ).toFixed(1)}m，地块 20×20m）`))
-      results.push(head.bboxMax![1] <= 300
-        ? ok('R3', `高度 ${head.bboxMax![1].toFixed(1)}m ≤ 300m`)
-        : bad('R3', `高度 ${head.bboxMax![1].toFixed(1)}m 超出 300m 限高 ${(head.bboxMax![1] - 300).toFixed(1)}m`))
-      results.push(head.triangles <= 50_000
-        ? ok('R4', `三角形 ${head.triangles.toLocaleString()} ≤ 50,000`)
-        : bad('R4', `三角形 ${head.triangles.toLocaleString()} 超出 50,000 上限 ${(head.triangles - 50_000).toLocaleString()}`))
+      results.push(head.bboxMax![1] <= 1000
+        ? ok('R3', `高度 ${head.bboxMax![1].toFixed(1)}m ≤ 1000m`)
+        : bad('R3', `高度 ${head.bboxMax![1].toFixed(1)}m 超出 1000m 限高 ${(head.bboxMax![1] - 1000).toFixed(1)}m`))
+      results.push(head.triangles <= 300_000
+        ? ok('R4', `三角形 ${head.triangles.toLocaleString()} ≤ 300,000`)
+        : bad('R4', `三角形 ${head.triangles.toLocaleString()} 超出 300,000 上限 ${(head.triangles - 300_000).toLocaleString()}`))
 
       // R11：完成度下限（修宪：防最简可行解——预算上限的 24% 与构件密度是底线）
       if (isOfficial(row)) {
@@ -129,7 +129,7 @@ export async function inspectBuilding(
         const triFloor = head.triangles >= QUALITY_FLOOR.minTriangles
         const meshFloor = (head.meshes ?? 0) >= QUALITY_FLOOR.minMeshes
         results.push(triFloor && meshFloor
-          ? ok('R11', `完成度达标：三角形 ${head.triangles.toLocaleString()} ≥ ${QUALITY_FLOOR.minTriangles.toLocaleString()}，mesh ${head.meshes} ≥ ${QUALITY_FLOOR.minMeshes}（预算上限 50,000 的 ${(head.triangles / 500).toFixed(0)}%）`)
+          ? ok('R11', `完成度达标：三角形 ${head.triangles.toLocaleString()} ≥ ${QUALITY_FLOOR.minTriangles.toLocaleString()}，mesh ${head.meshes} ≥ ${QUALITY_FLOOR.minMeshes}（预算上限 300,000 的 ${(head.triangles / 3000).toFixed(0)}%）`)
           : bad('R11', `完成度不足：三角形 ${head.triangles.toLocaleString()}（需 ≥ ${QUALITY_FLOOR.minTriangles.toLocaleString()}），mesh ${head.meshes ?? 0}（需 ≥ ${QUALITY_FLOOR.minMeshes}）——加密窗棂/栏杆/线脚/柱阵等细部，把预算分配表花掉`))
       }
 

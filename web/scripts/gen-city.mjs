@@ -22,13 +22,22 @@ const buildings = rows.map((r) => {
   const notesPath = resolve(cityDir, entryDir, 'NOTES.md')
   let notesExcerpt = null
   if (existsSync(notesPath)) {
-    // 摘录保留行结构（前端按 \n 转 <br>），仅剥离标题#/列表-/加粗**等修饰与行内多余空白
-    notesExcerpt = readFileSync(notesPath, 'utf8')
+    const raw = readFileSync(notesPath, 'utf8')
+    // 优先取「## 摘要」节（builder 写好的两三句）；无该节回退为清洗后的前 300 字
+    const strip = (text) => text
       .split(/\r?\n/)
       .map((l) => l.replace(/^\s*#{1,6}\s*/, '').replace(/^\s*[-*]\s+/, '').replace(/\*\*/g, '').replace(/\s+/g, ' ').trim())
       .filter(Boolean)
-      .join('\n');
-    if (notesExcerpt.length > 1500) notesExcerpt = notesExcerpt.slice(0, 1500) + '…'
+      .join('\n')
+    const m = raw.match(/^##\s*摘要\s*$/m)
+    if (m) {
+      const rest = raw.slice(m.index + m[0].length)
+      const end = rest.search(/^##\s/m)
+      notesExcerpt = strip(end === -1 ? rest : rest.slice(0, end))
+    } else {
+      notesExcerpt = strip(raw)
+    }
+    if (notesExcerpt.length > 300) notesExcerpt = notesExcerpt.slice(0, 300) + '…'
   }
   return {
     id: r.id, lot: r.lot, name: r.name, desc: r.desc ?? '',

@@ -115,7 +115,7 @@ export class BuildingManager {
     try {
       const mod = await this.loaders[b.id]()                      // 韧性层 1：chunk 加载失败 → 灰盒
       const lot = this.city.lots.find((l) => l.id === b.lot)!
-      const ctx: BuildCtx = { lot: { id: b.lot, size: lot.size, maxHeight: 300 }, rng: mulberry32(hashSeed(b.id)), blocks }
+      const ctx: BuildCtx = { lot: { id: b.lot, size: lot.size, maxHeight: 1000 }, rng: mulberry32(hashSeed(b.id)), blocks }
       const root = validateObject3D(mod.default(ctx))             // 韧性层 2/3：build 异常或坏对象 → 灰盒
       root.traverse((o) => { o.userData.buildingId = b.id })
       if (this.filterFn) this.filterFn(root)

@@ -14,15 +14,15 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     g.add(ctx.blocks.boxFloor({ w: 12, d: 12, h: 3, y }))
     g.add(ctx.blocks.windowStrip({ w: 12.2, h: 1.1, y: y + 1 }))
     // 窗棂分格：每层每面 10 竖条（低面数高密度）
-    for (let k = 0; k < 12; k++) {
-      const x = -6 + k * (12 / 11)
+    for (let k = 0; k < 18; k++) {
+      const x = -6 + k * (12 / 17)
       g.add(ctx.blocks.wall({ w: 0.14, h: 3, d: 0.14, x, y, z: 6.1 }))
       g.add(ctx.blocks.wall({ w: 0.14, h: 3, d: 0.14, x, y, z: -6.1 }))
       g.add(ctx.blocks.wall({ w: 0.14, h: 3, d: 0.14, x: 6.1, y, z: x }))
       g.add(ctx.blocks.wall({ w: 0.14, h: 3, d: 0.14, x: -6.1, y, z: x }))
     }
     // 横棂两层
-    for (const zy of [1.1, 2.3]) {
+    for (const zy of [0.8, 1.6, 2.4]) {
       g.add(ctx.blocks.wall({ w: 12.2, h: 0.14, d: 0.14, y: y + zy, z: 6.1 }))
       g.add(ctx.blocks.wall({ w: 12.2, h: 0.14, d: 0.14, y: y + zy, z: -6.1 }))
       g.add(ctx.blocks.wall({ w: 0.14, h: 0.14, d: 12.2, x: 6.1, y: y + zy, z: 0 }))
@@ -47,14 +47,21 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   spire.castShadow = true
   g.add(spire)
 
-  // 基座柱阵：11×11 = 121 根 12 边柱
-  for (let ix = 0; ix < 11; ix++)
-    for (let iz = 0; iz < 11; iz++)
-      g.add(ctx.blocks.column({ r: 0.22, h: 2.2, x: -8 + ix * 1.6, z: -8 + iz * 1.6 }))
+  // 基座柱阵：13×13 = 169 根 12 边柱
+  for (let ix = 0; ix < 13; ix++)
+    for (let iz = 0; iz < 13; iz++)
+      g.add(ctx.blocks.column({ r: 0.22, h: 2.2, x: -8.4 + ix * 1.4, z: -8.4 + iz * 1.4 }))
+  // 基座装饰球阵（细分 1 的二十面体，草地点缀）
+  for (let i = 0; i < 80; i++) {
+    const a = (i / 80) * Math.PI * 2
+    const b = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 1), new THREE.MeshStandardMaterial({ color: '#8C9E8B', roughness: 0.9 }))
+    b.position.set(Math.cos(a) * 9.4, 0.3, Math.sin(a) * 9.4)
+    g.add(b)
+  }
 
   // 景观：树、路灯、椅、绿篱
   const rng = ctx.rng
-  for (let i = 0; i < 16; i++) g.add(ctx.blocks.tree({ x: -8 + rng() * 16, z: -8 + rng() * 16, seed: i + 1 }))
+  for (let i = 0; i < 28; i++) g.add(ctx.blocks.tree({ x: -8 + rng() * 16, z: -8 + rng() * 16, seed: i + 1 }))
   for (const s of [-1, 1]) {
     g.add(ctx.blocks.streetLamp({ x: s * 9, z: 9 }))
     g.add(ctx.blocks.streetLamp({ x: 9, z: s * 9 }))
