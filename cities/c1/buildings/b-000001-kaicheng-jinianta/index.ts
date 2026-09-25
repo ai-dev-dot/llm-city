@@ -205,27 +205,27 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   beacon.position.y = mastTop + 3.7
   root.add(beacon)
 
-  // ---- 场地：地块满铺（草皮 + 铺装环 + 灌木），不裸地交付 ----
-  // 全地块草皮底板（被台基盖住中部，四周环带露出）
-  box(20.0, 0.05, 20.0, 0, 0, 0, '#7D8B64', { roughness: 0.95 })
-  // 一台顶草皮环（二台 ±8.5 外环带）
-  box(18.3, 0.06, 18.3, 0, 0.92, 0, '#77875C', { roughness: 0.95 })
-  // 二台顶草皮环（三台 ±7.75 外环带）
-  box(16.8, 0.06, 16.8, 0, 1.94, 0, '#82906A', { roughness: 0.95 })
-  // 台基外一圈铺装环（浅灰，衔接草皮与台基）
-  box(19.9, 0.07, 1.1, 0, 0.05, 9.2, C.light, { roughness: 0.9 })
-  box(19.9, 0.07, 1.1, 0, 0.05, -9.2, C.light, { roughness: 0.9 })
-  box(1.1, 0.07, 17.9, 9.2, 0.05, 0, C.light, { roughness: 0.9 })
-  box(1.1, 0.07, 17.9, -9.2, 0.05, 0, C.light, { roughness: 0.9 })
-  // 草皮上的灌木球阵（细分 1 二十面体，确定性布点）
+  // ---- 场地：地块满铺（草皮垫层 + 铺装环 + 灌木），不裸地交付 ----
+  // 场景地面 y=0、道路 y=0.05：草皮必须是有厚度的垫层（顶面 0.5）才能在深度缓冲里
+  // 站得住——薄贴片会与大地平面同深度档而被吃掉。0.5 高的垫层自带路缘效果。
+  box(19.6, 0.5, 19.6, 0, 0, 0, '#7FA35C', { roughness: 0.95 })
+  // 台基草皮环（铺在一/二层台基层顶的外露环带）
+  box(18.3, 0.06, 18.3, 0, 0.92, 0, '#74A054', { roughness: 0.95 })
+  box(16.8, 0.06, 16.8, 0, 1.94, 0, '#7FAC60', { roughness: 0.95 })
+  // 台基外圈铺装环（铺在草皮垫层顶面上）
+  box(19.6, 0.08, 1.0, 0, 0.5, 9.1, C.light, { roughness: 0.9 })
+  box(19.6, 0.08, 1.0, 0, 0.5, -9.1, C.light, { roughness: 0.9 })
+  box(1.0, 0.08, 17.6, 9.1, 0.5, 0, C.light, { roughness: 0.9 })
+  box(1.0, 0.08, 17.6, -9.1, 0.5, 0, C.light, { roughness: 0.9 })
+  // 草皮上的灌木球阵（半嵌进草皮面）
   for (let i = 0; i < 14; i++) {
     const ang = (i / 14) * Math.PI * 2 + 0.22
-    const r = 9.65 + rng() * 0.15
+    const r = 9.55 + rng() * 0.12
     const shrub = new THREE.Mesh(
       new THREE.IcosahedronGeometry(0.38 + rng() * 0.16, 1),
       stdMaterial(i % 3 === 0 ? '#8C9E8B' : '#6E7F5C', { roughness: 0.95 }),
     )
-    shrub.position.set(Math.cos(ang) * r, 0.42, Math.sin(ang) * r)
+    shrub.position.set(Math.cos(ang) * r, 0.82, Math.sin(ang) * r)
     shrub.castShadow = true
     root.add(shrub)
   }
@@ -251,25 +251,25 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     lift(B.hedge({ w: 3.4, d: 0.55, h: 0.75, x: sx * 8.5, z: sz * 9.0 }), 0.98)
     lift(B.hedge({ w: 0.55, d: 3.4, h: 0.75, x: sx * 9.0, z: sz * 8.5 }), 0.98)
   }
-  // 南轴仪仗旗阵（台基外草皮上、台阶两侧各六根，旗面暖金）
+  // 南轴仪仗旗阵（台基外草皮垫层上、台阶两侧各六根，旗面暖金）
   for (let i = 0; i < 6; i++) {
     const z = 9.7 - i * 0.12
     for (const sx of [-1, 1]) {
       const px = sx * (5.2 + (i % 2) * 1.1)
       const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 7, 8), stdMaterial(C.dark, { metalness: 0.5, roughness: 0.5 }))
-      pole.position.set(px, 3.5 + 0.05, z)
+      pole.position.set(px, 4.0, z)
       pole.castShadow = true
       root.add(pole)
-      box(1.8, 1.0, 0.06, px + sx * -0.92, 6.0 + 0.05, z, C.gold, { emissive: C.gold, emissiveIntensity: 0.35 })
+      box(1.8, 1.0, 0.06, px + sx * -0.92, 6.4, z, C.gold, { emissive: C.gold, emissiveIntensity: 0.35 })
     }
   }
-  // 南轴铺装带 + 长椅（台基外地面）
-  box(2.2, 0.1, 1.3, -4.6, 0, 9.55, C.light)
-  box(2.2, 0.1, 1.3, 4.6, 0, 9.55, C.light)
-  lift(B.bench({ x: -4.6, z: 9.55 }), 0.1)
-  lift(B.bench({ x: 4.6, z: 9.55 }), 0.1)
-  lift(B.bench({ x: -6.9, z: 6.9, rotY: Math.PI / 4 }), 0)
-  lift(B.bench({ x: 6.9, z: 6.9, rotY: -Math.PI / 4 }), 0)
+  // 南轴铺装带 + 长椅（草皮垫层顶面）
+  box(2.2, 0.1, 1.3, -4.6, 0.5, 9.55, C.light)
+  box(2.2, 0.1, 1.3, 4.6, 0.5, 9.55, C.light)
+  lift(B.bench({ x: -4.6, z: 9.55 }), 0.6)
+  lift(B.bench({ x: 4.6, z: 9.55 }), 0.6)
+  lift(B.bench({ x: -6.9, z: 6.9, rotY: Math.PI / 4 }), 0.5)
+  lift(B.bench({ x: 6.9, z: 6.9, rotY: -Math.PI / 4 }), 0.5)
 
   return root
 }
