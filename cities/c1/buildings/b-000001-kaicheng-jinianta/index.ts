@@ -206,10 +206,15 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   beacon.position.y = mastTop + 3.7
   root.add(beacon)
 
-  // ---- 场地：地块满铺（草皮垫层 + 铺装环 + 灌木），不裸地交付 ----
-  // 场景地面 y=0、道路 y=0.05：草皮必须是有厚度的垫层（顶面 0.5）才能在深度缓冲里
-  // 站得住——薄贴片会与大地平面同深度档而被吃掉。0.5 高的垫层自带路缘效果。
-  box(19.6, 0.5, 19.6, 0, 0, 0, '#7FA35C', { roughness: 0.95, emissive: '#4F7A38', emissiveIntensity: 0.42 })
+  // ---- 场地：地块全域满铺（草皮垫层直抵用地红线），不裸地交付 ----
+  // 用地红线 = 地块 20×20 边缘（R2 容差 0.5 内）。草皮垫层铺满 20×20：
+  // 0.5 高垫层让顶面脱离大地深度档；emissive 补底抵消掠射角压暗；外圈浅石路缘让红线可读。
+  box(20, 0.5, 20, 0, 0, 0, '#85B060', { roughness: 0.95, emissive: '#4F7A38', emissiveIntensity: 0.5 })
+  // 红线路缘（四边浅石条，勾出地块边界）
+  box(20, 0.55, 0.35, 0, 0, 9.85, C.light, { roughness: 0.9 })
+  box(20, 0.55, 0.35, 0, 0, -9.85, C.light, { roughness: 0.9 })
+  box(0.35, 0.55, 19.4, 9.85, 0, 0, C.light, { roughness: 0.9 })
+  box(0.35, 0.55, 19.4, -9.85, 0, 0, C.light, { roughness: 0.9 })
   // 十字步道（草坪上的浅石步道，从四方通向台基）
   box(1.4, 0.08, 3.0, 0, 0.5, 8.35, C.light, { roughness: 0.9 })
   box(1.4, 0.08, 3.0, 0, 0.5, -8.35, C.light, { roughness: 0.9 })
