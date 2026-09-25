@@ -19,7 +19,7 @@ export function vendorShade(vendorColor: string, modelIndex: number): string {
   return `#${c.getHexString()}`
 }
 
-interface Saved { color: number; emissive: number }
+interface Saved { color: number; emissive: number; emissiveIntensity: number }
 const EDGE_KEY = '__filterEdge'
 
 export class FilterSystem {
@@ -61,7 +61,7 @@ export class FilterSystem {
       if (!m.isMesh) return
       const mat = m.material as THREE.MeshStandardMaterial
       if (!mat || Array.isArray(mat)) return
-      if (!this.saved.has(m)) this.saved.set(m, { color: mat.color.getHex(), emissive: mat.emissive.getHex() })
+      if (!this.saved.has(m)) this.saved.set(m, { color: mat.color.getHex(), emissive: mat.emissive.getHex(), emissiveIntensity: mat.emissiveIntensity })
       mat.color.set(color)
       mat.emissive.set(color)
       mat.emissiveIntensity = Math.max(mat.emissiveIntensity, 0.25)
@@ -80,9 +80,9 @@ export class FilterSystem {
       if (!m.isMesh) return
       const s = this.saved.get(m)
       const mat = m.material as THREE.MeshStandardMaterial
-      if (s && mat && !Array.isArray(mat)) { mat.color.setHex(s.color); mat.emissive.setHex(s.emissive) }
+      if (s && mat && !Array.isArray(mat)) { mat.color.setHex(s.color); mat.emissive.setHex(s.emissive); mat.emissiveIntensity = s.emissiveIntensity }
       if ((m as any)[EDGE_KEY]) {
-        for (const ch of [...m.children]) if (ch.userData?.isFilterEdge) { (ch as THREE.Mesh).geometry?.dispose(); m.remove(ch) }
+        for (const ch of [...m.children]) if (ch.userData?.isFilterEdge) { (ch as THREE.LineSegments).geometry?.dispose(); ((ch as THREE.LineSegments).material as THREE.Material)?.dispose(); m.remove(ch) }
         ;(m as any)[EDGE_KEY] = false
       }
     })
