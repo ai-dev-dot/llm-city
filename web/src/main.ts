@@ -5,6 +5,7 @@ import { FilterSystem } from './city/filters'
 import { setupPicking } from './city/pick'
 import { mountTooltip } from './ui/tooltip'
 import { showSidebar } from './ui/sidebar'
+import { mountHud } from './ui/hud'
 import { city, buildingLoaders } from './generated/city-data'
 
 const canvas = document.getElementById('city-canvas') as HTMLCanvasElement
@@ -41,6 +42,9 @@ setupPicking(canvas, bundle.camera, bundle.controls, bundle.scene, (id, ev) => {
   const b = city.buildings.find((x) => x.id === id)!
   showSidebar(hud, bundle.camera, bundle.controls, manager.groupOf(id), b)
 })
+
+// HUD 层（spec §10/§13）：启动铭牌、错误报告条、快捷键（P/T hooks 先接空函数，Task 17/19 填充）
+const hudHandle = mountHud(hud, city, manager, filterSystem, { onPhoto: () => {}, onTour: () => {} })
 
 let last = performance.now()
 bundle.renderer.setAnimationLoop((now: number) => {
