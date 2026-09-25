@@ -223,9 +223,29 @@ export async function inspectCity(repoRoot: string, cityDir: string): Promise<In
       : [ok('R14', existsSync(blocksRootDir) ? `积木库安检通过（${readdirSync(blocksRootDir, { withFileTypes: true }).filter((d) => d.isDirectory()).length} 个模型目录）` : '暂无自建积木库')],
   }
 
+  // 街区同源 advisory（[city-admin] 立法 2026-09-25：同 model_id 最优、同厂商次之；官方为市政配套不计入）。
+  // 方向而非死原则——advisory 永远 pass，不挂红灯，仅供城主预览与模型选址参考
+  const byBlock: Record<string, Record<string, number>> = {}
+  for (const r of rows) {
+    const b = r.lot.split('-')[0]
+    byBlock[b] ??= {}
+    if (r.builder.model_id !== 'official') byBlock[b][r.builder.model_id] = (byBlock[b][r.builder.model_id] ?? 0) + 1
+  }
+  const affinity = Object.entries(byBlock).map(([b, ms]) => {
+    const ids = Object.keys(ms)
+    if (ids.length === 0) return `${b}：仅官方建筑（市政配套，对任意模型开放）`
+    if (ids.length === 1) return `${b}：同源 ✓ ${ids[0]} ×${ms[ids[0]]}`
+    return `${b}：混居 ${ids.map((m) => `${m} ×${ms[m]}`).join('、')}（同源偏好仅供参考）`
+  })
+  const affinityResult: InspectResult = {
+    building: '（街区同源 advisory）', city: cityId,
+    passed: true,
+    results: [ok('advisory', rows.length ? (affinity.join('；') || '无建筑') : '城空，任意选址')],
+  }
+
   // 逐建筑 R1–R10（并行执行控制 CI 时长；**共享同一 rows 数组作 registryOverride——mesh_stats/completed_at 全部写进内存数组，Promise.all 后集中落盘一次**，避免各建筑各自 loadRegistry 快照并行 writeRegistry 的丢失更新）
   const dirs = rows.map((r) => r.entry.split('/')[1]).filter(Boolean)
   const dirResults = await Promise.all(dirs.map((d) => inspectBuilding(repoRoot, cityDir, d, { registryOverride: rows })))
   if (dirs.length) writeRegistry(cityDir, rows)
-  return [structResult, blocksResult, ...dirResults]
+  return [structResult, blocksResult, affinityResult, ...dirResults]
 }

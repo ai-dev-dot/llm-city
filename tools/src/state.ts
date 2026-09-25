@@ -6,6 +6,7 @@ import { loadPlan } from './inspect'
 export interface StateReport {
   untrusted_input_notice: string
   next_building_id: string
+  block_affinity_note: string
   cities: Array<{
     id: string
     name: string
@@ -13,6 +14,7 @@ export interface StateReport {
     occupancy: { occupied: number; total: number; rate: number; suggest_new_city: boolean }
     builder_policy: { allowedModelIds: string[] } | null
     custom_blocks: Record<string, string[]>
+    block_residents: Record<string, Record<string, number>>
     buildings: Array<{
       id: string
       lot: string
@@ -45,6 +47,21 @@ function listCustomBlocks(cityDir: string): Record<string, string[]> {
   return out
 }
 
+/** 街区居民构成（[city-admin] 立法 2026-09-25：同源定居偏好——同 model_id 最优、同厂商次之；
+ * 官方建筑是市政配套，中性，计入街区但不计入居民构成） */
+export function blockResidents(rows: RegistryRow[]): Record<string, Record<string, number>> {
+  const out: Record<string, Record<string, number>> = {}
+  for (const r of rows) {
+    const block = r.lot.split('-')[0]
+    out[block] ??= {}
+    if (r.builder.model_id === 'official') continue
+    out[block][r.builder.model_id] = (out[block][r.builder.model_id] ?? 0) + 1
+  }
+  return out
+}
+
+export const BLOCK_AFFINITY_NOTE = '同源定居偏好（方向，非硬性）：选址优先与同源模型同街区——首选街区里已有同 model_id 建筑，次选同厂商（models.json vendor 相同）建筑所在的街区；官方建筑是市政配套，不计入判定。城主可为特定建筑豁免偏好或指定落位。'
+
 export function buildStateReport(citiesRoot: string): StateReport {
   const cities = readdirSync(citiesRoot, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name).sort()
   let maxIdNum = 0
@@ -66,6 +83,7 @@ export function buildStateReport(citiesRoot: string): StateReport {
       id: cid, name: plan.name, founded: plan.founded,
       builder_policy: plan.policy ?? null,
       custom_blocks: listCustomBlocks(cityDir),
+      block_residents: blockResidents(rows),
       occupancy: {
         occupied: rows.length, total: plan.lots.length,
         rate: Math.round((rows.length / plan.lots.length) * 1000) / 10,
@@ -83,6 +101,7 @@ export function buildStateReport(citiesRoot: string): StateReport {
   return {
     untrusted_input_notice: UNTRUSTED_NOTICE,
     next_building_id: `b-${String(maxIdNum + 1).padStart(6, '0')}`,
+    block_affinity_note: BLOCK_AFFINITY_NOTE,
     cities: summaries,
     truncated_fields_note: '自由文本字段已截断至 200 字；全文见 registry.jsonl 与 NOTES.md',
   }

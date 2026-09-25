@@ -173,7 +173,10 @@ describe('inspectBuilding R1–R12（spec §14 坏建筑样本全拦截）', () 
     expect(results[1].building).toBe('（自建积木库）')   // R14 配套：目录名合法 + 积木静态安检
     expect(results[1].passed).toBe(true)
     expect(results[1].results[0].detail).toMatch(/积木库安检通过（2 个模型目录）/)
-    const buildings = results.slice(2)   // 首两项为登记簿一致性与自建积木库（临时城里其余 fixture 目录无登记行，属孤儿，不参与断言）
+    expect(results[2].building).toBe('（街区同源 advisory）')   // 同源偏好：advisory 永不挂红灯
+    expect(results[2].passed).toBe(true)
+    expect(results[2].results[0].detail).toMatch(/C3：同源 ✓ glm-5\.3 ×2/)
+    const buildings = results.slice(3)   // 前三项为登记簿一致性、自建积木库与同源 advisory（临时城里其余 fixture 目录无登记行，属孤儿，不参与断言）
     expect(buildings).toHaveLength(2)
     expect(buildings.every((r) => r.passed)).toBe(true)
     const after = loadRegistry(cityDir)
