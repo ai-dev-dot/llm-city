@@ -58,7 +58,7 @@ export class BuildingManager {
   private status = new Map<string, MountStatus>()
   private roots = new LruCache<string, THREE.Object3D>(150)
   private lastUpdate = 0
-  private cb: ((c: { ok: number; failed: number }) => void) | null = null
+  private statusCbs = new Set<(c: { ok: number; failed: number }) => void>()
   private filterFn: ((root: THREE.Object3D) => void) | null = null
 
   constructor(private scene: THREE.Scene, private city: CityData, private loaders: Record<string, () => Promise<{ default: (ctx: BuildCtx) => THREE.Object3D }>>, private opts: { visibleRadius?: number } = {}) {
@@ -74,7 +74,12 @@ export class BuildingManager {
     }
   }
 
-  onStatusChange(cb: (c: { ok: number; failed: number }) => void) { this.cb = cb }
+  /** 注册状态回调，返回取消函数。Task 19 carry-forward（Task 17 审查）：mountHud 重挂先摘旧 renderReport
+   *  再挂新，不向监听器集合累积死回调；多播语义让 main.ts 的统计 console 日志与 HUD 报告条并存不互顶。 */
+  onStatusChange(cb: (c: { ok: number; failed: number }) => void): () => void {
+    this.statusCbs.add(cb)
+    return () => { this.statusCbs.delete(cb) }
+  }
   reapplyFilter(fn: (root: THREE.Object3D) => void) { this.filterFn = fn; for (const [, st] of this.status) if (st.state === 'ok' && st.root) fn(st.root) }
 
   getStatus(id: string): MountStatus { return this.status.get(id) ?? { state: 'idle' } }
@@ -122,7 +127,7 @@ export class BuildingManager {
       this.showGrayBox(b)
       this.status.set(b.id, { state: 'failed' })
     }
-    this.cb?.(this.getCounts())
+    for (const cb of this.statusCbs) cb(this.getCounts())
   }
 
   private showGrayBox(b: BuildingRecord) {

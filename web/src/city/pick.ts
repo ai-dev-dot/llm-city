@@ -28,12 +28,12 @@ export function setupPicking(
   canvas: HTMLCanvasElement, camera: THREE.PerspectiveCamera, controls: OrbitControls,
   pickRoot: THREE.Object3D, onHover: (id: string | null, ev: PointerEvent) => void,
   onClick: (id: string) => void,
-): void {
+): () => void {
   const raycaster = new THREE.Raycaster()
   const ndc = new THREE.Vector2()
   let lastMove = 0
   let hoverId: string | null = null
-  const castAt = (ev: PointerEvent): string | null => {
+  const castAt = (ev: { clientX: number; clientY: number }): string | null => {
     const rect = canvas.getBoundingClientRect()
     ndc.set(((ev.clientX - rect.left) / rect.width) * 2 - 1, -((ev.clientY - rect.top) / rect.height) * 2 + 1)
     raycaster.setFromCamera(ndc, camera)
@@ -45,19 +45,28 @@ export function setupPicking(
     }
     return null
   }
-  canvas.addEventListener('pointermove', (ev) => {
+  const onMove = (ev: PointerEvent) => {
     const now = performance.now()
     if (now - lastMove < 50) return
     lastMove = now
     hoverId = castAt(ev)
     onHover(hoverId, ev)
-  })
+  }
   // 拖拽判定：pointerdown 记起点，位移 > 5px 视为 OrbitControls 拖拽，抑制误触发（主导航手段是拖拽旋转）
   let downX = 0, downY = 0
-  canvas.addEventListener('pointerdown', (ev) => { downX = ev.clientX; downY = ev.clientY })
-  canvas.addEventListener('click', (ev) => {
+  const onDown = (ev: PointerEvent) => { downX = ev.clientX; downY = ev.clientY }
+  const onClickAt = (ev: MouseEvent) => {
     if (Math.hypot(ev.clientX - downX, ev.clientY - downY) > 5) return
     const id = castAt(ev)
     if (id) onClick(id)
-  })
+  }
+  canvas.addEventListener('pointermove', onMove)
+  canvas.addEventListener('pointerdown', onDown)
+  canvas.addEventListener('click', onClickAt)
+  // 返回取消函数（Task 19 carry-forward）：restored 重挂 tooltip/拾取时先摘旧监听，防 hover/click 重复触发
+  return () => {
+    canvas.removeEventListener('pointermove', onMove)
+    canvas.removeEventListener('pointerdown', onDown)
+    canvas.removeEventListener('click', onClickAt)
+  }
 }

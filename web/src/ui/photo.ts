@@ -19,7 +19,7 @@ export class PhotoMode {
   private bar: HTMLElement | null = null
   private frame: HTMLElement | null = null
 
-  constructor(private hud: HTMLElement, private bundle: SceneBundle, private hudHandle: HudHandle) {}
+  constructor(private hud: HTMLElement, private bundle: SceneBundle, private hudHandle: Pick<HudHandle, 'toggleHud' | 'setFilter'>) {}
 
   get isActive() { return this.active }
 

@@ -2,12 +2,15 @@ import type { BuildingRecord, CityData } from '../generated/city-data'
 import type { BuildingManager } from '../city/loader'
 import type { FilterSystem, FilterMode } from '../city/filters'
 import type { SceneBundle } from '../city/scene'
+import type { TourRouteId, TourPreset } from '../city/tour'
 import { AMBIENCE_PRESETS, applyAmbience } from '../city/ambience'
 import { formatTokens } from './format'
 
 // mountHud 可重入（main.ts restored 重挂）：window keydown 监听须先摘旧再挂新，否则重挂后快捷键会触发多次。
 // 注意必须放模块顶层——放函数体内每次调用都会重置为 null，旧 handler 引用即丢失。
 let activeKeyHandler: ((e: KeyboardEvent) => void) | null = null
+// 同理（Task 19 carry-forward）：manager 状态回调重挂先摘旧 renderReport 再挂新，不累积写 detached 节点的死回调。
+let activeStatusOff: (() => void) | null = null
 
 export function plaqueStats(buildings: BuildingRecord[]) {
   let tokensIn = 0, tokensOut = 0, unknownIn = false, unknownOut = false
@@ -23,12 +26,27 @@ export function plaqueStats(buildings: BuildingRecord[]) {
   }
 }
 
-export interface HudHandle { toggleHud(): void; setFilter(mode: FilterMode): void }
+export interface HudHandle {
+  toggleHud(): void
+  setFilter(mode: FilterMode): void
+  cycleTour(): void
+  cycleSpeed(): void
+  flyToPreset(p: TourPreset): void
+}
+
+const TOUR_LABEL: Record<TourRouteId, string> = {
+  off: '关', plazaOrbit: '广场环绕', boulevard: '主干道', ascend: '上升揭示', buildingOrbit: '环绕本建筑',
+}
 
 export function mountHud(
   hud: HTMLElement, city: CityData, manager: BuildingManager, filterSystem: FilterSystem,
   bundle: SceneBundle,
-  hooks: { onPhoto: () => void; onTour: () => void },
+  hooks: {
+    onPhoto: () => void
+    onTour: () => TourRouteId          // 切到下一条巡航路线，返回新路线（main.ts 调 tour）
+    onTourSpeed: () => number          // 切到下一档速度倍率，返回新倍率（main.ts 调 tour）
+    onPreset: (p: TourPreset) => void  // 预设机位（main.ts 调 tour.flyToPreset）
+  },
 ): HudHandle {
   hud.innerHTML = ''
   const s = plaqueStats(city.buildings)
@@ -64,6 +82,29 @@ export function mountHud(
   }
   hud.appendChild(ambienceBar)
 
+  // 巡航条（spec §10：右上氛围条下方）——四态路线循环 + 速度循环 + 三预设机位
+  const tourBar = document.createElement('div')
+  tourBar.className = 'panel'
+  tourBar.style.cssText = 'position:absolute;right:16px;top:64px;display:flex;gap:6px;padding:6px 8px;font-size:13px;'
+  const tourBtnStyle = 'padding:6px 10px;background:transparent;color:var(--text-primary);border:1px solid var(--panel-border);border-radius:6px;cursor:pointer;font-family:inherit;'
+  const tourBtn = document.createElement('button')
+  tourBtn.textContent = `巡航: ${TOUR_LABEL.off}`
+  tourBtn.title = 'T 键同义：广场环绕 ▸ 主干道 ▸ 上升揭示 ▸ 关'
+  tourBtn.style.cssText = tourBtnStyle
+  tourBar.appendChild(tourBtn)
+  const speedBtn = document.createElement('button')
+  speedBtn.textContent = '速度 1x'
+  speedBtn.style.cssText = tourBtnStyle
+  tourBar.appendChild(speedBtn)
+  for (const [label, p] of [['全景', 'panorama'], ['中央广场', 'plaza'], ['航拍', 'aerial']] as const) {
+    const btn = document.createElement('button')
+    btn.textContent = label
+    btn.style.cssText = tourBtnStyle
+    btn.addEventListener('click', () => handle.flyToPreset(p))
+    tourBar.appendChild(btn)
+  }
+  hud.appendChild(tourBar)
+
   // 错误报告条（右下，常驻；Canvas 异常时 UI 层仍可见——与 Canvas 分层）
   const report = document.createElement('div')
   report.className = 'panel'
@@ -84,7 +125,8 @@ export function mountHud(
     })
   }
   renderReport()
-  manager.onStatusChange(renderReport)
+  activeStatusOff?.()
+  activeStatusOff = manager.onStatusChange(renderReport)
 
   // 滤镜档位指示
   const filterBadge = document.createElement('div')
@@ -103,7 +145,7 @@ export function mountHud(
       handle.setFilter(next)
     }
     if (e.key === 'p' || e.key === 'P') hooks.onPhoto()
-    if (e.key === 't' || e.key === 'T') hooks.onTour()
+    if (e.key === 't' || e.key === 'T') handle.cycleTour()
   }
   if (activeKeyHandler) window.removeEventListener('keydown', activeKeyHandler)
   activeKeyHandler = onKey
@@ -117,6 +159,9 @@ export function mountHud(
       filterBadge.style.display = mode === 'off' ? 'none' : ''
       filterBadge.textContent = FILTER_LABEL[mode]
     },
+    cycleTour() { tourBtn.textContent = `巡航: ${TOUR_LABEL[hooks.onTour()]}` },
+    cycleSpeed() { speedBtn.textContent = `速度 ${hooks.onTourSpeed()}x` },
+    flyToPreset(p) { hooks.onPreset(p) },
   }
   return handle
 }
