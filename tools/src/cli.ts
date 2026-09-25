@@ -43,6 +43,11 @@ async function main() {
       }
     }
     process.exit(results.every((r) => r.passed) ? 0 : 1)
+  }
+  if (cmd === 'state') {
+    const { buildStateReport } = await import('./state')
+    console.log(JSON.stringify(buildStateReport(resolve(repoRoot, 'cities')), null, 2))
+    return
   } else {
     console.error('用法：npm run inspect -- [建筑目录名] [--json] [--complete]')
     process.exit(2)
