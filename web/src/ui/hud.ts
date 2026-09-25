@@ -3,6 +3,10 @@ import type { BuildingManager } from '../city/loader'
 import type { FilterSystem, FilterMode } from '../city/filters'
 import { formatTokens } from './format'
 
+// mountHud 可重入（main.ts restored 重挂）：window keydown 监听须先摘旧再挂新，否则重挂后快捷键会触发多次。
+// 注意必须放模块顶层——放函数体内每次调用都会重置为 null，旧 handler 引用即丢失。
+let activeKeyHandler: ((e: KeyboardEvent) => void) | null = null
+
 export function plaqueStats(buildings: BuildingRecord[]) {
   let tokensIn = 0, tokensOut = 0, unknownIn = false, unknownOut = false
   for (const b of buildings) {
@@ -73,9 +77,6 @@ export function mountHud(
   hud.appendChild(filterBadge)
 
   const FILTER_LABEL: Record<FilterMode, string> = { off: '', model: '滤镜：按模型', vendor: '滤镜：按厂商' }
-
-// mountHud 可重入（main.ts restored 重挂）：window keydown 监听须先摘旧再挂新，否则重挂后快捷键会触发多次
-let activeKeyHandler: ((e: KeyboardEvent) => void) | null = null
 
   // 快捷键
   const onKey = (e: KeyboardEvent) => {
