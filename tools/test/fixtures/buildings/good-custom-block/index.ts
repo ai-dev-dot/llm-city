@@ -31,8 +31,9 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     }
   }
   g.add(ctx.blocks.flatRoofTop({ w: 12, d: 12, y: floors * 3.2 }))
-  // 穹顶冠（半球 + 顶针）。不用 pitchedRoof：其 45° 旋转在保守包围盒（Box3.setFromObject
-  // 非精确模式）下会外扩 √2 倍，宽 12m 的顶会算成 24m 触发 R2。对称穹顶无此问题。
+  // 穹顶冠（半球 + 顶针）。历史上曾因保守包围盒（Box3.setFromObject 非精确模式对
+  // 45° 旋转攒尖顶外扩 √2 倍）而避开 pitchedRoof；2026-09-25 [city-admin] 已修复为
+  // precise 逐三角形精确盒（见 good-rotated 回归样本），此处保持对称穹顶原样。
   const dome = new THREE.Mesh(
     new THREE.SphereGeometry(5.2, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2),
     new THREE.MeshStandardMaterial({ color: '#4A5568', roughness: 0.6 }),

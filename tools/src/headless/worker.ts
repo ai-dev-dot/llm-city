@@ -32,7 +32,10 @@ try {
       // R13 退线：非豁免构件须落在地块中央 16×16。豁免：地被层（顶 ≤0.6m）、
       // 小件（顶 ≤1.5m 且 ≤1.6×1.6）、薄板（厚 ≤0.5m 且顶 ≤3m，如台阶）、景观件（userData.site）
       if (!isSite(m)) {
-        const b = new THREE.Box3().setFromObject(m)
+        // [city-admin] 修复 2026-09-25：Box3.setFromObject 非精确模式按本地 AABB 经旋转矩阵
+        // 保守放大计（旋转 30° 的六棱柱被量出 1.3 倍半径），曾致 R13 误判红灯；
+        // precise=true 逐三角形算世界空间包围盒，旋转几何按真实投影判定。
+        const b = new THREE.Box3().setFromObject(m, true)
         if (Number.isFinite(b.min.x) && !b.isEmpty()) {
           const topY = b.max.y
           const extX = b.max.x - b.min.x
@@ -46,7 +49,8 @@ try {
     }
   })
 
-  const box = new THREE.Box3().setFromObject(root)
+  // 同上：precise 模式，R2 按真实投影（含旋转构件）计算水平包围盒
+  const box = new THREE.Box3().setFromObject(root, true)
   const finite = (v: THREE.Vector3 | undefined) => !!v && Number.isFinite(v.x + v.y + v.z)
   if (!finite(box.min) || !finite(box.max) || box.isEmpty()) {
     throw new Error('建筑为空：无可渲染几何（包围盒为空或含 NaN）')

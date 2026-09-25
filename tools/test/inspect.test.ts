@@ -25,6 +25,7 @@ const COPIED_DIRS = [
   'b-000004-bad-tris', 'b-000005-bad-random', 'b-000006-bad-cross', 'good-tower',
   'b-000007-bad-empty', 'b-000009-good-tower', 'b-000008-bad-quality',
   'b-000010-bad-setback', 'b-000011-good-custom-block', 'b-000012-bad-cross-block',
+  'b-000013-good-rotated',
 ]
 
 beforeAll(() => {
@@ -47,6 +48,7 @@ beforeAll(() => {
   cpSync(resolve(root, 'tools/test/fixtures/buildings/good-tower'), resolve(cityDir, 'buildings/b-000009-good-tower'), { recursive: true })
   cpSync(resolve(root, 'tools/test/fixtures/buildings/good-custom-block'), resolve(cityDir, 'buildings/b-000011-good-custom-block'), { recursive: true })
   cpSync(resolve(root, 'tools/test/fixtures/buildings/bad-cross-block'), resolve(cityDir, 'buildings/b-000012-bad-cross-block'), { recursive: true })
+  cpSync(resolve(root, 'tools/test/fixtures/buildings/good-rotated'), resolve(cityDir, 'buildings/b-000013-good-rotated'), { recursive: true })
   // bad-cross-import 的 index.ts import '../good-tower/index'——上面额外复制一份**原名** good-tower 供其解析
   // （无登记行的目录：inspectBuilding 不做孤儿检测，只有 inspectCity 查）
   const libCtxAbs = resolve(root, 'lib/ctx').replace(/\\/g, '/')
@@ -112,6 +114,14 @@ describe('inspectBuilding R1–R12（spec §14 坏建筑样本全拦截）', () 
     expect(r14.pass).toBe(false)
     expect(r14.detail).toMatch(/claude-sonnet-4\.5/)
     expect(r14.detail).toMatch(/他模型|其他模型/)
+  })
+  it('R2/R13：旋转曲面构件按真实投影判定（precise 包围盒，[city-admin] 修复 2026-09-25）', async () => {
+    const rows = [row('b-000013', 'C3-03', 'buildings/b-000013-good-rotated/index.ts')]
+    const r = await inspectBuilding(root, cityDir, 'b-000013-good-rotated', { registryOverride: rows })
+    expect(r.passed).toBe(true)   // 旧保守包围盒下 R2（攒尖顶外扩 √2）与 R13（六棱盘 1.3 倍半径）双双误判
+    expect(r.results.find((x) => x.rule === 'R2')!.pass).toBe(true)
+    expect(r.results.find((x) => x.rule === 'R13')!.pass).toBe(true)
+    expect(rows[0].mesh_stats?.triangles).toBeGreaterThan(50_000)
   })
   it('官方建筑豁免 R11/R12/R13', async () => {
     const rows = [row('b-000008', 'C3-08', 'buildings/b-000008-bad-quality/index.ts', 'official')]
