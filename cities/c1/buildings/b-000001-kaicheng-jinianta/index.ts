@@ -72,10 +72,10 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   for (let j = 0; j < 9; j++) box(5.0, 0.31, 0.26, 0, 2.49 - 0.31 * j, 7.1 + 0.26 * j, C.light)
 
   // 北面开城铭碑（立于北侧草坪，面朝城外）
-  box(3.0, 0.3, 0.9, 0, 0.5, -8.3, C.trim)
-  box(2.5, 2.0, 0.38, 0, 0.8, -8.3, C.dark)
-  box(2.0, 1.3, 0.06, 0, 1.15, -8.51, '#9FB8C8', { emissive: '#9FB8C8', emissiveIntensity: 0.5 })
-  box(2.8, 0.2, 0.6, 0, 2.8, -8.3, C.light)
+  box(3.0, 0.3, 0.9, 0, 0.5, -7.6, C.trim)
+  box(2.5, 2.0, 0.38, 0, 0.8, -7.6, C.dark)
+  box(2.0, 1.3, 0.06, 0, 1.15, -7.81, '#9FB8C8', { emissive: '#9FB8C8', emissiveIntensity: 0.5 })
+  box(2.8, 0.2, 0.6, 0, 2.8, -7.6, C.light)
 
   // ---- 塔身八层退台（每层 6.5m，自 10.4m 见方每层收 0.6m）----
   let width = 10.4
@@ -254,11 +254,11 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     lift(B.hedge({ w: 3.2, d: 0.55, h: 0.75, x: sx * 8.4, z: sz * 9.2 }), 0.5)
     lift(B.hedge({ w: 0.55, d: 3.2, h: 0.75, x: sx * 9.2, z: sz * 8.4 }), 0.5)
   }
-  // 南轴仪仗旗阵（南步道两侧草坪各六杆，旗面暖金）
+  // 南轴仪仗旗阵（南步道两侧草坪各六杆，旗面暖金；R13 退线内）
   for (let i = 0; i < 6; i++) {
-    const z = 9.0 - i * 0.24
+    const z = 7.8 - i * 0.18
     for (const sx of [-1, 1]) {
-      const px = sx * 2.6
+      const px = sx * 3.6
       const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 7, 8), stdMaterial(C.dark, { metalness: 0.5, roughness: 0.5 }))
       pole.position.set(px, 4.0, z)
       pole.castShadow = true
