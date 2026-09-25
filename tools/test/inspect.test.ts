@@ -24,6 +24,7 @@ const COPIED_DIRS = [
   'b-000001-good-tower', 'b-000002-bad-bbox', 'b-000003-bad-height',
   'b-000004-bad-tris', 'b-000005-bad-random', 'b-000006-bad-cross', 'good-tower',
   'b-000007-bad-empty', 'b-000009-good-tower', 'b-000008-bad-quality',
+  'b-000010-bad-setback',
 ]
 
 beforeAll(() => {
@@ -39,6 +40,7 @@ beforeAll(() => {
   cpSync(resolve(root, 'tools/test/fixtures/buildings/good-tower'), resolve(cityDir, 'buildings/good-tower'), { recursive: true })
   cpSync(resolve(root, 'tools/test/fixtures/buildings/bad-empty'), resolve(cityDir, 'buildings/b-000007-bad-empty'), { recursive: true })
   cpSync(resolve(root, 'tools/test/fixtures/buildings/bad-quality'), resolve(cityDir, 'buildings/b-000008-bad-quality'), { recursive: true })
+  cpSync(resolve(root, 'tools/test/fixtures/buildings/bad-setback'), resolve(cityDir, 'buildings/b-000010-bad-setback'), { recursive: true })
   cpSync(resolve(root, 'tools/test/fixtures/buildings/good-tower'), resolve(cityDir, 'buildings/b-000009-good-tower'), { recursive: true })
   // bad-cross-import 的 index.ts import '../good-tower/index'——上面额外复制一份**原名** good-tower 供其解析
   // （无登记行的目录：inspectBuilding 不做孤儿检测，只有 inspectCity 查）
@@ -56,7 +58,7 @@ describe('inspectBuilding R1–R12（spec §14 坏建筑样本全拦截）', () 
     const rows = [row('b-000001', 'C3-05', 'buildings/b-000001-good-tower/index.ts')]
     const r = await inspectBuilding(root, cityDir, 'b-000001-good-tower', { registryOverride: rows })
     expect(r.passed).toBe(true)
-    expect(r.results.map((x) => x.rule)).toHaveLength(12)
+    expect(r.results.map((x) => x.rule)).toHaveLength(13)
     expect(rows[0].mesh_stats?.triangles).toBeGreaterThan(100)   // 回填发生在 override 数组上
   })
   it.each([
@@ -83,12 +85,20 @@ describe('inspectBuilding R1–R12（spec §14 坏建筑样本全拦截）', () 
     expect(r12.pass).toBe(false)
     expect(r12.detail).toMatch(/NOTES/)
   })
-  it('官方建筑豁免 R11/R12', async () => {
+  it('R13：贴线构件（超出中央 16×16）被拦（[city-admin] 退线法）', async () => {
+    const rows = [row('b-000010', 'C3-10', 'buildings/b-000010-bad-setback/index.ts')]
+    const r = await inspectBuilding(root, cityDir, 'b-000010-bad-setback', { registryOverride: rows })
+    const r13 = r.results.find((x) => x.rule === 'R13')!
+    expect(r13.pass).toBe(false)
+    expect(r13.detail).toMatch(/退线不足/)
+  })
+  it('官方建筑豁免 R11/R12/R13', async () => {
     const rows = [row('b-000008', 'C3-08', 'buildings/b-000008-bad-quality/index.ts', 'official')]
     rows[0].builder = { model: 'official', model_id: 'official', agent: 'official' }
     const r = await inspectBuilding(root, cityDir, 'b-000008-bad-quality', { registryOverride: rows })
     expect(r.results.find((x) => x.rule === 'R11')!.pass).toBe(true)
     expect(r.results.find((x) => x.rule === 'R12')!.pass).toBe(true)
+    expect(r.results.find((x) => x.rule === 'R13')!.pass).toBe(true)
   })
   it('R7：地块被他人占用', async () => {
     const rows = [

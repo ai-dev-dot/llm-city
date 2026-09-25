@@ -14,12 +14,35 @@ try {
 
   let triangles = 0
   let meshes = 0
+  root.updateMatrixWorld(true)
+  const isSite = (o: THREE.Object3D | null): boolean => {
+    let p: THREE.Object3D | null = o
+    while (p) { if (p.userData?.site === true) return true; p = p.parent }
+    return false
+  }
+  const coreHalf = Math.min(msg.lot.size[0], msg.lot.size[1]) * 0.4
+  let sbViolations = 0
+  let sbWorst = 0
   root.traverse((o) => {
     const m = o as THREE.Mesh
     if ((m as THREE.Mesh).isMesh && m.geometry) {
       const n = m.geometry.index ? m.geometry.index.count : (m.geometry.attributes.position?.count ?? 0)
       triangles += Math.floor(n / 3)
       meshes++
+      // R13 退线：非豁免构件须落在地块中央 16×16。豁免：地被层（顶 ≤0.6m）、
+      // 小件（顶 ≤1.5m 且 ≤1.6×1.6）、薄板（厚 ≤0.5m 且顶 ≤3m，如台阶）、景观件（userData.site）
+      if (!isSite(m)) {
+        const b = new THREE.Box3().setFromObject(m)
+        if (Number.isFinite(b.min.x) && !b.isEmpty()) {
+          const topY = b.max.y
+          const extX = b.max.x - b.min.x
+          const extZ = b.max.z - b.min.z
+          if (!(topY <= 0.6 || (topY <= 1.5 && extX <= 1.6 && extZ <= 1.6) || (Math.min(extX, extZ) <= 0.5 && topY <= 3.0))) {
+            const exceed = Math.max(Math.abs(b.min.x), Math.abs(b.max.x), Math.abs(b.min.z), Math.abs(b.max.z)) - coreHalf
+            if (exceed > 0.05) { sbViolations++; sbWorst = Math.max(sbWorst, exceed) }
+          }
+        }
+      }
     }
   })
 
@@ -29,7 +52,7 @@ try {
     throw new Error('建筑为空：无可渲染几何（包围盒为空或含 NaN）')
   }
   parentPort!.postMessage({
-    ok: true, triangles, meshes,
+    ok: true, triangles, meshes, setback: { violations: sbViolations, worst: sbWorst, coreHalf },
     bboxMin: [box.min.x, box.min.y, box.min.z] as [number, number, number],
     bboxMax: [box.max.x, box.max.y, box.max.z] as [number, number, number],
   })

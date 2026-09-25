@@ -2,7 +2,10 @@ import { execSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+
+// 真实 git/tsx 子进程在并行负载下较慢：放宽本文件超时预算（Windows + 杀毒扫描实测需要）
+vi.setConfig({ hookTimeout: 60_000, testTimeout: 60_000 })
 import { runCheckHistory } from '../src/history'
 
 let repo: string

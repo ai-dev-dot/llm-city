@@ -11,6 +11,7 @@ export interface HeadlessResult {
   stack?: string
   triangles: number
   meshes?: number
+  setback?: { violations: number; worst: number; coreHalf: number }
   bboxMin?: [number, number, number]
   bboxMax?: [number, number, number]
 }

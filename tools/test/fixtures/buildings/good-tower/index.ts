@@ -47,15 +47,15 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   spire.castShadow = true
   g.add(spire)
 
-  // 基座柱阵：13×13 = 169 根 12 边柱
+  // 基座柱阵：15×15 = 225 根 12 边柱（R13 退线：收进中央 16×16）
   for (let ix = 0; ix < 15; ix++)
     for (let iz = 0; iz < 15; iz++)
-      g.add(ctx.blocks.column({ r: 0.22, h: 2.2, x: -8.6 + ix * 1.23, z: -8.6 + iz * 1.23 }))
+      g.add(ctx.blocks.column({ r: 0.22, h: 2.2, x: -7.4 + ix * 1.06, z: -7.4 + iz * 1.06 }))
   // 基座装饰球阵（细分 1 的二十面体，草地点缀）
   for (let i = 0; i < 205; i++) {
     const a = (i / 205) * Math.PI * 2
     const b = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 1), new THREE.MeshStandardMaterial({ color: '#8C9E8B', roughness: 0.9 }))
-    b.position.set(Math.cos(a) * 9.4, 0.3, Math.sin(a) * 9.4)
+    b.position.set(Math.cos(a) * 9.4, 0.26, Math.sin(a) * 9.4)
     g.add(b)
   }
 
@@ -72,7 +72,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   g.add(ctx.blocks.hedge({ w: 8, d: 0.7, x: 0, z: 9.2 }))
   g.add(ctx.blocks.hedge({ w: 8, d: 0.7, x: 0, z: -9.2 }))
   // 高表现力官方件示范：拱墙环廊 + 栏杆环 + 石盆 + 盲拱贴面
-  for (const [rx, rz, rotY] of [[0, 9.4, 0], [0, -9.4, Math.PI], [9.4, 0, Math.PI / 2], [-9.4, 0, -Math.PI / 2]] as const) {
+  for (const [rx, rz, rotY] of [[0, 7.4, 0], [0, -7.4, Math.PI], [7.4, 0, Math.PI / 2], [-7.4, 0, -Math.PI / 2]] as const) {
     const aw = ctx.blocks.archWall({ w: 6, h: 3.2, archW: 1.5, archH: 2.6, depth: 0.35, x: rx, y: 0.05, z: rz })
     aw.rotation.y = rotY
     g.add(aw)
@@ -81,11 +81,11 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     rg.position.x = rx === 0 ? 0 : rx * 0.72
     rg.position.z = rz === 0 ? 0 : rz * 0.72
     g.add(rg)
-    g.add(ctx.blocks.archPanel({ w: 1.4, h: 2.0, depth: 0.15, x: rx === 0 ? 2.2 : rx * 0.85, y: 0.05, z: rz === 0 ? 2.2 : rz * 0.85 }))
+    g.add(ctx.blocks.archPanel({ w: 1.4, h: 2.0, depth: 0.15, x: rx === 0 ? 2.2 : rx * 0.55, y: 0.05, z: rz === 0 ? 2.2 : rz * 0.55 }))
   }
   for (let i = 0; i < 16; i++) {
     const a = (i / 16) * Math.PI * 2
-    g.add(ctx.blocks.urn({ scale: 1.1, x: Math.cos(a) * 7.4, y: 0.05, z: Math.sin(a) * 7.4 }))
+    g.add(ctx.blocks.urn({ scale: 1.1, x: Math.cos(a) * 7.2, y: 0.05, z: Math.sin(a) * 7.2 }))
   }
   for (let i = 0; i < 40; i++) {
     const a = (i / 40) * Math.PI * 2

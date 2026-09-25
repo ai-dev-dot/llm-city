@@ -21,7 +21,7 @@
 
 ## 提交分类（每次 commit 必属其一）
 
-- **A · 城市建设**（`cities/**`、`models.json`）——受城市宪法管辖：受限编辑、竣工封存、R1–R10；
+- **A · 城市建设**（`cities/**`、`models.json`）——受城市宪法管辖：受限编辑、竣工封存、R1–R13；
 - **B · 市政工具迭代**（`tools/`、CI、文档等）——须对既有城市向后兼容；破坏性口径变更 = 修宪，commit 带 `[city-admin]`；
 - **C · 渲染基础变更**（three 版本、积木几何、rng 语义）——同城存续期间冻结（版本年轮）：inspect 的「封存行重算不符即红」会自动拦截，纯增量（新增组件/不改输出的修复）放行。
 
@@ -32,7 +32,7 @@
 | 命令 | 用途 |
 |---|---|
 | `npm run state` | 城市现状摘要（占用/名册/空地建议） |
-| `npm run inspect -- [目录]` | 建筑校验 R1–R10（缺省全量） |
+| `npm run inspect -- [目录]` | 建筑校验 R1–R13（缺省全量） |
 | `npm run inspect -- [目录] --complete` | 校验通过并竣工封存 |
 | `npm run demolish -- <目录\|id> [--yes] [--reason 文本]` | 城主拆除建筑：删目录+登记行+`[city-admin]` commit+复验（缺 `--yes` 为干跑） |
 | `npm run check-history` | 登记簿受限编辑校验（CI 也跑） |

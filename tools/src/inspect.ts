@@ -106,7 +106,7 @@ export async function inspectBuilding(
     const head = await runHeadless(outPath, { id: row.lot, size: lot?.size ?? [20, 20], maxHeight: 300 }, hashSeed(row.id))
     if (!head.ok) {
       results.push(bad('R1', `build() 执行失败：${head.error}${head.stack ? `\n${head.stack}` : ''}`))
-      results.push(bad('R2', '未执行')); results.push(bad('R3', '未执行')); results.push(bad('R4', '未执行')); results.push(bad('R9', '未执行'))
+      results.push(bad('R2', '未执行')); results.push(bad('R3', '未执行')); results.push(bad('R4', '未执行')); results.push(bad('R9', '未执行')); results.push(bad('R13', '未执行'))
     } else {
       results.push(ok('R9', '执行在时限内完成'))
       const halfW = (lot?.size[0] ?? 20) / 2 + 0.5, halfD = (lot?.size[1] ?? 20) / 2 + 0.5
@@ -131,6 +131,15 @@ export async function inspectBuilding(
         results.push(triFloor && meshFloor
           ? ok('R11', `完成度达标：三角形 ${head.triangles.toLocaleString()} ≥ ${QUALITY_FLOOR.minTriangles.toLocaleString()}，mesh ${head.meshes} ≥ ${QUALITY_FLOOR.minMeshes}（防故障护栏 500,000 的 ${(head.triangles / 5000).toFixed(0)}%）`)
           : bad('R11', `完成度不足：三角形 ${head.triangles.toLocaleString()}（需 ≥ ${QUALITY_FLOOR.minTriangles.toLocaleString()}），mesh ${head.meshes ?? 0}（需 ≥ ${QUALITY_FLOOR.minMeshes}）——加密窗棂/栏杆/线脚/柱阵等细部，把预算分配表花掉`))
+      }
+
+      // R13：退线（修宪：建筑本体落于地块中央 16×16，四周至少 2m 场地带；地被层/小件/薄板/景观件已在 worker 豁免）
+      if (isOfficial(row)) {
+        results.push(ok('R13', '官方建筑豁免退线'))
+      } else if (head.setback) {
+        results.push(head.setback.violations === 0
+          ? ok('R13', `退线达标：建筑本体落于中央 ${(head.setback.coreHalf * 2).toFixed(0)}×${(head.setback.coreHalf * 2).toFixed(0)}，四周留足场地带`)
+          : bad('R13', `退线不足：${head.setback.violations} 个构件超出中央 ${(head.setback.coreHalf * 2).toFixed(0)}×${(head.setback.coreHalf * 2).toFixed(0)}（最远超出 ${head.setback.worst.toFixed(2)}m）——建筑本体四周至少退 2m 留作场地（地被层/小件/薄板/景观件豁免）`))
       }
 
       // 回写与竣工（对 override 数组同样生效，测试即验证）。
