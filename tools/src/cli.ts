@@ -44,6 +44,30 @@ async function main() {
     }
     process.exit(results.every((r) => r.passed) ? 0 : 1)
   }
+  if (cmd === 'demolish') {
+    const { runDemolish } = await import('./demolish')
+    const yes = args.includes('--yes')
+    const ri = args.indexOf('--reason')
+    const reason = ri >= 0 ? args[ri + 1] : undefined
+    const target = args.find((a, i) => !a.startsWith('--') && (ri < 0 || i !== ri + 1))
+    if (!target) {
+      console.error('用法：npm run demolish -- <建筑目录名|建筑id> [--yes] [--reason 文本]（缺 --yes 为干跑）')
+      process.exit(2)
+    }
+    const r = await runDemolish(repoRoot, target, { yes, reason })
+    for (const s of r.summary) console.log(r.executed ? '  ' + s : s)
+    for (const w of r.warnings) console.log(`  ⚠ ${w}`)
+    if (!r.ok) { console.error(`✗ ${r.error}`); process.exit(2) }
+    if (r.executed) {
+      console.log(`拆除完成 ✓（${r.removed.directory ? '目录已删' : '目录本不存在'}、${r.removed.registryRow ? '登记行已删' : '登记行本不存在'}）`)
+      if (r.commit) console.log(`commit ${r.commit}（[city-admin] 通道，未 push——push 由城主手动执行）`)
+      if (r.postCheckViolations.length) {
+        console.error(`受限编辑复验异常（不应发生，请检查）：\n` + r.postCheckViolations.map((v) => `  ✗ ${v}`).join('\n'))
+        process.exit(1)
+      }
+    }
+    return
+  }
   if (cmd === 'check-history') {
     const { runCheckHistory } = await import('./history')
     const from = args.find((a) => a.startsWith('--from='))?.slice(7) ?? 'HEAD'
@@ -61,7 +85,13 @@ async function main() {
     console.log(JSON.stringify(buildStateReport(resolve(repoRoot, 'cities')), null, 2))
     return
   } else {
-    console.error('用法：npm run inspect -- [建筑目录名] [--json] [--complete]')
+    console.error([
+      '用法：',
+      '  npm run state',
+      '  npm run inspect -- [建筑目录名] [--json] [--complete]',
+      '  npm run demolish -- <建筑目录名|建筑id> [--yes] [--reason 文本]   # 城主拆除',
+      '  npm run check-history -- --from=<rev> --to=<rev|WORKTREE>',
+    ].join('\n'))
     process.exit(2)
   }
 }

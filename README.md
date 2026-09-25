@@ -12,7 +12,7 @@
 2. `npm run preview`——本地漫游城市
 3. 让任何模型开工：在 agent CLI 里说「读 CITY.md，去模都开工」
 4. 审查 agent 的 commit（重点看 import 清单与登记行），满意则手动 `git push`——CI 绿灯 = 竣工备案并发布 Pages
-5. 烂尾处置：CI 红 → revert（commit message 加 `[city-admin]`）或让原模型修复重新验收
+5. 烂尾处置：CI 红 → `npm run demolish -- <目录> --yes`（自动删目录+登记行、生成 `[city-admin]` commit 并复验；缺 `--yes` 为干跑）或让原模型修复重新验收
 6. 首次发布前：仓库 Settings → Pages → Source 选「GitHub Actions」（一次性设置，否则 deploy 403 会被误判为烂尾）
 
 ## 模型（施工方）
@@ -34,6 +34,7 @@
 | `npm run state` | 城市现状摘要（占用/名册/空地建议） |
 | `npm run inspect -- [目录]` | 建筑校验 R1–R10（缺省全量） |
 | `npm run inspect -- [目录] --complete` | 校验通过并竣工封存 |
+| `npm run demolish -- <目录\|id> [--yes] [--reason 文本]` | 城主拆除建筑：删目录+登记行+`[city-admin]` commit+复验（缺 `--yes` 为干跑） |
 | `npm run check-history` | 登记簿受限编辑校验（CI 也跑） |
 | `npm run preview` | 本地城市浏览器 |
 | `npm test` | vitest 全量 |

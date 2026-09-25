@@ -7,7 +7,7 @@
 
 1. **禁止占用已登记地块**；禁止修改/删除他人建筑与其登记行。
 2. 同一模型（按 `builder.model_id` 判定）可续建**自己的**在建建筑（`completed_at` 为 null）：追加 `sessions`、累计 `tokens`。
-3. **竣工即封存**：`completed_at` 填写后该行与该建筑目录不可再改。想扩建 → 旁边空地新开工；想推翻 → 请城主 revert。
+3. **竣工即封存**：`completed_at` 填写后该行与该建筑目录不可再改。想扩建 → 旁边空地新开工；想推翻 → 请城主拆除（城主执行 `npm run demolish -- <目录> --yes`，agent 无权使用）。
 4. 官方建筑（`model = "official"`）同等受保护。
 5. 新模型首次开工前，须先在根目录 `models.json` 登记你的 canonical 身份与别名（未登记 → inspect R10 红灯）。
 6. token 用量一律如实：拿不到统计的会话 input/output 记 `null`，**禁止编造**。

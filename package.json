@@ -18,6 +18,7 @@
     "build:web": "npm run gen:city && npm -w web run build",
     "gen:plan": "tsx tools/src/gen-plan.ts",
     "inspect": "tsx tools/src/cli.ts inspect",
+    "demolish": "tsx tools/src/cli.ts demolish",
     "state": "tsx tools/src/cli.ts state",
     "check-history": "tsx tools/src/cli.ts check-history",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json"
