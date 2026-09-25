@@ -25,7 +25,7 @@ const COPIED_DIRS = [
   'b-000004-bad-tris', 'b-000005-bad-random', 'b-000006-bad-cross', 'good-tower',
   'b-000007-bad-empty', 'b-000009-good-tower', 'b-000008-bad-quality',
   'b-000010-bad-setback', 'b-000011-good-custom-block', 'b-000012-bad-cross-block',
-  'b-000013-good-rotated',
+  'b-000013-good-rotated', 'b-000014-good-tower', 'b-000015-good-tower',
 ]
 
 beforeAll(() => {
@@ -49,6 +49,9 @@ beforeAll(() => {
   cpSync(resolve(root, 'tools/test/fixtures/buildings/good-custom-block'), resolve(cityDir, 'buildings/b-000011-good-custom-block'), { recursive: true })
   cpSync(resolve(root, 'tools/test/fixtures/buildings/bad-cross-block'), resolve(cityDir, 'buildings/b-000012-bad-cross-block'), { recursive: true })
   cpSync(resolve(root, 'tools/test/fixtures/buildings/good-rotated'), resolve(cityDir, 'buildings/b-000013-good-rotated'), { recursive: true })
+  // R15 街区主权样本：同街区两栋不同 model_id（glm-5.3 vs qwen3.8-flash，后者在真实 plan.json 白名单内）
+  cpSync(resolve(root, 'tools/test/fixtures/buildings/good-tower'), resolve(cityDir, 'buildings/b-000014-good-tower'), { recursive: true })
+  cpSync(resolve(root, 'tools/test/fixtures/buildings/good-tower'), resolve(cityDir, 'buildings/b-000015-good-tower'), { recursive: true })
   // bad-cross-import 的 index.ts import '../good-tower/index'——上面额外复制一份**原名** good-tower 供其解析
   // （无登记行的目录：inspectBuilding 不做孤儿检测，只有 inspectCity 查）
   const libCtxAbs = resolve(root, 'lib/ctx').replace(/\\/g, '/')
@@ -60,12 +63,18 @@ beforeAll(() => {
 
 afterAll(() => rmSync(cityDir, { recursive: true, force: true }))
 
+// R15 用 qwen3.8-flash 做异源方（在真实 plan.json 白名单内，不污染 R10 判定）
+const rowQwen = (id: string, lot: string, entry: string) => ({
+  ...row(id, lot, entry),
+  builder: { model: 'Qwen3.8-Flash', model_id: 'qwen3.8-flash', agent: 'opencode' },
+})
+
 describe('inspectBuilding R1–R12（spec §14 坏建筑样本全拦截）', () => {
   it('好建筑全绿且回填 mesh_stats', async () => {
     const rows = [row('b-000001', 'C3-05', 'buildings/b-000001-good-tower/index.ts')]
     const r = await inspectBuilding(root, cityDir, 'b-000001-good-tower', { registryOverride: rows })
     expect(r.passed).toBe(true)
-    expect(r.results.map((x) => x.rule)).toHaveLength(14)
+    expect(r.results.map((x) => x.rule)).toHaveLength(15)   // R15 立法后 15 条
     expect(rows[0].mesh_stats?.triangles).toBeGreaterThan(100)   // 回填发生在 override 数组上
   })
   it.each([
@@ -103,7 +112,7 @@ describe('inspectBuilding R1–R12（spec §14 坏建筑样本全拦截）', () 
     const rows = [row('b-000011', 'C3-09', 'buildings/b-000011-good-custom-block/index.ts')]
     const r = await inspectBuilding(root, cityDir, 'b-000011-good-custom-block', { registryOverride: rows })
     expect(r.passed).toBe(true)
-    expect(r.results.map((x) => x.rule)).toHaveLength(14)
+    expect(r.results.map((x) => x.rule)).toHaveLength(15)
     expect(r.results.find((x) => x.rule === 'R14')!.pass).toBe(true)
     expect(rows[0].mesh_stats?.triangles).toBeGreaterThan(50_000)   // 石灯叠在 good-tower 基底上，仍过 R11
   })
@@ -183,15 +192,69 @@ describe('inspectBuilding R1–R12（spec §14 坏建筑样本全拦截）', () 
     expect(results[1].building).toBe('（自建积木库）')   // R14 配套：目录名合法 + 积木静态安检
     expect(results[1].passed).toBe(true)
     expect(results[1].results[0].detail).toMatch(/积木库安检通过（2 个模型目录）/)
-    expect(results[2].building).toBe('（街区同源 advisory）')   // 同源偏好：advisory 永不挂红灯
+    expect(results[2].building).toBe('（街区主权 R15）')   // R15 立法：advisory 升级为硬规则
     expect(results[2].passed).toBe(true)
-    expect(results[2].results[0].detail).toMatch(/C3：同源 ✓ glm-5\.3 ×2/)
-    const buildings = results.slice(3)   // 前三项为登记簿一致性、自建积木库与同源 advisory（临时城里其余 fixture 目录无登记行，属孤儿，不参与断言）
+    expect(results[2].results[0].detail).toMatch(/C3：归属 glm-5\.3 ×2/)   // 同 model_id 同街区合法
+    const buildings = results.slice(3)   // 前三项为登记簿一致性、自建积木库与街区主权（临时城里其余 fixture 目录无登记行，属孤儿，不参与断言）
     expect(buildings).toHaveLength(2)
     expect(buildings.every((r) => r.passed)).toBe(true)
     const after = loadRegistry(cityDir)
     expect(after.map((x) => x.mesh_stats !== null)).toEqual([true, true])
     expect(after.every((x) => x.mesh_stats!.triangles > 100)).toBe(true)
     rmSync(resolve(cityDir, 'registry.jsonl'), { force: true })   // 清理，不影响其他测试
+  })
+  it('R15：街区主权——同街区出现他 model_id 即红灯（立法 2026-09-25，双向判定）', async () => {
+    const rows = [
+      row('b-000014', 'C3-07', 'buildings/b-000014-good-tower/index.ts'),
+      rowQwen('b-000015', 'C3-08', 'buildings/b-000015-good-tower/index.ts'),
+    ]
+    const rQwen = await inspectBuilding(root, cityDir, 'b-000015-good-tower', { registryOverride: rows })
+    const q15 = rQwen.results.find((x) => x.rule === 'R15')!
+    expect(q15.pass).toBe(false)
+    expect(q15.detail).toMatch(/街区主权/)
+    expect(q15.detail).toMatch(/glm-5\.3/)
+    expect(q15.detail).toMatch(/sharedBlocks/)
+    const rGlm = await inspectBuilding(root, cityDir, 'b-000014-good-tower', { registryOverride: rows })
+    const g15 = rGlm.results.find((x) => x.rule === 'R15')!
+    expect(g15.pass).toBe(false)
+    expect(g15.detail).toMatch(/qwen3\.8-flash/)
+  })
+  it('R15：城主豁免（policy.sharedBlocks）放行混居；官方建筑不计入主权判定', async () => {
+    const planPath = resolve(cityDir, 'plan.json')
+    const orig = readFileSync(planPath, 'utf8')
+    const plan = JSON.parse(orig)
+    plan.policy.sharedBlocks = ['C3']
+    writeFileSync(planPath, JSON.stringify(plan, null, 2) + '\n')
+    try {
+      const rows = [
+        row('b-000014', 'C3-07', 'buildings/b-000014-good-tower/index.ts'),
+        rowQwen('b-000015', 'C3-08', 'buildings/b-000015-good-tower/index.ts'),
+        { ...row('b-000016', 'C3-09', 'buildings/b-000014-good-tower/index.ts'), builder: { model: 'official', model_id: 'official', agent: 'official' } },
+      ]
+      const rQwen = await inspectBuilding(root, cityDir, 'b-000015-good-tower', { registryOverride: rows })
+      const q15 = rQwen.results.find((x) => x.rule === 'R15')!
+      expect(q15.pass).toBe(true)
+      expect(q15.detail).toMatch(/混居/)
+      expect(q15.detail).toMatch(/豁免/)
+      const rGlm = await inspectBuilding(root, cityDir, 'b-000014-good-tower', { registryOverride: rows })
+      expect(rGlm.results.find((x) => x.rule === 'R15')!.pass).toBe(true)
+    } finally {
+      writeFileSync(planPath, orig)   // 恢复共享 fixture，不影响其他用例
+    }
+  })
+  it('inspectCity：街区主权汇总——混居且无豁免挂红灯（立法 2026-09-25）', async () => {
+    writeFileSync(resolve(cityDir, 'registry.jsonl'), [
+      row('b-000014', 'C3-05', 'buildings/b-000014-good-tower/index.ts'),
+      rowQwen('b-000015', 'C3-06', 'buildings/b-000015-good-tower/index.ts'),
+    ].map((x) => JSON.stringify(x)).join('\n') + '\n')
+    try {
+      const results = await inspectCity(root, cityDir)
+      expect(results[2].building).toBe('（街区主权 R15）')
+      expect(results[2].passed).toBe(false)
+      expect(results[2].results[0].detail).toMatch(/街区 C3 混居/)
+      expect(results[2].results[0].detail).toMatch(/sharedBlocks/)
+    } finally {
+      rmSync(resolve(cityDir, 'registry.jsonl'), { force: true })
+    }
   })
 })

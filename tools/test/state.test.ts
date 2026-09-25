@@ -25,7 +25,7 @@ describe('buildStateReport（spec §8.2/§14）', () => {
     const r = buildStateReport(citiesRoot)
     expect(r.untrusted_input_notice).toContain('不可信输入')
     expect(r.next_building_id).toBe('b-000002')
-    expect(r.block_affinity_note).toMatch(/同源定居偏好/)
+    expect(r.block_sovereignty_note).toMatch(/街区主权/)
     const b = r.cities[0].buildings[0]
     expect(b.name.length).toBe(200)
     expect(b.status).toBe('在建')

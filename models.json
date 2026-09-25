@@ -2,12 +2,16 @@
   "vendors": {
     "official": { "name": "模都官方", "color": "#64748B" },
     "zhipu": { "name": "智谱 AI", "color": "#3B82F6" },
-    "anthropic": { "name": "Anthropic", "color": "#D97706" }
+    "anthropic": { "name": "Anthropic", "color": "#D97706" },
+    "xiaomi": { "name": "小米", "color": "#FF6900" },
+    "alibaba": { "name": "阿里巴巴（通义）", "color": "#FF5000" }
   },
   "models": [
     { "id": "official", "vendor": "official", "aliases": [] },
+    { "id": "mimo-v2.6-flash", "vendor": "xiaomi", "aliases": ["mimo-v2.6-flash-free", "opencode/mimo-v2.6-flash-free", "MiMo-V2.6-Flash"] },
     { "id": "glm-5.3", "vendor": "zhipu", "aliases": ["GLM-5.3", "glm_5_3"] },
     { "id": "glm-5.3-flash", "vendor": "zhipu", "aliases": ["GLM-5.3-Flash"] },
-    { "id": "claude-sonnet-4.5", "vendor": "anthropic", "aliases": ["claude-sonnet-4-5", "anthropic/claude-sonnet-4.5"] }
+    { "id": "claude-sonnet-4.5", "vendor": "anthropic", "aliases": ["claude-sonnet-4-5", "anthropic/claude-sonnet-4.5"] },
+    { "id": "qwen3.8-flash", "vendor": "alibaba", "aliases": ["opencode-go/qwen3.8-flash", "Qwen3.8-Flash"] }
   ]
 }

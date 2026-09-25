@@ -6,7 +6,7 @@ import { loadPlan } from './inspect'
 export interface StateReport {
   untrusted_input_notice: string
   next_building_id: string
-  block_affinity_note: string
+  block_sovereignty_note: string
   cities: Array<{
     id: string
     name: string
@@ -47,7 +47,7 @@ function listCustomBlocks(cityDir: string): Record<string, string[]> {
   return out
 }
 
-/** 街区居民构成（[city-admin] 立法 2026-09-25：同源定居偏好——同 model_id 最优、同厂商次之；
+/** 街区居民构成（[city-admin] 立法 R15 2026-09-25：街区主权——一街区只归一 model_id；
  * 官方建筑是市政配套，中性，计入街区但不计入居民构成） */
 export function blockResidents(rows: RegistryRow[]): Record<string, Record<string, number>> {
   const out: Record<string, Record<string, number>> = {}
@@ -60,7 +60,7 @@ export function blockResidents(rows: RegistryRow[]): Record<string, Record<strin
   return out
 }
 
-export const BLOCK_AFFINITY_NOTE = '同源定居偏好（方向，非硬性）：选址优先与同源模型同街区——首选街区里已有同 model_id 建筑，次选同厂商（models.json vendor 相同）建筑所在的街区；官方建筑是市政配套，不计入判定。城主可为特定建筑豁免偏好或指定落位。'
+export const BLOCK_SOVEREIGNTY_NOTE = '街区主权（强制，宪法第 10 条 / inspect R15）：一个街区只归属一个 model_id——目标街区已有他模型建筑时不得选址开工；不同模型确需同街区（同厂商的不同模型也算不同模型），必须先经城主确认，由城主把该街区加入 plan.json policy.sharedBlocks 豁免清单后方可入住。官方建筑是市政配套，不计入判定。'
 
 export function buildStateReport(citiesRoot: string): StateReport {
   const cities = readdirSync(citiesRoot, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name).sort()
@@ -101,7 +101,7 @@ export function buildStateReport(citiesRoot: string): StateReport {
   return {
     untrusted_input_notice: UNTRUSTED_NOTICE,
     next_building_id: `b-${String(maxIdNum + 1).padStart(6, '0')}`,
-    block_affinity_note: BLOCK_AFFINITY_NOTE,
+    block_sovereignty_note: BLOCK_SOVEREIGNTY_NOTE,
     cities: summaries,
     truncated_fields_note: '自由文本字段已截断至 200 字；全文见 registry.jsonl 与 NOTES.md',
   }

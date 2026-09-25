@@ -22,4 +22,9 @@ describe('规划图几何（spec §5.1/§5.2）', () => {
     expect(lot.district).toBe('E5')
     expect(lot.center).toEqual([20, -20])   // 09 = 最南最东
   })
+  it('policy：施工白名单 + 街区主权豁免清单（R15 立法）', () => {
+    expect(plan.policy!.allowedModelIds).toContain('official')
+    expect(plan.policy!.allowedModelIds).toContain('glm-5.3')
+    expect(plan.policy!.sharedBlocks).toEqual([])   // 城主显式放行的混居街区，缺省为空
+  })
 })

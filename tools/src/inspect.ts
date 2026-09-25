@@ -98,6 +98,23 @@ export async function inspectBuilding(
     else results.push(ok('R10', `身份 ${res.modelId} 归一一致${plan.policy?.allowedModelIds ? '，且在城主施工白名单内' : ''}`))
   }
 
+  // R15：街区主权（[city-admin] 立法 2026-09-25，取代旧「同源定居偏好」建议——建议无效改强制：
+  // 一街区只归一 model_id，官方为市政配套不计入；混居须经城主豁免 plan.policy.sharedBlocks）
+  if (!row) {
+    results.push(bad('R15', '无登记行，无法校验街区主权'))
+  } else if (row.builder.model_id === 'official') {
+    results.push(ok('R15', '官方建筑为市政配套，不受街区主权限制'))
+  } else {
+    const block = row.lot.split('-')[0]
+    const others = [...new Set(rows
+      .filter((r) => r.id !== row.id && r.lot.split('-')[0] === block
+        && r.builder.model_id !== 'official' && r.builder.model_id !== row.builder.model_id)
+      .map((r) => r.builder.model_id))]
+    if (!others.length) results.push(ok('R15', `街区 ${block} 归属 ${row.builder.model_id}（独享）`))
+    else if (plan.policy?.sharedBlocks?.includes(block)) results.push(ok('R15', `街区 ${block} 混居（${[row.builder.model_id, ...others].join('、')}）——城主豁免清单 sharedBlocks 放行`))
+    else results.push(bad('R15', `街区主权：街区 ${block} 已归属 ${others.join('、')}——一街区只归一模型（CITY.md 宪法第 10 条）；另选空街区，或请城主把 ${block} 加入 plan.json policy.sharedBlocks 豁免清单`))
+  }
+
   // R12：设计文档（修宪：施工前比选与预算分配须留痕；官方建筑豁免）
   if (row && isOfficial(row)) {
     results.push(ok('R12', '官方建筑豁免设计文档'))
@@ -223,29 +240,40 @@ export async function inspectCity(repoRoot: string, cityDir: string): Promise<In
       : [ok('R14', existsSync(blocksRootDir) ? `积木库安检通过（${readdirSync(blocksRootDir, { withFileTypes: true }).filter((d) => d.isDirectory()).length} 个模型目录）` : '暂无自建积木库')],
   }
 
-  // 街区同源 advisory（[city-admin] 立法 2026-09-25：同 model_id 最优、同厂商次之；官方为市政配套不计入）。
-  // 方向而非死原则——advisory 永远 pass，不挂红灯，仅供城主预览与模型选址参考
+  // 街区主权（[city-admin] 立法 R15 2026-09-25，取代旧「街区同源 advisory」）：
+  // 一街区只归一 model_id（官方为市政配套，不计入）；混居且不在城主豁免清单（policy.sharedBlocks）即红灯
+  const cityPlan = loadPlan(cityDir)
   const byBlock: Record<string, Record<string, number>> = {}
   for (const r of rows) {
     const b = r.lot.split('-')[0]
     byBlock[b] ??= {}
     if (r.builder.model_id !== 'official') byBlock[b][r.builder.model_id] = (byBlock[b][r.builder.model_id] ?? 0) + 1
   }
-  const affinity = Object.entries(byBlock).map(([b, ms]) => {
+  const sharedBlocks = new Set(cityPlan.policy?.sharedBlocks ?? [])
+  const sovereigntyLines: string[] = []
+  const sovereigntyErrs: string[] = []
+  for (const [b, ms] of Object.entries(byBlock)) {
     const ids = Object.keys(ms)
-    if (ids.length === 0) return `${b}：仅官方建筑（市政配套，对任意模型开放）`
-    if (ids.length === 1) return `${b}：同源 ✓ ${ids[0]} ×${ms[ids[0]]}`
-    return `${b}：混居 ${ids.map((m) => `${m} ×${ms[m]}`).join('、')}（同源偏好仅供参考）`
-  })
-  const affinityResult: InspectResult = {
-    building: '（街区同源 advisory）', city: cityId,
-    passed: true,
-    results: [ok('advisory', rows.length ? (affinity.join('；') || '无建筑') : '城空，任意选址')],
+    if (ids.length === 0) { sovereigntyLines.push(`${b}：仅官方建筑（市政配套，对任意模型开放）`); continue }
+    if (ids.length === 1) { sovereigntyLines.push(`${b}：归属 ${ids[0]} ×${ms[ids[0]]}`); continue }
+    const desc = `${b}：混居 ${ids.map((m) => `${m} ×${ms[m]}`).join('、')}`
+    if (sharedBlocks.has(b)) sovereigntyLines.push(`${desc}（城主豁免放行）`)
+    else {
+      sovereigntyLines.push(`${desc}（无豁免——R15 红灯）`)
+      sovereigntyErrs.push(`街区 ${b} 混居（${ids.join('、')}）且不在城主豁免清单 policy.sharedBlocks——一街区只归一模型（CITY.md 宪法第 10 条），请城主豁免或将他模型建筑迁出`)
+    }
+  }
+  const sovereigntyResult: InspectResult = {
+    building: '（街区主权 R15）', city: cityId,
+    passed: sovereigntyErrs.length === 0,
+    results: sovereigntyErrs.length
+      ? [bad('R15', sovereigntyErrs.join('；'))]
+      : [ok('R15', rows.length ? (sovereigntyLines.join('；') || '无建筑') : '城空，任意选址')],
   }
 
   // 逐建筑 R1–R10（并行执行控制 CI 时长；**共享同一 rows 数组作 registryOverride——mesh_stats/completed_at 全部写进内存数组，Promise.all 后集中落盘一次**，避免各建筑各自 loadRegistry 快照并行 writeRegistry 的丢失更新）
   const dirs = rows.map((r) => r.entry.split('/')[1]).filter(Boolean)
   const dirResults = await Promise.all(dirs.map((d) => inspectBuilding(repoRoot, cityDir, d, { registryOverride: rows })))
   if (dirs.length) writeRegistry(cityDir, rows)
-  return [structResult, blocksResult, affinityResult, ...dirResults]
+  return [structResult, blocksResult, sovereigntyResult, ...dirResults]
 }
