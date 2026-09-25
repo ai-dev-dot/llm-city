@@ -1,6 +1,8 @@
 import type { BuildingRecord, CityData } from '../generated/city-data'
 import type { BuildingManager } from '../city/loader'
 import type { FilterSystem, FilterMode } from '../city/filters'
+import type { SceneBundle } from '../city/scene'
+import { AMBIENCE_PRESETS, applyAmbience } from '../city/ambience'
 import { formatTokens } from './format'
 
 // mountHud 可重入（main.ts restored 重挂）：window keydown 监听须先摘旧再挂新，否则重挂后快捷键会触发多次。
@@ -25,6 +27,7 @@ export interface HudHandle { toggleHud(): void; setFilter(mode: FilterMode): voi
 
 export function mountHud(
   hud: HTMLElement, city: CityData, manager: BuildingManager, filterSystem: FilterSystem,
+  bundle: SceneBundle,
   hooks: { onPhoto: () => void; onTour: () => void },
 ): HudHandle {
   hud.innerHTML = ''
@@ -47,6 +50,19 @@ export function mountHud(
   hint.style.cssText = 'position:absolute;left:16px;bottom:132px;padding:6px 10px;font-size:12px;color:var(--text-secondary);'
   hint.textContent = 'H HUD · P 摄影 · F 滤镜 · T 巡航'
   hud.appendChild(hint)
+
+  // 氛围预设按钮组（spec §10：白天/夜景/黄昏，默认白天；只调光照，不染建筑本色）
+  const ambienceBar = document.createElement('div')
+  ambienceBar.className = 'panel'
+  ambienceBar.style.cssText = 'position:absolute;right:16px;top:16px;display:flex;gap:6px;padding:6px 8px;font-size:13px;'
+  for (const key of ['day', 'night', 'dusk'] as const) {
+    const btn = document.createElement('button')
+    btn.textContent = AMBIENCE_PRESETS[key].label
+    btn.style.cssText = 'padding:6px 10px;background:transparent;color:var(--text-primary);border:1px solid var(--panel-border);border-radius:6px;cursor:pointer;font-family:inherit;'
+    btn.addEventListener('click', () => applyAmbience(bundle, AMBIENCE_PRESETS[key]))
+    ambienceBar.appendChild(btn)
+  }
+  hud.appendChild(ambienceBar)
 
   // 错误报告条（右下，常驻；Canvas 异常时 UI 层仍可见——与 Canvas 分层）
   const report = document.createElement('div')

@@ -54,7 +54,7 @@ const photo = new PhotoMode(hud, bundle, {
 })
 // mountHud 可重入：webglcontextrestored 后重调即完整重挂持久 HUD
 const mountAll = () => {
-  hudHandle = mountHud(hud, city, manager, filterSystem, { onPhoto: () => photo.toggle(), onTour: () => {} })
+  hudHandle = mountHud(hud, city, manager, filterSystem, bundle, { onPhoto: () => photo.toggle(), onTour: () => {} })
 }
 mountAll()
 
