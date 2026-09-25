@@ -14,8 +14,8 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     g.add(ctx.blocks.boxFloor({ w: 12, d: 12, h: 3, y }))
     g.add(ctx.blocks.windowStrip({ w: 12.2, h: 1.1, y: y + 1 }))
     // 窗棂分格：每层每面 10 竖条（低面数高密度）
-    for (let k = 0; k < 18; k++) {
-      const x = -6 + k * (12 / 17)
+    for (let k = 0; k < 26; k++) {
+      const x = -6 + k * (12 / 25)
       g.add(ctx.blocks.wall({ w: 0.14, h: 3, d: 0.14, x, y, z: 6.1 }))
       g.add(ctx.blocks.wall({ w: 0.14, h: 3, d: 0.14, x, y, z: -6.1 }))
       g.add(ctx.blocks.wall({ w: 0.14, h: 3, d: 0.14, x: 6.1, y, z: x }))
@@ -48,12 +48,12 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   g.add(spire)
 
   // 基座柱阵：13×13 = 169 根 12 边柱
-  for (let ix = 0; ix < 13; ix++)
-    for (let iz = 0; iz < 13; iz++)
-      g.add(ctx.blocks.column({ r: 0.22, h: 2.2, x: -8.4 + ix * 1.4, z: -8.4 + iz * 1.4 }))
+  for (let ix = 0; ix < 15; ix++)
+    for (let iz = 0; iz < 15; iz++)
+      g.add(ctx.blocks.column({ r: 0.22, h: 2.2, x: -8.6 + ix * 1.23, z: -8.6 + iz * 1.23 }))
   // 基座装饰球阵（细分 1 的二十面体，草地点缀）
-  for (let i = 0; i < 80; i++) {
-    const a = (i / 80) * Math.PI * 2
+  for (let i = 0; i < 205; i++) {
+    const a = (i / 205) * Math.PI * 2
     const b = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 1), new THREE.MeshStandardMaterial({ color: '#8C9E8B', roughness: 0.9 }))
     b.position.set(Math.cos(a) * 9.4, 0.3, Math.sin(a) * 9.4)
     g.add(b)
@@ -61,7 +61,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
 
   // 景观：树、路灯、椅、绿篱
   const rng = ctx.rng
-  for (let i = 0; i < 28; i++) g.add(ctx.blocks.tree({ x: -8 + rng() * 16, z: -8 + rng() * 16, seed: i + 1 }))
+  for (let i = 0; i < 56; i++) g.add(ctx.blocks.tree({ x: -8 + rng() * 16, z: -8 + rng() * 16, seed: i + 1 }))
   for (const s of [-1, 1]) {
     g.add(ctx.blocks.streetLamp({ x: s * 9, z: 9 }))
     g.add(ctx.blocks.streetLamp({ x: 9, z: s * 9 }))
@@ -71,5 +71,25 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   }
   g.add(ctx.blocks.hedge({ w: 8, d: 0.7, x: 0, z: 9.2 }))
   g.add(ctx.blocks.hedge({ w: 8, d: 0.7, x: 0, z: -9.2 }))
+  // 高表现力官方件示范：拱墙环廊 + 栏杆环 + 石盆 + 盲拱贴面
+  for (const [rx, rz, rotY] of [[0, 9.4, 0], [0, -9.4, Math.PI], [9.4, 0, Math.PI / 2], [-9.4, 0, -Math.PI / 2]] as const) {
+    const aw = ctx.blocks.archWall({ w: 6, h: 3.2, archW: 1.5, archH: 2.6, depth: 0.35, x: rx, y: 0.05, z: rz })
+    aw.rotation.y = rotY
+    g.add(aw)
+    const rg = ctx.blocks.railing({ w: 12, h: 0.9, x: 0, y: 0.05, z: 0 })
+    rg.rotation.y = rotY
+    rg.position.x = rx === 0 ? 0 : rx * 0.72
+    rg.position.z = rz === 0 ? 0 : rz * 0.72
+    g.add(rg)
+    g.add(ctx.blocks.archPanel({ w: 1.4, h: 2.0, depth: 0.15, x: rx === 0 ? 2.2 : rx * 0.85, y: 0.05, z: rz === 0 ? 2.2 : rz * 0.85 }))
+  }
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2
+    g.add(ctx.blocks.urn({ scale: 1.1, x: Math.cos(a) * 7.4, y: 0.05, z: Math.sin(a) * 7.4 }))
+  }
+  for (let i = 0; i < 40; i++) {
+    const a = (i / 40) * Math.PI * 2
+    g.add(ctx.blocks.latticePanel({ w: 1.6, h: 1.2, cols: 2, rows: 2, x: Math.cos(a) * 6.6, y: 0.05, z: Math.sin(a) * 6.6 }))
+  }
   return g
 }
