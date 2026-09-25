@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import type { BuildCtx } from '../../../../lib/ctx'
 import { bookwall, hexLantern } from '../../blocks/glm-5.3/library-parts'
+import { gardenTree } from '../../blocks/glm-5.3/garden-tree'
 
 /** 巴别图书馆 · b-000001 · E5-05（模都城市原点）
  *  博尔赫斯《巴别图书馆》：宇宙由无限而相同的六边形回廊构成。
@@ -97,17 +98,48 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   const baseH = 4.2
   for (let i = 0; i < 6; i++) {
     const isDoor = i === DOOR_FACE
+    const archW = isDoor ? 2.6 : 2.3
     root.add(place(B.archWall({
-      w: 6.9, h: baseH, archW: isDoor ? 2.6 : 2.3, archH: isDoor ? 3.7 : 3.3, depth: 0.5, color: '#C9C4B8',
+      w: 6.9, h: baseH, archW, archH: isDoor ? 3.7 : 3.3, depth: 0.5, color: '#C9C4B8',
     }), faceAz(i), AP - 0.25, baseY))
+    {                                                       // 拱券楔石：放射状石块环拱洞一匝，正中钥匙石加深
+      const ring = new THREE.Group()
+      const archR = archW / 2 + 0.17
+      for (let k = 0; k < 9; k++) {
+        const t = 188 + (k * 184) / 8                        // 覆盖上半圆弧
+        const rad = t * D
+        const key = k === 4
+        const voussoir = mesh(new THREE.BoxGeometry(key ? 0.34 : 0.27, 0.26, 0.56), key ? M.trimDeep : M.stone)
+        voussoir.position.set(Math.cos(rad) * archR, Math.sin(rad) * archR, 0)
+        voussoir.rotation.z = rad + Math.PI / 2
+        ring.add(voussoir)
+      }
+      root.add(place(ring, faceAz(i), AP + 0.27, baseY + (isDoor ? 3.7 : 3.3) - archW / 2))
+    }
+    for (const gy of [1.25, 2.6]) {                          // 一层墙面砌缝横线（石造层理）
+      root.add(place(mesh(new THREE.BoxGeometry(6.82, 0.045, 0.54), M.trimDeep), faceAz(i), AP + 0.26, baseY + gy))
+    }
     for (const s of [-1, 1]) {                               // 拱侧基座盲拱饰
       root.add(place(B.archPanel({ w: 1.05, h: 2.2, depth: 0.16, color: '#ABA694' }), faceAz(i) + s * Math.atan2(2.6, AP), Math.hypot(AP, 2.6), baseY + 0.35))
     }
     if (!isDoor) {                                           // 拱洞内退书墙（书海透出拱外）
       root.add(place(bookwall({ w: 5.4, h: 3.4, rows: 7, rand: rng }), faceAz(i), AP - 0.62, baseY + 0.3))
-    } else {                                                 // 正门：双扇木门 + 石槛 + 楣匾
+    } else {                                                 // 正门：双扇木门（金门钉阵 + 门环）+ 石槛 + 楣匾
       for (const s of [-1, 1]) {
-        root.add(place(mesh(new THREE.BoxGeometry(1.22, 3.15, 0.14), M.wood), faceAz(i) + s * Math.atan2(0.63, AP - 0.05), Math.hypot(AP - 0.05, 0.63), baseY + 0.05))
+        const leafGrp = new THREE.Group()
+        const panel = mesh(new THREE.BoxGeometry(1.22, 3.15, 0.14), M.wood)
+        panel.position.y = 3.15 / 2; leafGrp.add(panel)
+        for (const nx of [-0.38, 0, 0.38]) {                 // 门钉 3 列 × 6 行
+          for (let ny = 0; ny < 6; ny++) {
+            const nail = mesh(new THREE.SphereGeometry(0.03, 8, 6), M.gold)
+            nail.position.set(nx, 0.55 + ny * 0.45, 0.085); leafGrp.add(nail)
+          }
+        }
+        const knocker = mesh(new THREE.TorusGeometry(0.085, 0.018, 6, 14), M.gold)   // 门环
+        knocker.position.set(0.2 * s, 1.55, 0.1); leafGrp.add(knocker)
+        const plate = mesh(new THREE.BoxGeometry(0.1, 0.24, 0.03), M.trimDeep)
+        plate.position.set(0.2 * s, 1.62, 0.085); leafGrp.add(plate)
+        root.add(place(leafGrp, faceAz(i) + s * Math.atan2(0.63, AP - 0.05), Math.hypot(AP - 0.05, 0.63), baseY + 0.05))
       }
       root.add(place(mesh(new THREE.BoxGeometry(2.9, 0.12, 0.7), M.stoneBase), faceAz(i), AP - 0.15, baseY - 0.02))
       root.add(place(B.archPanel({ w: 1.7, h: 0.85, depth: 0.2, color: '#DDD8CC' }), faceAz(i), AP + 0.28, baseY + 3.15))
@@ -166,11 +198,18 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   root.add(hexPrism(6.55, 0.34, M.trim, 0, atY + atH, 0))            // 阁楼顶三叠涩出大檐
   root.add(hexPrism(6.82, 0.15, M.trimDeep, 0, atY + atH + 0.34, 0))
   root.add(hexPrism(6.35, 0.18, M.trim, 0, atY + atH + 0.49, 0))
-  for (let k = 0; k < 6; k++) {                              // 六顶点小尖塔
+  for (let i = 0; i < 6; i++) {                              // 大檐下齿饰一圈（托檐齿）
+    for (const off of [-2.4, -1.2, 0, 1.2, 2.4]) {
+      root.add(place(mesh(new THREE.BoxGeometry(0.2, 0.16, 0.24), M.trimDeep), faceAz(i) + Math.atan2(off, 6.36), Math.hypot(6.36, off), atY + atH - 0.1))
+    }
+  }
+  for (let k = 0; k < 6; k++) {                              // 六顶点小尖塔（锥顶鎏金球）
     const az = vertAz(k), cx = 6.42 * Math.cos(az), cz = 6.42 * Math.sin(az)
     root.add(hexPrism(0.15, 0.95, M.stone, cx, atY + atH + 0.62, cz))
     const cone = mesh(new THREE.CylinderGeometry(0.02, 0.3, 0.55, 6), M.copperDark)
     cone.position.set(cx, atY + atH + 1.78, cz); root.add(cone)
+    const orb = mesh(new THREE.SphereGeometry(0.055, 10, 8), M.gold)
+    orb.position.set(cx, atY + atH + 2.12, cz); root.add(orb)
   }
 
   // ---------- 鼓座 + 六圆窗 ----------
@@ -191,6 +230,15 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     const sill = mesh(new THREE.BoxGeometry(0.95, 0.12, 0.3), M.trim)      // 窗台下托架
     sill.rotation.y = Math.PI / 2 - az
     sill.position.copy(dir.clone().multiplyScalar(4.4)); sill.position.y = drumY + drumH / 2 - 0.62; root.add(sill)
+    const pedShape = new THREE.Shape()                                     // 窗楣三角山花
+    pedShape.moveTo(-0.34, 0); pedShape.lineTo(0.34, 0); pedShape.lineTo(0, 0.28); pedShape.closePath()
+    const pediment = mesh(new THREE.ExtrudeGeometry(pedShape, { depth: 0.12, bevelEnabled: false }), M.trim)
+    root.add(place(pediment, az, 4.4, drumY + drumH / 2 + 0.78))
+  }
+  for (let k = 0; k < 6; k++) {                              // 鼓座窗间扁平壁柱（顶点方位）
+    root.add(place(mesh(new THREE.BoxGeometry(0.46, drumH - 0.1, 0.14), M.trim), vertAz(k), 4.34, drumY + 0.05))
+    root.add(place(mesh(new THREE.BoxGeometry(0.58, 0.12, 0.18), M.trimDeep), vertAz(k), 4.36, drumY - 0.02))   // 柱头
+    root.add(place(mesh(new THREE.BoxGeometry(0.58, 0.12, 0.18), M.trimDeep), vertAz(k), 4.36, drumY + drumH - 0.1))
   }
   const drumTop = mesh(new THREE.CylinderGeometry(4.6, 4.45, 0.22, 48), M.trim)
   drumTop.position.y = drumY + drumH + 0.11; root.add(drumTop)
@@ -230,11 +278,18 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     dent.rotation.y = Math.PI / 2 - az
     dent.position.set(4.28 * Math.cos(az), domeY + 0.32, 4.28 * Math.sin(az)); root.add(dent)
   }
+  for (let rib = 0; rib < 24; rib++) {                       // 24 肋根的鎏金饰钉
+    const az = rib * 15 * D
+    const stud = mesh(new THREE.SphereGeometry(0.07, 10, 8), M.gold)
+    stud.position.set(4.24 * Math.cos(az), domeY + 0.42, 4.24 * Math.sin(az)); root.add(stud)
+  }
 
   // ---------- 采光亭：压顶环 + 六柱 + 暖芯 + 六棱攒尖 + 宝珠尖针 ----------
   const lantY = domeY + domeH - 0.25
   const collar = mesh(new THREE.CylinderGeometry(0.72, 0.86, 0.34, 24), M.trim)
   collar.position.y = lantY + 0.17; root.add(collar)
+  const goldRing = mesh(new THREE.TorusGeometry(0.755, 0.032, 8, 24), M.gold)   // 采光亭鎏金颈环
+  goldRing.rotation.x = Math.PI / 2; goldRing.position.y = lantY + 0.36; root.add(goldRing)
   for (let k = 0; k < 6; k++) root.add(hexPrism(0.09, 1.35, M.trim, 0.88 * Math.cos(vertAz(k)), lantY + 0.34, 0.88 * Math.sin(vertAz(k))))
   const beacon = mesh(new THREE.CylinderGeometry(0.66, 0.66, 1.05, 6), M.glowWarm)
   beacon.position.y = lantY + 0.34 + 0.525; root.add(beacon)
@@ -276,9 +331,9 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   }
 
   // ---------- 场地景观：树阵 / 六棱石灯 / 长椅 / 绿篱角 / 石盆 ----------
-  for (let k = 0; k < 6; k++) {                              // 树：面方位 r 8.75（枝展控制在红线内）
+  for (let k = 0; k < 6; k++) {                              // 精修庭院树：面方位 r 8.75（六棱树池 + 修剪球冠）
     const az = faceAz(k) + (rng() - 0.5) * 6 * D
-    root.add(B.tree({ x: 8.75 * Math.cos(az), z: 8.75 * Math.sin(az), scale: 0.88 + rng() * 0.14, seed: 11 + k }))
+    root.add(gardenTree({ x: 8.75 * Math.cos(az), z: 8.75 * Math.sin(az), scale: 0.95 + rng() * 0.12, seed: 31 + k }))
   }
   for (let k = 0; k < 6; k++) {                              // 六棱石灯：放射步道口两侧
     for (const s of [-1, 1]) {
