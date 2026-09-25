@@ -63,6 +63,7 @@ export function makeStreetLamp(o: { x?: number; z?: number; h?: number }): THREE
   const head = mesh(new THREE.SphereGeometry(0.28, 12, 8), stdMaterial('#F5F1E0', { emissive: '#FFE9A8', emissiveIntensity: 0.9 }))
   head.position.y = h; grp.add(head)
   grp.position.set(o.x ?? 0, 0, o.z ?? 0)
+  grp.userData.site = true   // 景观件：R13 退线豁免
   return grp
 }
 export function makeTree(o: { x?: number; z?: number; scale?: number; seed?: number }): THREE.Object3D {
@@ -80,6 +81,7 @@ export function makeTree(o: { x?: number; z?: number; scale?: number; seed?: num
   const s = o.scale ?? 1
   grp.scale.set(s, s, s)
   grp.position.set(o.x ?? 0, 0, o.z ?? 0)
+  grp.userData.site = true   // 景观件：R13 退线豁免
   return grp
 }
 export function makeNeonSign(o: { w: number; h: number; color: string; x?: number; y?: number; z?: number }): THREE.Object3D {
@@ -97,6 +99,7 @@ export function makePlinth(o: { w: number; d: number; h: number; color?: string 
 export function makeHedge(o: { w: number; d?: number; h?: number; x?: number; z?: number }): THREE.Object3D {
   const g = mesh(new THREE.BoxGeometry(o.w, o.h ?? 0.9, o.d ?? 0.8), stdMaterial('#6E7F5C', { roughness: 0.95 }))
   g.position.set(o.x ?? 0, (o.h ?? 0.9) / 2, o.z ?? 0)
+  g.userData.site = true   // 景观件：R13 退线豁免
   return g
 }
 export function makeBench(o: { x?: number; z?: number; rotY?: number }): THREE.Object3D {
@@ -109,6 +112,7 @@ export function makeBench(o: { x?: number; z?: number; rotY?: number }): THREE.O
   }
   grp.rotation.y = o.rotY ?? 0
   grp.position.set(o.x ?? 0, 0, o.z ?? 0)
+  grp.userData.site = true   // 景观件：R13 退线豁免
   return grp
 }
 
@@ -172,6 +176,7 @@ export function makeUrn(o: { scale?: number; color?: string; x?: number; y?: num
   const s = o.scale ?? 1
   grp.scale.set(s, s, s)
   grp.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0)
+  grp.userData.site = true   // 景观件：R13 退线豁免
   return grp
 }
 
