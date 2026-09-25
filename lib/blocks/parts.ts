@@ -111,3 +111,84 @@ export function makeBench(o: { x?: number; z?: number; rotY?: number }): THREE.O
   grp.position.set(o.x ?? 0, 0, o.z ?? 0)
   return grp
 }
+
+// ---- 高表现力组件（[city-admin] 增补 2026-09-25：把面数预算花在可感知细节上的官方件）----
+
+/** 带半圆拱洞的墙板（洞开到底成柱廊）；挤出方向 +Z，y 为板底 */
+export function makeArchWall(o: { w: number; h: number; archW: number; archH: number; depth?: number; color?: string; x?: number; y?: number; z?: number }): THREE.Object3D {
+  const depth = o.depth ?? 0.4
+  const shape = new THREE.Shape()
+  shape.moveTo(-o.w / 2, 0); shape.lineTo(-o.w / 2, o.h); shape.lineTo(o.w / 2, o.h); shape.lineTo(o.w / 2, 0); shape.closePath()
+  const hole = new THREE.Path()
+  hole.moveTo(-o.archW / 2, 0)
+  hole.lineTo(-o.archW / 2, o.archH - o.archW / 2)
+  hole.absarc(0, o.archH - o.archW / 2, o.archW / 2, Math.PI, 0, true)
+  hole.lineTo(o.archW / 2, 0)
+  hole.closePath()
+  shape.holes.push(hole)
+  const g = mesh(new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 7, steps: 1 }), stdMaterial(pick(o.color, 8), { roughness: 0.8 }))
+  g.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0)
+  return g
+}
+
+/** 实心拱形贴板（盲拱/浮雕饰面）：矩形 + 顶部半圆轮廓，挤出 +Z，y 为板底 */
+export function makeArchPanel(o: { w: number; h: number; depth?: number; color?: string; x?: number; y?: number; z?: number }): THREE.Object3D {
+  const r = o.w / 2
+  const shape = new THREE.Shape()
+  shape.moveTo(-r, 0); shape.lineTo(-r, o.h - r)
+  shape.absarc(0, o.h - r, r, Math.PI, 0, true)
+  shape.lineTo(r, 0); shape.closePath()
+  const g = mesh(new THREE.ExtrudeGeometry(shape, { depth: o.depth ?? 0.18, bevelEnabled: false, curveSegments: 7, steps: 1 }), stdMaterial(pick(o.color, 8), { roughness: 0.8 }))
+  g.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0)
+  return g
+}
+
+/** 栏杆段：扶手 + 踢脚 + 密立柱（柱距约 1m），沿局部 X 展开，y 为底部 */
+export function makeRailing(o: { w: number; h?: number; color?: string; x?: number; y?: number; z?: number }): THREE.Object3D {
+  const h = o.h ?? 1.0
+  const grp = new THREE.Group()
+  const hand = mesh(new THREE.BoxGeometry(o.w, 0.12, 0.22), stdMaterial(pick(o.color, 1)))
+  hand.position.y = h - 0.06; grp.add(hand)
+  const skirt = mesh(new THREE.BoxGeometry(o.w, 0.1, 0.12), stdMaterial(pick(o.color, 3)))
+  skirt.position.y = 0.05; grp.add(skirt)
+  const n = Math.max(3, Math.round(o.w))
+  for (let i = 0; i <= n; i++) {
+    const post = mesh(new THREE.CylinderGeometry(0.055, 0.07, h - 0.12, 6), stdMaterial(pick(o.color, 3), { roughness: 0.6 }))
+    post.position.set(-o.w / 2 + (o.w * i) / n, (h - 0.12) / 2 + 0.12); grp.add(post)
+  }
+  grp.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0)
+  return grp
+}
+
+/** 石盆（urn：座 + 盆身 + 半球盖），y 为底部 */
+export function makeUrn(o: { scale?: number; color?: string; x?: number; y?: number; z?: number }): THREE.Object3D {
+  const grp = new THREE.Group()
+  const base = mesh(new THREE.CylinderGeometry(0.3, 0.36, 0.34, 10), stdMaterial(pick(o.color, 3)))
+  base.position.y = 0.17; grp.add(base)
+  const body = mesh(new THREE.CylinderGeometry(0.26, 0.2, 0.42, 10), stdMaterial(pick(o.color, 8)))
+  body.position.y = 0.52; grp.add(body)
+  const cap = mesh(new THREE.SphereGeometry(0.24, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), stdMaterial(pick(o.color, 3)))
+  cap.position.y = 0.73; grp.add(cap)
+  const s = o.scale ?? 1
+  grp.scale.set(s, s, s)
+  grp.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0)
+  return grp
+}
+
+/** 井字窗棂板（cols 竖 × rows 横棂条），y 为底部 */
+export function makeLatticePanel(o: { w: number; h: number; cols?: number; rows?: number; bar?: number; color?: string; x?: number; y?: number; z?: number }): THREE.Object3D {
+  const grp = new THREE.Group()
+  const t = o.bar ?? 0.12
+  const mat = stdMaterial(pick(o.color, 3))
+  const cols = o.cols ?? 4, rows = o.rows ?? 3
+  for (let c = 0; c <= cols; c++) {
+    const v = mesh(new THREE.BoxGeometry(t, o.h, t), mat)
+    v.position.set(-o.w / 2 + (o.w * c) / cols, o.h / 2, 0); grp.add(v)
+  }
+  for (let r = 0; r <= rows; r++) {
+    const hbar = mesh(new THREE.BoxGeometry(o.w, t, t), mat)
+    hbar.position.set(0, (o.h * r) / rows, 0); grp.add(hbar)
+  }
+  grp.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0)
+  return grp
+}
