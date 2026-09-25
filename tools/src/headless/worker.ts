@@ -13,11 +13,13 @@ try {
   if (!(root instanceof THREE.Object3D)) throw new Error('build() 必须返回 THREE.Object3D')
 
   let triangles = 0
+  let meshes = 0
   root.traverse((o) => {
     const m = o as THREE.Mesh
     if ((m as THREE.Mesh).isMesh && m.geometry) {
       const n = m.geometry.index ? m.geometry.index.count : (m.geometry.attributes.position?.count ?? 0)
       triangles += Math.floor(n / 3)
+      meshes++
     }
   })
 
@@ -27,7 +29,7 @@ try {
     throw new Error('建筑为空：无可渲染几何（包围盒为空或含 NaN）')
   }
   parentPort!.postMessage({
-    ok: true, triangles,
+    ok: true, triangles, meshes,
     bboxMin: [box.min.x, box.min.y, box.min.z] as [number, number, number],
     bboxMax: [box.max.x, box.max.y, box.max.z] as [number, number, number],
   })

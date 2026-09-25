@@ -10,6 +10,7 @@ export interface HeadlessResult {
   error?: string
   stack?: string
   triangles: number
+  meshes?: number
   bboxMin?: [number, number, number]
   bboxMax?: [number, number, number]
 }

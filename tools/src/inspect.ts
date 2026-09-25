@@ -13,6 +13,10 @@ export interface InspectResult { building: string; city: string; passed: boolean
 const ok = (rule: string, detail: string): RuleResult => ({ rule, pass: true, detail })
 const bad = (rule: string, detail: string): RuleResult => ({ rule, pass: false, detail })
 
+/** R11/R12 品质下限（[city-admin] 修宪 2026-09-25）：官方建筑（model=official）豁免 */
+export const QUALITY_FLOOR = { minTriangles: 12_000, minMeshes: 60, notesMinChars: 200 }
+const isOfficial = (row: RegistryRow) => row.builder.model_id === 'official'
+
 export function loadPlan(cityDir: string): PlanData {
   return JSON.parse(readFileSync(resolve(cityDir, 'plan.json'), 'utf8')) as PlanData
 }
@@ -83,6 +87,19 @@ export async function inspectBuilding(
     else results.push(ok('R10', `身份 ${res.modelId} 归一一致${plan.policy?.allowedModelIds ? '，且在城主施工白名单内' : ''}`))
   }
 
+  // R12：设计文档（修宪：施工前比选与预算分配须留痕；官方建筑豁免）
+  if (row && isOfficial(row)) {
+    results.push(ok('R12', '官方建筑豁免设计文档'))
+  } else {
+    const notesPath = resolve(buildingDir, 'NOTES.md')
+    let notes: string | null = null
+    if (existsSync(notesPath)) notes = readFileSync(notesPath, 'utf8')
+    if (!notes) results.push(bad('R12', '缺 NOTES.md 设计文档——须含立意、方案比选结论与三角预算分配表（CITY.md 第 2 步）'))
+    else if (notes.length < QUALITY_FLOOR.notesMinChars) results.push(bad('R12', `NOTES.md 过短（${notes.length} 字 < ${QUALITY_FLOOR.notesMinChars}）——补齐立意、形制与预算分配`))
+    else if (!notes.includes('预算')) results.push(bad('R12', 'NOTES.md 缺三角预算分配（「预算」节）——每类构件的计划面数与实际开销'))
+    else results.push(ok('R12', `设计文档 ${notes.length} 字，含预算分配`))
+  }
+
   // R2/R3/R4/R9：无头执行
   if (compiled.ok && !r6a.length && !importViolations.length && row) {
     const lot = plan.lots.find((l) => l.id === row.lot)
@@ -104,6 +121,17 @@ export async function inspectBuilding(
       results.push(head.triangles <= 50_000
         ? ok('R4', `三角形 ${head.triangles.toLocaleString()} ≤ 50,000`)
         : bad('R4', `三角形 ${head.triangles.toLocaleString()} 超出 50,000 上限 ${(head.triangles - 50_000).toLocaleString()}`))
+
+      // R11：完成度下限（修宪：防最简可行解——预算上限的 24% 与构件密度是底线）
+      if (isOfficial(row)) {
+        results.push(ok('R11', '官方建筑豁免品质下限'))
+      } else {
+        const triFloor = head.triangles >= QUALITY_FLOOR.minTriangles
+        const meshFloor = (head.meshes ?? 0) >= QUALITY_FLOOR.minMeshes
+        results.push(triFloor && meshFloor
+          ? ok('R11', `完成度达标：三角形 ${head.triangles.toLocaleString()} ≥ ${QUALITY_FLOOR.minTriangles.toLocaleString()}，mesh ${head.meshes} ≥ ${QUALITY_FLOOR.minMeshes}（预算上限 50,000 的 ${(head.triangles / 500).toFixed(0)}%）`)
+          : bad('R11', `完成度不足：三角形 ${head.triangles.toLocaleString()}（需 ≥ ${QUALITY_FLOOR.minTriangles.toLocaleString()}），mesh ${head.meshes ?? 0}（需 ≥ ${QUALITY_FLOOR.minMeshes}）——加密窗棂/栏杆/线脚/柱阵等细部，把预算分配表花掉`))
+      }
 
       // 回写与竣工（对 override 数组同样生效，测试即验证）。
       // 封存行（completed_at 非空）不回写：重算一致则静默跳过（不重复写封存行）；不符则红——

@@ -10,7 +10,7 @@ let cityDir: string   // 临时城市：真实 plan.json + 临时 registry + fix
 
 const row = (id: string, lot: string, entry: string, model = 'GLM-5.3') => ({
   id, lot, name: `测试建筑${id}`, desc: '测试',
-  builder: { model, model_id: 'glm-5.3', agent: 'zcode', operator: 'Think' },
+  builder: { model, model_id: 'glm-5.3', agent: 'zcode' },
   sessions: [{ date: '2026-09-24T20:30:00+08:00', input: 100, output: 50, note: '首建' }],
   tokens: { input: 100, output: 50 },
   started_at: '2026-09-24T20:30:00+08:00', completed_at: null,
@@ -23,7 +23,7 @@ const row = (id: string, lot: string, entry: string, model = 'GLM-5.3') => ({
 const COPIED_DIRS = [
   'b-000001-good-tower', 'b-000002-bad-bbox', 'b-000003-bad-height',
   'b-000004-bad-tris', 'b-000005-bad-random', 'b-000006-bad-cross', 'good-tower',
-  'b-000007-bad-empty', 'b-000009-good-tower',
+  'b-000007-bad-empty', 'b-000009-good-tower', 'b-000008-bad-quality',
 ]
 
 beforeAll(() => {
@@ -38,6 +38,7 @@ beforeAll(() => {
   cpSync(resolve(root, 'tools/test/fixtures/buildings/bad-cross-import'), resolve(cityDir, 'buildings/b-000006-bad-cross'), { recursive: true })
   cpSync(resolve(root, 'tools/test/fixtures/buildings/good-tower'), resolve(cityDir, 'buildings/good-tower'), { recursive: true })
   cpSync(resolve(root, 'tools/test/fixtures/buildings/bad-empty'), resolve(cityDir, 'buildings/b-000007-bad-empty'), { recursive: true })
+  cpSync(resolve(root, 'tools/test/fixtures/buildings/bad-quality'), resolve(cityDir, 'buildings/b-000008-bad-quality'), { recursive: true })
   cpSync(resolve(root, 'tools/test/fixtures/buildings/good-tower'), resolve(cityDir, 'buildings/b-000009-good-tower'), { recursive: true })
   // bad-cross-import 的 index.ts import '../good-tower/index'——上面额外复制一份**原名** good-tower 供其解析
   // （无登记行的目录：inspectBuilding 不做孤儿检测，只有 inspectCity 查）
@@ -50,12 +51,12 @@ beforeAll(() => {
 
 afterAll(() => rmSync(cityDir, { recursive: true, force: true }))
 
-describe('inspectBuilding R1–R10（spec §14 坏建筑样本全拦截）', () => {
+describe('inspectBuilding R1–R12（spec §14 坏建筑样本全拦截）', () => {
   it('好建筑全绿且回填 mesh_stats', async () => {
     const rows = [row('b-000001', 'C3-05', 'buildings/b-000001-good-tower/index.ts')]
     const r = await inspectBuilding(root, cityDir, 'b-000001-good-tower', { registryOverride: rows })
     expect(r.passed).toBe(true)
-    expect(r.results.map((x) => x.rule)).toHaveLength(10)
+    expect(r.results.map((x) => x.rule)).toHaveLength(12)
     expect(rows[0].mesh_stats?.triangles).toBeGreaterThan(100)   // 回填发生在 override 数组上
   })
   it.each([
@@ -71,6 +72,23 @@ describe('inspectBuilding R1–R10（spec §14 坏建筑样本全拦截）', () 
     expect(r.passed).toBe(false)
     const failed = r.results.filter((x) => !x.pass).map((x) => x.rule)
     expect(failed).toContain(rule)
+  })
+  it('R11/R12：低完成度且无 NOTES 的建筑被拦（[city-admin] 修宪 2026-09-25）', async () => {
+    const rows = [row('b-000008', 'C3-08', 'buildings/b-000008-bad-quality/index.ts')]
+    const r = await inspectBuilding(root, cityDir, 'b-000008-bad-quality', { registryOverride: rows })
+    const r11 = r.results.find((x) => x.rule === 'R11')!
+    const r12 = r.results.find((x) => x.rule === 'R12')!
+    expect(r11.pass).toBe(false)
+    expect(r11.detail).toMatch(/完成度不足/)
+    expect(r12.pass).toBe(false)
+    expect(r12.detail).toMatch(/NOTES/)
+  })
+  it('官方建筑豁免 R11/R12', async () => {
+    const rows = [row('b-000008', 'C3-08', 'buildings/b-000008-bad-quality/index.ts', 'official')]
+    rows[0].builder = { model: 'official', model_id: 'official', agent: 'official' }
+    const r = await inspectBuilding(root, cityDir, 'b-000008-bad-quality', { registryOverride: rows })
+    expect(r.results.find((x) => x.rule === 'R11')!.pass).toBe(true)
+    expect(r.results.find((x) => x.rule === 'R12')!.pass).toBe(true)
   })
   it('R7：地块被他人占用', async () => {
     const rows = [
