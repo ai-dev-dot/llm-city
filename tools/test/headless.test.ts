@@ -1,9 +1,9 @@
-import { mkdtempSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { compileBuilding } from '../src/compile'
-import { ensureWorker, runHeadless } from '../src/headless/run'
+import { ensureWorker, runHeadless, workerFingerprint } from '../src/headless/run'
 
 const root = resolve(__dirname, '../..')
 const fx = (...p: string[]) => resolve(root, 'tools/test/fixtures/buildings', ...p)
@@ -44,5 +44,25 @@ describe('runHeadless（R2/R3/R4/R9 的数据来源）', () => {
     const r = await runHeadless(out, lot, 1, 5000)
     expect(r.ok).toBe(false)
     expect(r.error).toMatch(/建筑炸了/)
+  })
+  it('worker 缓存指纹自愈：戳记缺失或与源码不符时自动重编译（[city-admin] 2026-09-25）', () => {
+    const stampPath = resolve(root, 'node_modules/.cache/llm-city/worker.mjs.sha')
+    rmSync(stampPath, { force: true })
+    ensureWorker(root)   // 旧版无戳记缓存 → 视为失效，重编译并落戳记
+    expect(readFileSync(stampPath, 'utf8')).toMatch(/^[0-9a-f]{64}$/)
+    writeFileSync(stampPath, 'stale-fingerprint')
+    ensureWorker(root)   // 戳记与源码不符（模拟改过 worker.ts/lib 后的旧缓存）→ 重编译自愈
+    expect(readFileSync(stampPath, 'utf8')).toBe(workerFingerprint(root))
+  })
+  it('worker 指纹覆盖 lib 依赖：lib 源码变更即指纹变化', () => {
+    const before = workerFingerprint(root)
+    const probe = resolve(root, 'lib/.fp-probe.ts')
+    writeFileSync(probe, '// 指纹探针\n')
+    try {
+      expect(workerFingerprint(root)).not.toBe(before)
+    } finally {
+      rmSync(probe, { force: true })
+    }
+    expect(workerFingerprint(root)).toBe(before)   // 探针移除后指纹复原
   })
 })

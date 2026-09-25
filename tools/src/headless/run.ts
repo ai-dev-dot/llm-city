@@ -1,6 +1,7 @@
 import { Worker } from 'node:worker_threads'
-import { existsSync, mkdirSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { createHash } from 'node:crypto'
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { relative, resolve } from 'node:path'
 import * as esbuild from 'esbuild'
 import * as url from 'node:url'
 import type { Lot } from '../../../lib/ctx'
@@ -16,10 +17,34 @@ export interface HeadlessResult {
   bboxMax?: [number, number, number]
 }
 
-/** 幂等：编译 worker.ts → node_modules/.cache/llm-city/worker.mjs（external three，可向上解析 node_modules） */
+/** worker 缓存的期望指纹：worker.ts 源码 + lib 目录下全部 .ts 源码（worker 的本地依赖按
+ *  城市架构只会落在 lib/，three 为 external 不入 bundle；路径排序保证跨平台稳定）。
+ *  [city-admin] 2026-09-25：修复「worker.ts 改动后旧缓存仍被复用」的隐患——
+ *  市政代码迭代后 inspect 曾继续跑旧逻辑，须手动删缓存才生效。 */
+export function workerFingerprint(repoRoot: string): string {
+  const hash = createHash('sha256')
+  const walk = (dir: string) => {
+    for (const f of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const p = resolve(dir, f.name)
+      if (f.isDirectory()) walk(p)
+      else if (f.name.endsWith('.ts')) {
+        hash.update(relative(repoRoot, p).replace(/\\/g, '/'))
+        hash.update(readFileSync(p, 'utf8'))
+      }
+    }
+  }
+  hash.update(readFileSync(resolve(repoRoot, 'tools/src/headless/worker.ts'), 'utf8'))
+  walk(resolve(repoRoot, 'lib'))
+  return hash.digest('hex')
+}
+
+/** 幂等：编译 worker.ts → node_modules/.cache/llm-city/worker.mjs（external three，可向上解析 node_modules）。
+ *  缓存命中以指纹戳记（worker.mjs.sha）一致为准：源码或 lib 变更即自动重编译，旧版无戳记缓存亦自动失效。 */
 export function ensureWorker(repoRoot: string): string {
   const out = resolve(repoRoot, 'node_modules/.cache/llm-city/worker.mjs')
-  if (existsSync(out)) return out
+  const stamp = `${out}.sha`
+  const digest = workerFingerprint(repoRoot)
+  if (existsSync(out) && existsSync(stamp) && readFileSync(stamp, 'utf8') === digest) return out
   mkdirSync(resolve(repoRoot, 'node_modules/.cache/llm-city'), { recursive: true })
   const entry = resolve(repoRoot, 'tools/src/headless/worker.ts')
   esbuild.buildSync({
@@ -31,6 +56,7 @@ export function ensureWorker(repoRoot: string): string {
     external: ['three'],
     logLevel: 'silent',
   })
+  writeFileSync(stamp, digest)
   return out
 }
 
