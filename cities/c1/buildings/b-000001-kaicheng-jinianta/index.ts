@@ -63,41 +63,42 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     root.add(g)
   }
 
-  // ---- 台基（三层收方：±9.25 / ±8.5 / ±7.75，顶面 y=3.0）----
-  box(18.5, 0.9, 18.5, 0, 0, 0, C.light)
-  box(17.0, 1.0, 17.0, 0, 0.9, 0, C.light)
-  box(15.5, 1.1, 15.5, 0, 1.9, 0, C.trim)
+  // ---- 台基（三层收方：±7 / ±6.25 / ±5.5，顶面 y=2.8）——收窄台基，把地块还给草坪 ----
+  box(14, 0.9, 14, 0, 0, 0, C.light)
+  box(12.5, 0.95, 12.5, 0, 0.9, 0, C.light)
+  box(11, 0.95, 11, 0, 1.85, 0, C.trim)
 
-  // 南面大台阶：从三台顶缘（z 7.75）十级落地到 z≈10.1（高差 3.0）
-  for (let j = 0; j < 10; j++) box(6.4, 0.3, 0.24, 0, 2.7 - 0.3 * j, 7.87 + 0.24 * j, C.light)
+  // 南面大台阶：从台基顶缘（z 7）九级落到草坪（高差 2.8）
+  for (let j = 0; j < 9; j++) box(5.0, 0.31, 0.26, 0, 2.49 - 0.31 * j, 7.1 + 0.26 * j, C.light)
 
-  // 北面开城铭碑（立于二层台基顶 y=1.9，|z|=8.1 在二台 ±8.5 内、三台 ±7.75 外）
-  box(3.0, 0.3, 0.9, 0, 1.9, -8.1, C.trim)
-  box(2.5, 2.0, 0.38, 0, 2.2, -8.1, C.dark)
-  box(2.0, 1.3, 0.06, 0, 2.55, -8.31, '#9FB8C8', { emissive: '#9FB8C8', emissiveIntensity: 0.5 })
-  box(2.8, 0.2, 0.6, 0, 4.2, -8.1, C.light)
+  // 北面开城铭碑（立于北侧草坪，面朝城外）
+  box(3.0, 0.3, 0.9, 0, 0.5, -8.3, C.trim)
+  box(2.5, 2.0, 0.38, 0, 0.8, -8.3, C.dark)
+  box(2.0, 1.3, 0.06, 0, 1.15, -8.51, '#9FB8C8', { emissive: '#9FB8C8', emissiveIntensity: 0.5 })
+  box(2.8, 0.2, 0.6, 0, 2.8, -8.3, C.light)
 
-  // ---- 塔身八层退台（每层 6.5m，自 15m 见方每层收 1.34m）----
-  let width = 15
-  let y = 3
+  // ---- 塔身八层退台（每层 6.5m，自 10.4m 见方每层收 0.6m）----
+  let width = 10.4
+  let y = 2.8
   for (let f = 0; f < 8; f++) {
     const hw = width / 2
     // 实体核（缩进，被拱廊包住）
     box(width - 1.8, 6.5, width - 1.8, 0, y, 0, C.stone)
-    // 四面拱券柱廊：每面 5 券（收分后上层面板渐窄，券同宽递减）
-    const panelW = hw * 2 - 0.6
-    const aw = panelW / 5 - 0.5
-    for (let k = 0; k < 5; k++) {
-      const cx = -panelW / 2 + (panelW / 5) * (k + 0.5)
-      archPanel(panelW / 5 + 0.08, 5.6, aw, 4.9, cx, y + 0.35, hw - 0.2, 0)
-      archPanel(panelW / 5 + 0.08, 5.6, aw, 4.9, cx, y + 0.35, -hw + 0.2, Math.PI)
-      archPanel(panelW / 5 + 0.08, 5.6, aw, 4.9, hw - 0.2, y + 0.35, cx, Math.PI / 2)
-      archPanel(panelW / 5 + 0.08, 5.6, aw, 4.9, -hw + 0.2, y + 0.35, cx, -Math.PI / 2)
+    // 四面拱券柱廊：下层 5 券、上层 4 券
+    const panelW = width - 0.6
+    const nArch = width >= 9.5 ? 5 : 4
+    const aw = panelW / nArch - 0.5
+    for (let k = 0; k < nArch; k++) {
+      const cx = -panelW / 2 + (panelW / nArch) * (k + 0.5)
+      archPanel(panelW / nArch + 0.08, 5.6, aw, 4.9, cx, y + 0.35, hw - 0.2, 0)
+      archPanel(panelW / nArch + 0.08, 5.6, aw, 4.9, cx, y + 0.35, -hw + 0.2, Math.PI)
+      archPanel(panelW / nArch + 0.08, 5.6, aw, 4.9, hw - 0.2, y + 0.35, cx, Math.PI / 2)
+      archPanel(panelW / nArch + 0.08, 5.6, aw, 4.9, -hw + 0.2, y + 0.35, cx, -Math.PI / 2)
     }
     // 券内深景：实体核四面对齐每个券洞贴盲拱浮雕（官方件 archPanel），洞中见拱，纵深成对
     const coreHw = (width - 1.8) / 2
-    for (let k = 0; k < 5; k++) {
-      const cx = -panelW / 2 + (panelW / 5) * (k + 0.5)
+    for (let k = 0; k < nArch; k++) {
+      const cx = -panelW / 2 + (panelW / nArch) * (k + 0.5)
       const niche = (x: number, z: number, rotY: number) => {
         const relief = B.archPanel({ w: aw * 0.92, h: 4.4, depth: 0.16, color: C.sand })
         relief.position.set(x, y + 0.5, z)
@@ -117,9 +118,9 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
       lp.rotation.y = rotY
       root.add(lp)
     }
-    // 券间壁柱（每面四根）+ 四角护角柱
-    for (let k = 1; k <= 4; k++) {
-      const bx = -panelW / 2 + (panelW / 5) * k
+    // 券间壁柱（每面 nArch-1 根）+ 四角护角柱
+    for (let k = 1; k <= nArch - 1; k++) {
+      const bx = -panelW / 2 + (panelW / nArch) * k
       box(0.44, 5.7, 0.5, bx, y + 0.25, hw - 0.2, C.sand)
       box(0.44, 5.7, 0.5, bx, y + 0.25, -hw + 0.2, C.sand)
       box(0.5, 5.7, 0.44, hw - 0.2, y + 0.25, bx, C.sand)
@@ -139,7 +140,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     for (const sx of [-1, 1]) for (const sz of [-1, 1])
       lift(B.urn({ color: C.trim, x: sx * (hw + 0.05), y: y + 6.84, z: sz * (hw + 0.05) }), 0)
     y += 6.5
-    width -= 1.34
+    width -= 0.6
   }
 
   // ---- 圣坛（八柱亭 + 青铜穹顶 + 灯笼），y 为八层塔身顶 ----
@@ -208,24 +209,21 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   // ---- 场地：地块满铺（草皮垫层 + 铺装环 + 灌木），不裸地交付 ----
   // 场景地面 y=0、道路 y=0.05：草皮必须是有厚度的垫层（顶面 0.5）才能在深度缓冲里
   // 站得住——薄贴片会与大地平面同深度档而被吃掉。0.5 高的垫层自带路缘效果。
-  box(19.6, 0.5, 19.6, 0, 0, 0, '#7FA35C', { roughness: 0.95 })
-  // 台基草皮环（铺在一/二层台基层顶的外露环带）
-  box(18.3, 0.06, 18.3, 0, 0.92, 0, '#74A054', { roughness: 0.95 })
-  box(16.8, 0.06, 16.8, 0, 1.94, 0, '#7FAC60', { roughness: 0.95 })
-  // 台基外圈铺装环（铺在草皮垫层顶面上）
-  box(19.6, 0.08, 1.0, 0, 0.5, 9.1, C.light, { roughness: 0.9 })
-  box(19.6, 0.08, 1.0, 0, 0.5, -9.1, C.light, { roughness: 0.9 })
-  box(1.0, 0.08, 17.6, 9.1, 0.5, 0, C.light, { roughness: 0.9 })
-  box(1.0, 0.08, 17.6, -9.1, 0.5, 0, C.light, { roughness: 0.9 })
+  box(19.6, 0.5, 19.6, 0, 0, 0, '#7FA35C', { roughness: 0.95, emissive: '#4F7A38', emissiveIntensity: 0.42 })
+  // 十字步道（草坪上的浅石步道，从四方通向台基）
+  box(1.4, 0.08, 3.0, 0, 0.5, 8.35, C.light, { roughness: 0.9 })
+  box(1.4, 0.08, 3.0, 0, 0.5, -8.35, C.light, { roughness: 0.9 })
+  box(3.0, 0.08, 1.4, 8.35, 0.5, 0, C.light, { roughness: 0.9 })
+  box(3.0, 0.08, 1.4, -8.35, 0.5, 0, C.light, { roughness: 0.9 })
   // 草皮上的灌木球阵（半嵌进草皮面）
   for (let i = 0; i < 14; i++) {
     const ang = (i / 14) * Math.PI * 2 + 0.22
-    const r = 9.55 + rng() * 0.12
+    const r = 9.35 + rng() * 0.12
     const shrub = new THREE.Mesh(
       new THREE.IcosahedronGeometry(0.38 + rng() * 0.16, 1),
       stdMaterial(i % 3 === 0 ? '#8C9E8B' : '#6E7F5C', { roughness: 0.95 }),
     )
-    shrub.position.set(Math.cos(ang) * r, 0.82, Math.sin(ang) * r)
+    shrub.position.set(Math.cos(ang) * r, 0.85, Math.sin(ang) * r)
     shrub.castShadow = true
     root.add(shrub)
   }
@@ -235,7 +233,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   for (let i = 0; i < 12; i++) {
     const ang = (i / 12) * Math.PI * 2
     if (Math.abs(Math.cos(ang)) < 0.3 && Math.sin(ang) > 0.55) continue
-    lift(B.streetLamp({ x: Math.cos(ang) * 9.55, z: Math.sin(ang) * 9.55, h: 4.0 }), 0.12)
+    lift(B.streetLamp({ x: Math.cos(ang) * 9.4, z: Math.sin(ang) * 9.4, h: 4.0 }), 0.5)
   }
   // 一台顶外圈树阵（r≈8.8，介于二台 ±8.5 与一台边 ±9.25 之间）
   for (let i = 0; i < 12; i++) {
@@ -244,18 +242,18 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     lift(B.tree({
       x: Math.cos(ang) * (8.8 + (rng() - 0.5) * 0.2), z: Math.sin(ang) * (8.8 + (rng() - 0.5) * 0.2),
       scale: 0.85 + rng() * 0.3, seed: i + 1,
-    }), 0.98)
+    }), 0.5)
   }
   // 四角 L 形绿篱（一台顶）
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-    lift(B.hedge({ w: 3.4, d: 0.55, h: 0.75, x: sx * 8.5, z: sz * 9.0 }), 0.98)
-    lift(B.hedge({ w: 0.55, d: 3.4, h: 0.75, x: sx * 9.0, z: sz * 8.5 }), 0.98)
+    lift(B.hedge({ w: 3.2, d: 0.55, h: 0.75, x: sx * 8.4, z: sz * 9.2 }), 0.5)
+    lift(B.hedge({ w: 0.55, d: 3.2, h: 0.75, x: sx * 9.2, z: sz * 8.4 }), 0.5)
   }
-  // 南轴仪仗旗阵（台基外草皮垫层上、台阶两侧各六根，旗面暖金）
+  // 南轴仪仗旗阵（南步道两侧草坪各六杆，旗面暖金）
   for (let i = 0; i < 6; i++) {
-    const z = 9.7 - i * 0.12
+    const z = 9.0 - i * 0.24
     for (const sx of [-1, 1]) {
-      const px = sx * (5.2 + (i % 2) * 1.1)
+      const px = sx * 2.6
       const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 7, 8), stdMaterial(C.dark, { metalness: 0.5, roughness: 0.5 }))
       pole.position.set(px, 4.0, z)
       pole.castShadow = true
@@ -263,11 +261,9 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
       box(1.8, 1.0, 0.06, px + sx * -0.92, 6.4, z, C.gold, { emissive: C.gold, emissiveIntensity: 0.35 })
     }
   }
-  // 南轴铺装带 + 长椅（草皮垫层顶面）
-  box(2.2, 0.1, 1.3, -4.6, 0.5, 9.55, C.light)
-  box(2.2, 0.1, 1.3, 4.6, 0.5, 9.55, C.light)
-  lift(B.bench({ x: -4.6, z: 9.55 }), 0.6)
-  lift(B.bench({ x: 4.6, z: 9.55 }), 0.6)
+  // 长椅（草坪边、步道旁）
+  lift(B.bench({ x: -2.6, z: 9.45 }), 0.5)
+  lift(B.bench({ x: 2.6, z: 9.45 }), 0.5)
   lift(B.bench({ x: -6.9, z: 6.9, rotY: Math.PI / 4 }), 0.5)
   lift(B.bench({ x: 6.9, z: 6.9, rotY: -Math.PI / 4 }), 0.5)
 
