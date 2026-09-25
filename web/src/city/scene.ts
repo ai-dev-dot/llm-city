@@ -50,6 +50,17 @@ export function createScene(canvas: HTMLCanvasElement, city: CityData): SceneBun
   ground.receiveShadow = true
   scene.add(ground)
 
+  // 地块默认草皮瓦（[city-admin] 2026-09-25：空地不裸灰——每格地块默认铺草皮，
+  // 整个街区在俯视下读作一整块草坪；建筑在其上再做自己的园地设计。
+  // 0.16 高垫层顶面高于道路层防深度吞没；emissive 补底抵消掠射角把顶面压灰。）
+  const lotGrass = new THREE.MeshStandardMaterial({ color: '#8AA662', roughness: 0.95, emissive: '#42672F', emissiveIntensity: 0.4 })
+  for (const lot of city.lots) {
+    const tile = new THREE.Mesh(new THREE.BoxGeometry(19.6, 0.16, 19.6), lotGrass)
+    tile.position.set(lot.center[0], 0.08, lot.center[1])
+    tile.receiveShadow = true
+    scene.add(tile)
+  }
+
   // 道路网格推导（spec §11 道路骨架=场景底色一部分）：街区边界间的 12m 道路条
   const { blocks, blockPitch, roadWidth } = city.grid
   const span = blocks * blockPitch   // 648

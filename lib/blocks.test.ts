@@ -26,6 +26,19 @@ describe('官方积木库（spec §6.4 十三件）', () => {
       expect(countTris(obj), `${names[i]} 应有几何`).toBeGreaterThan(0)
     }
   })
+  it('高表现力五件（增补 2026-09-25）齐全且有几何', () => {
+    const objs = [
+      blocks.archWall({ w: 4, h: 5, archW: 2.2, archH: 4 }),
+      blocks.archPanel({ w: 2, h: 3 }),
+      blocks.railing({ w: 8 }),
+      blocks.urn({}),
+      blocks.latticePanel({ w: 3, h: 2.4 }),
+    ]
+    for (const o of objs) {
+      expect(o).toBeInstanceOf(THREE.Object3D)
+      expect(countTris(o)).toBeGreaterThan(0)
+    }
+  })
   it('同种子 tree 两次构建一致（确定性，锁叶形随机量）', () => {
     const a = blocks.tree({ seed: 7 }), b = blocks.tree({ seed: 7 })
     const leaves = (root: THREE.Object3D) => {
