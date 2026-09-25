@@ -39,8 +39,24 @@ const buildings = rows.map((r) => {
     }
     if (notesExcerpt.length > 300) notesExcerpt = notesExcerpt.slice(0, 300) + '…'
   }
+  // 宗地几何（[city-admin] 立法 2026-09-26 宪法第 14 条）：parcel 缺省 = 单地块；
+  // 中心 = 宗地各地块中心均值（矩形宗地即几何中心），尺寸 = 包络 + 单地块边长
+  const parcel = Array.isArray(r.parcel) && r.parcel.length ? r.parcel : [r.lot]
+  const parcelLots = parcel.map((id) => plan.lots.find((l) => l.id === id)).filter(Boolean)
+  const parcelCenter = parcelLots.length
+    ? [
+        parcelLots.reduce((s, l) => s + l.center[0], 0) / parcelLots.length,
+        parcelLots.reduce((s, l) => s + l.center[1], 0) / parcelLots.length,
+      ]
+    : null
+  const parcelSize = parcelLots.length
+    ? [
+        Math.max(...parcelLots.map((l) => l.center[0])) - Math.min(...parcelLots.map((l) => l.center[0])) + 20,
+        Math.max(...parcelLots.map((l) => l.center[1])) - Math.min(...parcelLots.map((l) => l.center[1])) + 20,
+      ]
+    : null
   return {
-    id: r.id, lot: r.lot, name: r.name, desc: r.desc ?? '',
+    id: r.id, lot: r.lot, parcel, parcelCenter, parcelSize, name: r.name, desc: r.desc ?? '',
     model: r.builder.model, modelId: r.builder.model_id, vendor: vendorOf(r.builder.model_id),
     agent: r.builder.agent, operator: r.builder.operator ?? null,
     sessions: r.sessions, tokens: r.tokens,
@@ -58,7 +74,8 @@ import type { BuildCtx } from '../../../lib/ctx'
 import type { Object3D } from 'three'
 
 export interface BuildingRecord {
-  id: string; lot: string; name: string; desc: string
+  id: string; lot: string; parcel: string[]; parcelCenter: [number, number] | null; parcelSize: [number, number] | null
+  name: string; desc: string
   model: string; modelId: string; vendor: { id: string; name: string; color: string } | null
   agent: string; operator: string | null
   sessions: Array<{ date: string; input: number | null; output: number | null; note?: string }>

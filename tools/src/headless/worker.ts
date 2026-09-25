@@ -20,7 +20,10 @@ try {
     while (p) { if (p.userData?.site === true) return true; p = p.parent }
     return false
   }
-  const coreHalf = Math.min(msg.lot.size[0], msg.lot.size[1]) * 0.4
+  // R13 退线（[city-admin] 立法 2026-09-26 宗地化宪法第 14 条）：建筑本体须落在宗地中央
+  // (w−4)×(d−4)——逐轴各退 2m。单地块 20×20 时为 16×16，与旧口径 min*0.4 数值一致。
+  const coreHalfX = msg.lot.size[0] / 2 - 2
+  const coreHalfZ = msg.lot.size[1] / 2 - 2
   let sbViolations = 0
   let sbWorst = 0
   root.traverse((o) => {
@@ -29,7 +32,7 @@ try {
       const n = m.geometry.index ? m.geometry.index.count : (m.geometry.attributes.position?.count ?? 0)
       triangles += Math.floor(n / 3)
       meshes++
-      // R13 退线：非豁免构件须落在地块中央 16×16。豁免：地被层（顶 ≤0.6m）、
+      // R13 退线：非豁免构件须落在宗地中央 (w−4)×(d−4)。豁免：地被层（顶 ≤0.6m）、
       // 小件（顶 ≤1.5m 且 ≤1.6×1.6）、薄板（厚 ≤0.5m 且顶 ≤3m，如台阶）、景观件（userData.site）
       if (!isSite(m)) {
         // [city-admin] 修复 2026-09-25：Box3.setFromObject 非精确模式按本地 AABB 经旋转矩阵
@@ -41,7 +44,9 @@ try {
           const extX = b.max.x - b.min.x
           const extZ = b.max.z - b.min.z
           if (!(topY <= 0.6 || (topY <= 1.5 && extX <= 1.6 && extZ <= 1.6) || (Math.min(extX, extZ) <= 0.5 && topY <= 3.0))) {
-            const exceed = Math.max(Math.abs(b.min.x), Math.abs(b.max.x), Math.abs(b.min.z), Math.abs(b.max.z)) - coreHalf
+            const exceedX = Math.max(Math.abs(b.min.x), Math.abs(b.max.x)) - coreHalfX
+            const exceedZ = Math.max(Math.abs(b.min.z), Math.abs(b.max.z)) - coreHalfZ
+            const exceed = Math.max(exceedX, exceedZ)
             if (exceed > 0.05) { sbViolations++; sbWorst = Math.max(sbWorst, exceed) }
           }
         }
@@ -56,7 +61,7 @@ try {
     throw new Error('建筑为空：无可渲染几何（包围盒为空或含 NaN）')
   }
   parentPort!.postMessage({
-    ok: true, triangles, meshes, setback: { violations: sbViolations, worst: sbWorst, coreHalf },
+    ok: true, triangles, meshes, setback: { violations: sbViolations, worst: sbWorst, coreHalfX, coreHalfZ },
     bboxMin: [box.min.x, box.min.y, box.min.z] as [number, number, number],
     bboxMax: [box.max.x, box.max.y, box.max.z] as [number, number, number],
   })

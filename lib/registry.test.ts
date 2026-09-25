@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { checkRegistryEdit, localIsoNow, parseRegistry, serializeRegistry, validateRow, validateTimestamp } from './registry'
+import { checkRegistryEdit, expandParcel, localIsoNow, parcelDims, parseRegistry, serializeRegistry, validateRow, validateTimestamp } from './registry'
 
 const fx = (name: string) => readFileSync(resolve(__dirname, '../tools/test/registry', name), 'utf8')
 
@@ -42,6 +42,39 @@ describe('validateTimestamp / validateRow', () => {
     const row = JSON.parse(fx('two-rows.jsonl').split('\n')[0])
     const builder = { model: row.builder.model, model_id: row.builder.model_id, agent: row.builder.agent }
     expect(validateRow({ ...row, builder }, 0)).toEqual([])
+  })
+})
+
+describe('parcel 宗地（宪法第 14 条 2026-09-26 立法）', () => {
+  const base = JSON.parse(fx('two-rows.jsonl').split('\n')[0])   // lot C3-05
+  const withParcel = (parcel: string[], lot = 'C3-05') => ({ ...base, lot, parcel })
+
+  it('合法矩形宗地通过：1×1/1×2/2×2/1×3/3×3', () => {
+    expect(validateRow(withParcel(['C3-05']), 0)).toEqual([])
+    expect(validateRow(withParcel(['C3-05', 'C3-06']), 0)).toEqual([])          // 1×2
+    expect(validateRow(withParcel(['C3-01', 'C3-02', 'C3-04', 'C3-05']), 0)).toEqual([])   // 2×2
+    expect(validateRow(withParcel(['C3-01', 'C3-02', 'C3-03'], 'C3-01'), 0)).toEqual([])   // 1×3
+    expect(validateRow(withParcel(Array.from({ length: 9 }, (_, i) => `C3-0${i + 1}`)), 0)).toEqual([])   // 3×3
+  })
+  it('跨街区 / 非矩形 / 重复 / 锚点不在册 均拦', () => {
+    expect(validateRow(withParcel(['C3-05', 'D5-06']), 0).join()).toMatch(/跨街区/)
+    expect(validateRow(withParcel(['C3-01', 'C3-02', 'C3-06']), 0).join()).toMatch(/矩形/)   // L 形
+    expect(validateRow(withParcel(['C3-05', 'C3-05']), 0).join()).toMatch(/重复/)
+    expect(validateRow(withParcel(['C3-05', 'C3-06'], 'C3-04'), 0).join()).toMatch(/锚点/)
+  })
+  it('expandParcel 缺省回退单地块；parcelDims 算宗地尺寸（列×行，米）', () => {
+    expect(expandParcel(base)).toEqual(['E5-05'])
+    expect(expandParcel(withParcel(['C3-04', 'C3-05', 'C3-07', 'C3-08']))).toEqual(['C3-04', 'C3-05', 'C3-07', 'C3-08'])
+    expect(parcelDims(base)).toEqual([20, 20])
+    expect(parcelDims(withParcel(['C3-05', 'C3-06']))).toEqual([40, 20])                     // 1×2（行内相邻）
+    expect(parcelDims(withParcel(['C3-04', 'C3-05', 'C3-07', 'C3-08']))).toEqual([40, 40])   // 2×2
+    expect(parcelDims(withParcel(['C3-01', 'C3-02', 'C3-03']))).toEqual([60, 20])            // 1×3
+  })
+  it('parcel 为不可变字段（改动即受限编辑违规）', () => {
+    const open = (p: string[]) => ({ ...withParcel(p), completed_at: null })   // 夹具首行为竣工行，改用在建行测受限编辑
+    const prev = [open(['C3-05', 'C3-06'])]
+    const curr = [open(['C3-05'])]
+    expect(checkRegistryEdit(prev, curr).join()).toMatch(/parcel/)
   })
 })
 

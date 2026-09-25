@@ -64,9 +64,10 @@ export class BuildingManager {
   constructor(private scene: THREE.Scene, private city: CityData, private loaders: Record<string, () => Promise<{ default: (ctx: BuildCtx) => THREE.Object3D }>>, private opts: { visibleRadius?: number } = {}) {
     this.roots.onEvict = (id, root) => this.disposeRoot(id, root)
     for (const b of city.buildings) {
-      const lot = city.lots.find((l) => l.id === b.lot)!
+      // 宗地化（宪法第 14 条）：摆放于宗地中心（parcelCenter 由 gen-city 从 plan 地块中心均值算出）
+      const pos = b.parcelCenter ?? city.lots.find((l) => l.id === b.lot)?.center ?? [0, 0]
       const g = new THREE.Group()
-      g.position.set(lot.center[0], 0, lot.center[1])
+      g.position.set(pos[0], 0, pos[1])
       g.userData.buildingId = b.id
       this.scene.add(g)
       this.groups.set(b.id, g)
@@ -114,8 +115,8 @@ export class BuildingManager {
     this.status.set(b.id, { state: 'loading' })
     try {
       const mod = await this.loaders[b.id]()                      // 韧性层 1：chunk 加载失败 → 灰盒
-      const lot = this.city.lots.find((l) => l.id === b.lot)!
-      const ctx: BuildCtx = { lot: { id: b.lot, size: lot.size, maxHeight: 300 }, rng: mulberry32(hashSeed(b.id)), blocks }
+      const size = b.parcelSize ?? this.city.lots.find((l) => l.id === b.lot)?.size ?? [20, 20]
+      const ctx: BuildCtx = { lot: { id: b.parcel.join('+'), size, maxHeight: 300 }, rng: mulberry32(hashSeed(b.id)), blocks }
       const root = validateObject3D(mod.default(ctx))             // 韧性层 2/3：build 异常或坏对象 → 灰盒
       root.traverse((o) => { o.userData.buildingId = b.id })
       if (this.filterFn) this.filterFn(root)

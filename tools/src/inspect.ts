@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { relative, resolve } from 'node:path'
 import { loadIdentityTable, resolveModelId } from '../../lib/identity'
-import { localIsoNow, loadRegistry, validateRow, writeRegistry, type RegistryRow } from '../../lib/registry'
+import { localIsoNow, loadRegistry, validateRow, writeRegistry, expandParcel, parcelDims, type RegistryRow } from '../../lib/registry'
 import { hashSeed } from '../../lib/ctx'
 import { checkAllowedInputs, compileBuilding, readDirSources, scanSource, rel } from './compile'
 import { runHeadless } from './headless/run'
@@ -83,11 +83,15 @@ export async function inspectBuilding(
   if (!row) {
     results.push(bad('R7', `登记簿中找不到 id=${id ?? '(目录名不合法)'} 的登记行——请先登记骨架（CITY.md 第 6 步）`))
   } else {
-    const lot = plan.lots.find((l) => l.id === row.lot)
-    const occupied = rows.some((r) => r.lot === row.lot && r.id !== row.id)
-    if (!lot) results.push(bad('R7', `地块 ${row.lot} 不在规划图中`))
-    else if (occupied) results.push(bad('R7', `地块 ${row.lot} 已被其他建筑占用`))
-    else results.push(ok('R7', `地块 ${row.lot} 合法且未占用`))
+    // R7 宗地化（宪法第 14 条）：按 parcel 全部地块判占用，不再只看锚点
+    const myLots = expandParcel(row)
+    const notInPlan = myLots.filter((l) => !plan.lots.some((pl) => pl.id === l))
+    const occupiedByOthers = new Set(rows.filter((r) => r.id !== row.id).flatMap((r) => expandParcel(r)))
+    const clash = myLots.filter((l) => occupiedByOthers.has(l))
+    const dims = parcelDims(row)
+    if (notInPlan.length) results.push(bad('R7', `地块 ${notInPlan.join('、')} 不在规划图中`))
+    else if (clash.length) results.push(bad('R7', `宗地地块 ${clash.join('、')} 已被其他建筑占用`))
+    else results.push(ok('R7', `宗地 ${myLots.join('+')} 合法且未占用（${dims[0]}×${dims[1]}m，${myLots.length} 地块）`))
   }
 
   // R10：身份归一 + 施工资格白名单（[city-admin] 修宪 2026-09-25：本城仅接收城主白名单模型）
@@ -131,24 +135,25 @@ export async function inspectBuilding(
     else if (notes.length < QUALITY_FLOOR.notesMinChars) results.push(bad('R12', `NOTES.md 过短（${notes.length} 字 < ${QUALITY_FLOOR.notesMinChars}）——补齐立意、形制与预算分配`))
     else if (!notes.includes('预算')) results.push(bad('R12', 'NOTES.md 缺三角预算分配（「预算」节）——每类构件的计划面数与实际开销'))
     else if (needsBrief && !notes.includes('立项')) results.push(bad('R12', 'NOTES.md 缺「立项」确认节（宪法第 12 条/CITY.md 第 3 步，2026-09-26 立法后开工适用）——记立项提案与城主确认实录（日期+结论）；未获城主同意前不得动工'))
-    else results.push(ok('R12', `设计文档 ${notes.length} 字，含预算分配${needsBrief ? '与立项确认' : ''}`))
+    else if (needsBrief && !notes.includes('总图')) results.push(bad('R12', 'NOTES.md「立项」节缺街区总图引用（宪法第 13 条）——街区内建筑须注明总图 blockplans/<街区号>.md 与建设期数；空街区首进驻先走街区总图立项'))
+    else results.push(ok('R12', `设计文档 ${notes.length} 字，含预算分配${needsBrief ? '与立项确认（含总图引用）' : ''}`))
   }
 
-  // R2/R3/R4/R9：无头执行
+  // R2/R3/R4/R9：无头执行（宗地化宪法第 14 条：size 用宗地矩形尺寸，局部原点 = 宗地中心）
   if (compiled.ok && !r6a.length && !importViolations.length && row) {
-    const lot = plan.lots.find((l) => l.id === row.lot)
-    const head = await runHeadless(outPath, { id: row.lot, size: lot?.size ?? [20, 20], maxHeight: 300 }, hashSeed(row.id))
+    const head = await runHeadless(outPath, { id: expandParcel(row).join('+'), size: parcelDims(row), maxHeight: 300 }, hashSeed(row.id))
     if (!head.ok) {
       results.push(bad('R1', `build() 执行失败：${head.error}${head.stack ? `\n${head.stack}` : ''}`))
       results.push(bad('R2', '未执行')); results.push(bad('R3', '未执行')); results.push(bad('R4', '未执行')); results.push(bad('R9', '未执行')); results.push(bad('R13', '未执行'))
     } else {
       results.push(ok('R9', '执行在时限内完成'))
-      const halfW = (lot?.size[0] ?? 20) / 2 + 0.5, halfD = (lot?.size[1] ?? 20) / 2 + 0.5
+      const [pw, pd] = parcelDims(row)
+      const halfW = pw / 2 + 0.5, halfD = pd / 2 + 0.5
       const minX = head.bboxMin![0], maxX = head.bboxMax![0], minZ = head.bboxMin![2], maxZ = head.bboxMax![2]
       const overX = Math.max(Math.abs(minX), Math.abs(maxX)) - halfW, overZ = Math.max(Math.abs(minZ), Math.abs(maxZ)) - halfD
       results.push(Math.max(overX, overZ) <= 0
-        ? ok('R2', `包围盒 ${ (maxX - minX).toFixed(1) }m × ${ (maxZ - minZ).toFixed(1) }m（含 0.5m 容差内）`)
-        : bad('R2', `水平投影超界 ${Math.max(overX, overZ).toFixed(2)}m（包围盒 ${(maxX - minX).toFixed(1)}×${(maxZ - minZ).toFixed(1)}m，地块 20×20m）`))
+        ? ok('R2', `包围盒 ${ (maxX - minX).toFixed(1) }m × ${(maxZ - minZ).toFixed(1)}m（宗地 ${pw}×${pd}m，含 0.5m 容差内）`)
+        : bad('R2', `水平投影超界 ${Math.max(overX, overZ).toFixed(2)}m（包围盒 ${(maxX - minX).toFixed(1)}×${(maxZ - minZ).toFixed(1)}m，宗地 ${pw}×${pd}m）`))
       results.push(head.bboxMax![1] <= 300
         ? ok('R3', `高度 ${head.bboxMax![1].toFixed(1)}m ≤ 300m`)
         : bad('R3', `高度 ${head.bboxMax![1].toFixed(1)}m 超出 300m 限高 ${(head.bboxMax![1] - 300).toFixed(1)}m`))
@@ -156,24 +161,29 @@ export async function inspectBuilding(
         ? ok('R4', `三角形 ${head.triangles.toLocaleString()} ≤ 500,000（防故障护栏）`)
         : bad('R4', `三角形 ${head.triangles.toLocaleString()} 超出 500,000 防故障护栏 ${(head.triangles - 500_000).toLocaleString()}`))
 
-      // R11：完成度下限（修宪：防最简可行解——预算上限的 24% 与构件密度是底线）
+      // R11：完成度下限（修宪：防最简可行解——预算上限的 24% 与构件密度是底线；
+      // [city-admin] 立法 2026-09-26 宗地化宪法第 14 条：底线按宗地地块数缩放——占地越大密度要求越高）
       if (isOfficial(row)) {
         results.push(ok('R11', '官方建筑豁免品质下限'))
       } else {
-        const triFloor = head.triangles >= QUALITY_FLOOR.minTriangles
-        const meshFloor = (head.meshes ?? 0) >= QUALITY_FLOOR.minMeshes
+        const nLots = expandParcel(row).length
+        const minTri = QUALITY_FLOOR.minTriangles * nLots
+        const minMesh = QUALITY_FLOOR.minMeshes * nLots
+        const triFloor = head.triangles >= minTri
+        const meshFloor = (head.meshes ?? 0) >= minMesh
         results.push(triFloor && meshFloor
-          ? ok('R11', `完成度达标：三角形 ${head.triangles.toLocaleString()} ≥ ${QUALITY_FLOOR.minTriangles.toLocaleString()}，mesh ${head.meshes} ≥ ${QUALITY_FLOOR.minMeshes}（防故障护栏 500,000 的 ${(head.triangles / 5000).toFixed(0)}%）`)
-          : bad('R11', `完成度不足：三角形 ${head.triangles.toLocaleString()}（需 ≥ ${QUALITY_FLOOR.minTriangles.toLocaleString()}），mesh ${head.meshes ?? 0}（需 ≥ ${QUALITY_FLOOR.minMeshes}）——加密窗棂/栏杆/线脚/柱阵等细部，把预算分配表花掉`))
+          ? ok('R11', `完成度达标：三角形 ${head.triangles.toLocaleString()} ≥ ${minTri.toLocaleString()}，mesh ${head.meshes} ≥ ${minMesh}${nLots > 1 ? `（宗地 ${nLots} 地块，底线按占地缩放）` : ''}（防故障护栏 500,000 的 ${(head.triangles / 5000).toFixed(0)}%）`)
+          : bad('R11', `完成度不足：三角形 ${head.triangles.toLocaleString()}（需 ≥ ${minTri.toLocaleString()}），mesh ${head.meshes ?? 0}（需 ≥ ${minMesh}）${nLots > 1 ? `——宗地 ${nLots} 地块，底线按占地缩放` : ''}——加密窗棂/栏杆/线脚/柱阵等细部，把预算分配表花掉`))
       }
 
-      // R13：退线（修宪：建筑本体落于地块中央 16×16，四周至少 2m 场地带；地被层/小件/薄板/景观件已在 worker 豁免）
+      // R13：退线（修宪：建筑本体落于宗地中央 (w−4)×(d−4)，四周至少 2m 场地带；地被层/小件/薄板/景观件已在 worker 豁免）
       if (isOfficial(row)) {
         results.push(ok('R13', '官方建筑豁免退线'))
       } else if (head.setback) {
+        const cx = head.setback.coreHalfX * 2, cz = head.setback.coreHalfZ * 2
         results.push(head.setback.violations === 0
-          ? ok('R13', `退线达标：建筑本体落于中央 ${(head.setback.coreHalf * 2).toFixed(0)}×${(head.setback.coreHalf * 2).toFixed(0)}，四周留足场地带`)
-          : bad('R13', `退线不足：${head.setback.violations} 个构件超出中央 ${(head.setback.coreHalf * 2).toFixed(0)}×${(head.setback.coreHalf * 2).toFixed(0)}（最远超出 ${head.setback.worst.toFixed(2)}m）——建筑本体四周至少退 2m 留作场地（地被层/小件/薄板/景观件豁免）`))
+          ? ok('R13', `退线达标：建筑本体落于宗地中央 ${cx.toFixed(0)}×${cz.toFixed(0)}，四周留足场地带`)
+          : bad('R13', `退线不足：${head.setback.violations} 个构件超出宗地中央 ${cx.toFixed(0)}×${cz.toFixed(0)}（最远超出 ${head.setback.worst.toFixed(2)}m）——建筑本体四周至少退 2m 留作场地（地被层/小件/薄板/景观件豁免）`))
       }
 
       // 回写与竣工（对 override 数组同样生效，测试即验证）。
@@ -205,9 +215,9 @@ export async function inspectCity(repoRoot: string, cityDir: string): Promise<In
   rows.forEach((r, i) => errs.push(...validateRow(r, i)))
   const ids = rows.map((r) => r.id)
   if (new Set(ids).size !== ids.length) errs.push('登记簿内 id 重复')
-  const lots = rows.map((r) => r.lot)
+  const lots = rows.flatMap((r) => expandParcel(r))
   const dupLot = lots.find((l, i) => lots.indexOf(l) !== i)
-  if (dupLot) errs.push(`地块 ${dupLot} 被双登记`)
+  if (dupLot) errs.push(`地块 ${dupLot} 被双登记（宗地重叠）`)
   // 孤儿建筑目录
   const buildingsDir = resolve(cityDir, 'buildings')
   if (existsSync(buildingsDir)) {

@@ -26,14 +26,15 @@ describe('buildStateReport（spec §8.2/§14）', () => {
     expect(r.untrusted_input_notice).toContain('不可信输入')
     expect(r.next_building_id).toBe('b-000002')
     expect(r.block_sovereignty_note).toMatch(/街区主权/)
+    expect(r.block_masterplan_note).toMatch(/街区总图/)
     const b = r.cities[0].buildings[0]
     expect(b.name.length).toBe(200)
     expect(b.status).toBe('在建')
+    expect(b.parcel).toEqual(['E5-05'])   // parcel 缺省回退单地块
     expect(r.cities[0].block_residents).toEqual({ E5: {} })   // 官方建筑中性：计入街区、不计入居民构成
     expect(r.cities[0].occupancy).toEqual({ occupied: 1, total: 729, rate: expect.any(Number), suggest_new_city: false })
-    expect(r.cities[0].free_lot_suggestions.length).toBe(10)
-    expect(r.cities[0].free_lot_suggestions).toContain('E5-05' === b.lot ? 'E5-04' : 'E5-05')   // 建议里不含已占地块
-    expect(r.cities[0].free_lot_suggestions).not.toContain('E5-05')
+    expect(r.cities[0].free_block_suggestions.length).toBe(10)
+    expect(r.cities[0].free_block_suggestions).not.toContain('E5')   // 已有建筑的街区不再列为空街区（宪法第 13 条）
   })
   it('空城（0 建筑）正常空态（Review Focus #5）', () => {
     const c2 = resolve(citiesRoot, 'c2')
@@ -44,7 +45,17 @@ describe('buildStateReport（spec §8.2/§14）', () => {
     const c2s = r.cities.find((c) => c.id === 'c2')!
     expect(c2s.buildings).toEqual([])
     expect(c2s.occupancy.occupied).toBe(0)
-    expect(c2s.free_lot_suggestions[0]).toMatch(/^E5-/)
+    expect(c2s.free_block_suggestions[0]).toBe('E5')   // 城心街区最近
+  })
+  it('free_block_suggestions（宪法第 13 条）：有总图 = 已认领街区，不再列为空街区', () => {
+    const c2 = resolve(citiesRoot, 'c2')
+    mkdirSync(resolve(c2, 'blockplans'), { recursive: true })
+    writeFileSync(resolve(c2, 'blockplans/E5.md'), '# E5 街区总图\n')
+    writeFileSync(resolve(c2, 'blockplans/README.md'), '# 模板说明（不应被当作街区认领）\n')
+    const r = buildStateReport(citiesRoot)
+    const c2s = r.cities.find((c) => c.id === 'c2')!
+    expect(c2s.free_block_suggestions).not.toContain('E5')
+    expect(c2s.free_block_suggestions.length).toBeGreaterThan(0)
   })
   it('custom_blocks：按模型列出各自积木文件；无积木目录时空对象（R14 立法）', () => {
     mkdirSync(resolve(citiesRoot, 'c1/blocks/glm-5.3'), { recursive: true })

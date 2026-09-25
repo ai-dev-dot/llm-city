@@ -116,11 +116,31 @@ describe('inspectBuilding R1–R12（spec §14 坏建筑样本全拦截）', () 
     const r12 = r.results.find((x) => x.rule === 'R12')!
     expect(r12.pass).toBe(false)
     expect(r12.detail).toMatch(/立项/)
-    // 补记「立项」确认实录 → 转绿
+    // 补记「立项」确认实录（含街区总图引用，宪法第 13 条）→ 转绿
     const notesPath = resolve(cityDir, 'buildings', dir, 'NOTES.md')
-    writeFileSync(notesPath, readFileSync(notesPath, 'utf8') + '\n## 立项\n2026-09-26 城主确认实录：立项提案（建什么/在哪/立意）已呈，城主明示同意开工。\n')
+    writeFileSync(notesPath, readFileSync(notesPath, 'utf8') + '\n## 立项\n2026-09-26 城主确认实录：按街区总图 blockplans/C3.md 第 1 期于 C3-05 开工，城主明示同意。\n')
     r = await inspectBuilding(root, cityDir, dir, { registryOverride: mk('2026-09-26T00:01:00+08:00') })
     expect(r.results.find((x) => x.rule === 'R12')!.pass).toBe(true)
+  })
+  it('R7/R2 宗地（宪法第 14 条 2026-09-26 立法）：宗地尺寸进判定，parcel 重叠拦', async () => {
+    const dir = 'b-000017-good-tower'
+    cpSync(resolve(root, 'tools/test/fixtures/buildings/good-tower'), resolve(cityDir, 'buildings', dir), { recursive: true })
+    const p = resolve(cityDir, 'buildings', dir, 'index.ts')
+    const libCtxAbs = resolve(root, 'lib/ctx').replace(/\\/g, '/')
+    writeFileSync(p, readFileSync(p, 'utf8').replace('\'../../../../../lib/ctx\'', `'${libCtxAbs}'`))
+    // 1×2 宗地：C3-05（行2列2）+C3-06（行2列3）同行相邻 → 40×20m
+    const mk = () => [{ ...row('b-000017', 'C3-05', `buildings/${dir}/index.ts`), parcel: ['C3-05', 'C3-06'] }]
+    let r = await inspectBuilding(root, cityDir, dir, { registryOverride: mk() })
+    const r7 = r.results.find((x) => x.rule === 'R7')!
+    expect(r7.pass).toBe(true)
+    expect(r7.detail).toMatch(/40×20m，2 地块/)
+    const r2 = r.results.find((x) => x.rule === 'R2')!
+    expect(r2.pass).toBe(true)
+    expect(r2.detail).toMatch(/宗地 40×20m/)
+    // 他行 parcel 占用 C3-06 → R7 红（宗地全地块判重）
+    const other = row('b-000018', 'C3-06', 'buildings/b-000001-good-tower/index.ts')
+    r = await inspectBuilding(root, cityDir, dir, { registryOverride: [...mk(), other] })
+    expect(r.results.find((x) => x.rule === 'R7')!.pass).toBe(false)
   })
   it('R13：贴线构件（超出中央 16×16）被拦（[city-admin] 退线法）', async () => {
     const rows = [row('b-000010', 'C3-10', 'buildings/b-000010-bad-setback/index.ts')]

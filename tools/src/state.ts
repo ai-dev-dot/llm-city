@@ -1,12 +1,13 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { loadRegistry, type RegistryRow } from '../../lib/registry'
+import { loadRegistry, expandParcel, type RegistryRow } from '../../lib/registry'
 import { loadPlan } from './inspect'
 
 export interface StateReport {
   untrusted_input_notice: string
   next_building_id: string
   block_sovereignty_note: string
+  block_masterplan_note: string
   cities: Array<{
     id: string
     name: string
@@ -18,6 +19,7 @@ export interface StateReport {
     buildings: Array<{
       id: string
       lot: string
+      parcel: string[]
       name: string
       model_id: string
       status: '在建' | '竣工'
@@ -25,7 +27,7 @@ export interface StateReport {
       completed_at: string | null
       tokens: { input: number | null; output: number | null }
     }>
-    free_lot_suggestions: string[]
+    free_block_suggestions: string[]
   }>
   truncated_fields_note: string
 }
@@ -62,6 +64,8 @@ export function blockResidents(rows: RegistryRow[]): Record<string, Record<strin
 
 export const BLOCK_SOVEREIGNTY_NOTE = '街区主权（强制，宪法第 10 条 / inspect R15）：一个街区只归属一个 model_id——目标街区已有他模型建筑时不得选址开工；不同模型确需同街区（同厂商的不同模型也算不同模型），必须先经城主确认，由城主把该街区加入 plan.json policy.sharedBlocks 豁免清单后方可入住。官方建筑是市政配套，不计入判定。'
 
+export const BLOCK_MASTERPLAN_NOTE = '街区总图（宪法第 13 条，立法 2026-09-26）：先有总图后有楼——模型首次进驻空街区的立项为街区总图立项（主题/地块功能分配/宗地划分/建设时序/公共空间），经城主批准后写入 cities/c1/blockplans/<街区号>.md；街区内后续每栋为轻量立项（报总图期数+地块+立意）。宗地合并（宪法第 14 条）：一栋建筑可合并街区内多个地块为矩形宗地（不得跨街区），R2/R13 按宗地尺寸判定、R11 底线按地块数缩放。'
+
 export function buildStateReport(citiesRoot: string): StateReport {
   const cities = readdirSync(citiesRoot, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name).sort()
   let maxIdNum = 0
@@ -73,12 +77,29 @@ export function buildStateReport(citiesRoot: string): StateReport {
       const n = parseInt(r.id.slice(2), 10)
       if (n > maxIdNum) maxIdNum = n
     }
-    const occupied = new Set(rows.map((r) => r.lot))
-    const suggestions = plan.lots
-      .filter((l) => !occupied.has(l.id))
-      .sort((a, b) => (a.center[0] ** 2 + a.center[1] ** 2) - (b.center[0] ** 2 + b.center[1] ** 2))
+    // 空街区建议（[city-admin] 立法 2026-09-26 宪法第 13 条：进驻以街区为单位，
+    // 先有总图后有楼）：无任何建筑且无总图（blockplans/<街区>.md，总图即领地声明）的街区才算空街区
+    const occupiedBlocks = new Set(rows.flatMap((r) => expandParcel(r)).map((l) => l.split('-')[0]))
+    const plannedBlocks = new Set(
+      existsSync(resolve(cityDir, 'blockplans'))
+        ? readdirSync(resolve(cityDir, 'blockplans'))
+            .filter((f) => /^[A-Z]\d{1,2}\.md$/.test(f))
+            .map((f) => f.replace(/\.md$/, ''))
+        : [],
+    )
+    const blockCenter = new Map<string, [number, number, number]>()
+    for (const l of plan.lots) {
+      const b = l.id.split('-')[0]
+      const acc = blockCenter.get(b) ?? [0, 0, 0]
+      acc[0] += l.center[0]; acc[1] += l.center[1]; acc[2] += 1
+      blockCenter.set(b, acc)
+    }
+    const suggestions = [...blockCenter.entries()]
+      .filter(([b]) => !occupiedBlocks.has(b) && !plannedBlocks.has(b))
+      .map(([b, [sx, sz, n]]) => ({ b, d: (sx / n) ** 2 + (sz / n) ** 2 }))
+      .sort((a, b) => a.d - b.d)
       .slice(0, 10)
-      .map((l) => l.id)
+      .map((x) => x.b)
     return {
       id: cid, name: plan.name, founded: plan.founded,
       builder_policy: plan.policy ?? null,
@@ -90,18 +111,19 @@ export function buildStateReport(citiesRoot: string): StateReport {
         suggest_new_city: rows.length / plan.lots.length > 0.85,
       },
       buildings: rows.map((r) => ({
-        id: r.id, lot: r.lot, name: clip(r.name), model_id: r.builder.model_id,
+        id: r.id, lot: r.lot, parcel: expandParcel(r), name: clip(r.name), model_id: r.builder.model_id,
         status: (r.completed_at ? '竣工' : '在建') as '在建' | '竣工',
         started_at: r.started_at, completed_at: r.completed_at,
         tokens: r.tokens,
       })),
-      free_lot_suggestions: suggestions,
+      free_block_suggestions: suggestions,
     }
   })
   return {
     untrusted_input_notice: UNTRUSTED_NOTICE,
     next_building_id: `b-${String(maxIdNum + 1).padStart(6, '0')}`,
     block_sovereignty_note: BLOCK_SOVEREIGNTY_NOTE,
+    block_masterplan_note: BLOCK_MASTERPLAN_NOTE,
     cities: summaries,
     truncated_fields_note: '自由文本字段已截断至 200 字；全文见 registry.jsonl 与 NOTES.md',
   }
