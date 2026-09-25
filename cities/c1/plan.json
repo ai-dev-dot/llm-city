@@ -9336,7 +9336,8 @@
       "official",
       "glm-5.3",
       "mimo-v2.6-flash",
-      "qwen3.8-flash"
+      "qwen3.8-flash",
+      "qwen3.8-max"
     ],
     "sharedBlocks": []
   }
