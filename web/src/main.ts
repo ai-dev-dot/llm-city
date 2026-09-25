@@ -1,6 +1,7 @@
 import './ui/tokens.css'
 import { createScene } from './city/scene'
 import { BuildingManager } from './city/loader'
+import { FilterSystem } from './city/filters'
 import { setupPicking } from './city/pick'
 import { mountTooltip } from './ui/tooltip'
 import { showSidebar } from './ui/sidebar'
@@ -10,6 +11,15 @@ const canvas = document.getElementById('city-canvas') as HTMLCanvasElement
 const bundle = createScene(canvas, city)
 const manager = new BuildingManager(bundle.scene, city, buildingLoaders)
 manager.onStatusChange((c) => console.info(`[llm-city] ${c.ok} 栋正常 / ${c.failed} 栋烂尾`))
+
+// 滤镜系统（spec §10）：只做临时渲染效果，不改作品本体（F 键循环在 Task 16 统一接）
+const filterSystem = new FilterSystem(city.buildings)
+manager.reapplyFilter((root) => {
+  // 新挂载建筑在滤镜期重应用
+  const id = root.userData.buildingId ?? (root.children[0]?.userData.buildingId as string | undefined)
+  const b = city.buildings.find((x) => x.id === id)
+  if (b && filterSystem.mode !== 'off') filterSystem.applyTo(root, b)
+})
 
 // 渲染韧性第 5 层：GL 上下文丢失恢复（Canvas 异常时 UI 层仍可见）
 canvas.addEventListener('webglcontextlost', (e) => {
