@@ -32,6 +32,7 @@ export interface HudHandle {
   cycleTour(): void
   cycleSpeed(): void
   flyToPreset(p: TourPreset): void
+  syncTour(route: TourRouteId): void
 }
 
 const TOUR_LABEL: Record<TourRouteId, string> = {
@@ -164,6 +165,8 @@ export function mountHud(
     cycleTour() { tourBtn.textContent = `巡航: ${TOUR_LABEL[hooks.onTour()]}` },
     cycleSpeed() { speedBtn.textContent = `速度 ${hooks.onTourSpeed()}x` },
     flyToPreset(p) { hooks.onPreset(p) },
+    // 巡航状态经 tour.onStateChange 推送（拖拽即停/预设飞点/环绕建筑），按钮文本随之同步
+    syncTour(route) { tourBtn.textContent = `巡航: ${TOUR_LABEL[route]}` },
   }
   return handle
 }

@@ -53,6 +53,9 @@ export class TourController {
   private lastTs = 0
   private stopFly: (() => void) | null = null
 
+  /** 状态变化通知（拖拽即停/预设飞点/环绕建筑都不经过 T 键，HUD 靠它同步按钮文本） */
+  onStateChange: ((route: TourRouteId) => void) | null = null
+
   constructor(private bundle: SceneBundle) {
     bundle.controls.addEventListener('start', () => this.stop())   // 用户接管即停巡航
   }
@@ -69,6 +72,7 @@ export class TourController {
     else this.lookAt = new THREE.Vector3(0, 30, 0)
     this.lastTs = 0
     cancelAnimationFrame(this.raf)
+    this.onStateChange?.(route)
     const tick = (ts: number) => {
       if (!this.curve) return
       if (this.lastTs) this.t += ((ts - this.lastTs) / 1000) * 0.02 * this.speed   // 一圈约 50s（1x）
@@ -90,6 +94,7 @@ export class TourController {
     this.curve = null
     cancelAnimationFrame(this.raf)
     this.stopFly?.(); this.stopFly = null
+    this.onStateChange?.('off')
   }
 
   flyToPreset(preset: TourPreset) {

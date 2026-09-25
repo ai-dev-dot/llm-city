@@ -105,6 +105,8 @@ const mountAll = () => {
     onTourSpeed: onTourSpeedCycle,
     onPreset: (p: TourPreset) => tour.flyToPreset(p),
   })
+  // 拖拽即停/预设飞点/环绕建筑不经过 T 键：靠状态回调同步按钮文本（单槽重挂不累积）
+  tour.onStateChange = (route) => hudHandle.syncTour(route)
 }
 mountAll()
 
