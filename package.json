@@ -16,6 +16,7 @@
     "gen:plan": "tsx tools/src/gen-plan.ts",
     "inspect": "tsx tools/src/cli.ts inspect",
     "state": "tsx tools/src/cli.ts state",
+    "check-history": "tsx tools/src/cli.ts check-history",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json"
   },
   "devDependencies": {

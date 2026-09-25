@@ -44,6 +44,18 @@ async function main() {
     }
     process.exit(results.every((r) => r.passed) ? 0 : 1)
   }
+  if (cmd === 'check-history') {
+    const { runCheckHistory } = await import('./history')
+    const from = args.find((a) => a.startsWith('--from='))?.slice(7) ?? 'HEAD'
+    const to = args.find((a) => a.startsWith('--to='))?.slice(5) ?? 'WORKTREE'
+    const r = await runCheckHistory(repoRoot, { from, to })
+    if (r.violations.length) {
+      console.error(`受限编辑校验未通过（${r.checkedCommits} 个提交步骤）：\n` + r.violations.map((v) => `  ✗ ${v}`).join('\n'))
+      process.exit(1)
+    }
+    console.log(`受限编辑校验通过 ✓（${r.checkedCommits} 个提交步骤）`)
+    return
+  }
   if (cmd === 'state') {
     const { buildStateReport } = await import('./state')
     console.log(JSON.stringify(buildStateReport(resolve(repoRoot, 'cities')), null, 2))
