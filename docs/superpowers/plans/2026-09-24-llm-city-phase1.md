@@ -163,7 +163,7 @@ llm-city/                        # 现有：README.md(占位) docs/ .git/
 }
 ```
 
-`web/package.json`（Task 12 再加 vite script）：
+`web/package.json`（Task 12 补 dev/build scripts——`npm -w web run dev/build` 依赖它们）：
 
 ```json
 {
@@ -172,7 +172,11 @@ llm-city/                        # 现有：README.md(占位) docs/ .git/
   "private": true,
   "type": "module",
   "dependencies": { "three": "0.186.0" },
-  "devDependencies": { "vite": "8.3.1" }
+  "devDependencies": { "vite": "8.3.1" },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  }
 }
 ```
 
@@ -2445,10 +2449,10 @@ const buildings = rows.map((r) => {
   }
 })
 
-const loaders = rows.map((r) => `  '${r.id}': () => import('../../${cityId}/${r.entry}'),`).join('\n')
+const loaders = rows.map((r) => `  '${r.id}': () => import('../../../${cityId}/${r.entry}'),`).join('\n')
 
 const out = `// 本文件由 web/scripts/gen-city.mjs 生成——勿手改（npm run gen:city）
-import type { BuildCtx } from '../../lib/ctx'
+import type { BuildCtx } from '../../../lib/ctx'
 import type { Object3D } from 'three'
 
 export interface BuildingRecord {
