@@ -137,6 +137,9 @@ describe('inspectBuilding R1–R12（spec §14 坏建筑样本全拦截）', () 
     const r2 = r.results.find((x) => x.rule === 'R2')!
     expect(r2.pass).toBe(true)
     expect(r2.detail).toMatch(/宗地 40×20m/)
+    // R4 护栏随宗地缩放：2 地块 × 500,000 = 1,000,000
+    const r4 = r.results.find((x) => x.rule === 'R4')!
+    expect(r4.detail).toMatch(/2 地块 × 500,000/)
     // 他行 parcel 占用 C3-06 → R7 红（宗地全地块判重）
     const other = row('b-000018', 'C3-06', 'buildings/b-000001-good-tower/index.ts')
     r = await inspectBuilding(root, cityDir, dir, { registryOverride: [...mk(), other] })

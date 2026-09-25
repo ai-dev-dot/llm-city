@@ -139,14 +139,17 @@ export async function inspectBuilding(
     else results.push(ok('R12', `设计文档 ${notes.length} 字，含预算分配${needsBrief ? '与立项确认（含总图引用）' : ''}`))
   }
 
-  // R2/R3/R4/R9：无头执行（宗地化宪法第 14 条：size 用宗地矩形尺寸，局部原点 = 宗地中心）
+  // R2/R3/R4/R9：无头执行（宗地化宪法第 14 条：size 用宗地矩形尺寸，局部原点 = 宗地中心；
+  // R4 护栏与 R9 时限按宗地地块数缩放——占地越大配额越大，死循环防护不变）
   if (compiled.ok && !r6a.length && !importViolations.length && row) {
-    const head = await runHeadless(outPath, { id: expandParcel(row).join('+'), size: parcelDims(row), maxHeight: 300 }, hashSeed(row.id))
+    const nLots = expandParcel(row).length
+    const triCap = 500_000 * nLots
+    const head = await runHeadless(outPath, { id: expandParcel(row).join('+'), size: parcelDims(row), maxHeight: 300 }, hashSeed(row.id), 10_000 * nLots)
     if (!head.ok) {
       results.push(bad('R1', `build() 执行失败：${head.error}${head.stack ? `\n${head.stack}` : ''}`))
       results.push(bad('R2', '未执行')); results.push(bad('R3', '未执行')); results.push(bad('R4', '未执行')); results.push(bad('R9', '未执行')); results.push(bad('R13', '未执行'))
     } else {
-      results.push(ok('R9', '执行在时限内完成'))
+      results.push(ok('R9', `执行在时限内完成（宗地 ${nLots} 地块限 ${10 * nLots}s）`))
       const [pw, pd] = parcelDims(row)
       const halfW = pw / 2 + 0.5, halfD = pd / 2 + 0.5
       const minX = head.bboxMin![0], maxX = head.bboxMax![0], minZ = head.bboxMin![2], maxZ = head.bboxMax![2]
@@ -157,22 +160,21 @@ export async function inspectBuilding(
       results.push(head.bboxMax![1] <= 300
         ? ok('R3', `高度 ${head.bboxMax![1].toFixed(1)}m ≤ 300m`)
         : bad('R3', `高度 ${head.bboxMax![1].toFixed(1)}m 超出 300m 限高 ${(head.bboxMax![1] - 300).toFixed(1)}m`))
-      results.push(head.triangles <= 500_000
-        ? ok('R4', `三角形 ${head.triangles.toLocaleString()} ≤ 500,000（防故障护栏）`)
-        : bad('R4', `三角形 ${head.triangles.toLocaleString()} 超出 500,000 防故障护栏 ${(head.triangles - 500_000).toLocaleString()}`))
+      results.push(head.triangles <= triCap
+        ? ok('R4', `三角形 ${head.triangles.toLocaleString()} ≤ ${triCap.toLocaleString()}（宗地 ${nLots} 地块 × 500,000 防故障护栏）`)
+        : bad('R4', `三角形 ${head.triangles.toLocaleString()} 超出宗地防故障护栏 ${triCap.toLocaleString()}（${nLots} 地块 × 500,000） ${(head.triangles - triCap).toLocaleString()}`))
 
       // R11：完成度下限（修宪：防最简可行解——预算上限的 24% 与构件密度是底线；
       // [city-admin] 立法 2026-09-26 宗地化宪法第 14 条：底线按宗地地块数缩放——占地越大密度要求越高）
       if (isOfficial(row)) {
         results.push(ok('R11', '官方建筑豁免品质下限'))
       } else {
-        const nLots = expandParcel(row).length
         const minTri = QUALITY_FLOOR.minTriangles * nLots
         const minMesh = QUALITY_FLOOR.minMeshes * nLots
         const triFloor = head.triangles >= minTri
         const meshFloor = (head.meshes ?? 0) >= minMesh
         results.push(triFloor && meshFloor
-          ? ok('R11', `完成度达标：三角形 ${head.triangles.toLocaleString()} ≥ ${minTri.toLocaleString()}，mesh ${head.meshes} ≥ ${minMesh}${nLots > 1 ? `（宗地 ${nLots} 地块，底线按占地缩放）` : ''}（防故障护栏 500,000 的 ${(head.triangles / 5000).toFixed(0)}%）`)
+          ? ok('R11', `完成度达标：三角形 ${head.triangles.toLocaleString()} ≥ ${minTri.toLocaleString()}，mesh ${head.meshes} ≥ ${minMesh}${nLots > 1 ? `（宗地 ${nLots} 地块，底线按占地缩放）` : ''}（防故障护栏 ${triCap.toLocaleString()} 的 ${(head.triangles / triCap * 100).toFixed(0)}%）`)
           : bad('R11', `完成度不足：三角形 ${head.triangles.toLocaleString()}（需 ≥ ${minTri.toLocaleString()}），mesh ${head.meshes ?? 0}（需 ≥ ${minMesh}）${nLots > 1 ? `——宗地 ${nLots} 地块，底线按占地缩放` : ''}——加密窗棂/栏杆/线脚/柱阵等细部，把预算分配表花掉`))
       }
 
