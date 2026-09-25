@@ -37,68 +37,29 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   }
   const lift = (o: THREE.Object3D, dy: number) => { o.position.y += dy; root.add(o); return o }
 
-  // 拱券柱廊板：矩形墙挖半圆拱洞（洞开到底成柱廊），挤出 0.4m。
-  // 位置语义：(x, z) 为板厚中心（法线 = rotY 方向），y 为板底。
+  // 拱券柱廊板（官方件 archWall）：位置语义 (x,z) 为板厚中心（法线 = rotY 方向），y 为板底
   const ARCH_DEPTH = 0.4
   const archPanel = (w: number, h: number, aw: number, ah: number, x: number, y: number, z: number, rotY: number) => {
-    const shape = new THREE.Shape()
-    shape.moveTo(-w / 2, 0); shape.lineTo(-w / 2, h); shape.lineTo(w / 2, h); shape.lineTo(w / 2, 0); shape.closePath()
-    const hole = new THREE.Path()
-    hole.moveTo(-aw / 2, 0)
-    hole.lineTo(-aw / 2, ah - aw / 2)
-    hole.absarc(0, ah - aw / 2, aw / 2, Math.PI, 0, true)
-    hole.lineTo(aw / 2, 0)
-    hole.closePath()
-    shape.holes.push(hole)
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: ARCH_DEPTH, bevelEnabled: false, curveSegments: 7, steps: 1 })
-    const cx = x + Math.sin(rotY) * (ARCH_DEPTH / 2)
-    const cz = z + Math.cos(rotY) * (ARCH_DEPTH / 2)
-    const m = new THREE.Mesh(geo, stdMaterial(C.sand, { roughness: 0.8 }))
-    // Extrude 局部 z∈[0, depth]：先平移 -depth/2 使挤出段以 (x,z) 为中心，再转 rotY
+    const m = B.archWall({ w, h, archW: aw, archH: ah, depth: ARCH_DEPTH, color: C.sand }) as THREE.Mesh
     m.geometry.translate(0, 0, -ARCH_DEPTH / 2)
-    m.position.set(cx, y, cz)
+    m.position.set(x + Math.sin(rotY) * (ARCH_DEPTH / 2), y, z + Math.cos(rotY) * (ARCH_DEPTH / 2))
     m.rotation.y = rotY
-    m.castShadow = true
     root.add(m)
     // 券洞内暖光板（居墙厚，小于洞口，两面可见——夜景灯笼效果）
     const glowPlate = new THREE.Mesh(
       new THREE.PlaneGeometry(aw * 0.8, ah * 0.78),
       stdMaterial(C.glow, { emissive: C.glow, emissiveIntensity: 0.55, roughness: 0.6 }),
     )
-    glowPlate.position.set(cx, y + ah * 0.42, cz)
+    glowPlate.position.set(x + Math.sin(rotY) * (ARCH_DEPTH / 2), y + ah * 0.42, z + Math.cos(rotY) * (ARCH_DEPTH / 2))
     glowPlate.rotation.y = rotY
     root.add(glowPlate)
   }
 
-  // 栏杆段：扶手 + 踢脚 + 立柱（柱距约 1m），(x,z) 为段中心、沿局部 X 展开
+  // 栏杆段（官方件 railing，四面安放补 rotY）
   const railing = (w: number, x: number, y: number, z: number, rotY: number) => {
-    const grp = new THREE.Group()
-    const hand = new THREE.Mesh(new THREE.BoxGeometry(w, 0.12, 0.22), stdMaterial(C.light))
-    hand.position.y = 0.94; hand.castShadow = true; grp.add(hand)
-    const skirt = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, 0.12), stdMaterial(C.trim))
-    skirt.position.y = 0.05; grp.add(skirt)
-    const n = Math.max(3, Math.round(w))
-    for (let i = 0; i <= n; i++) {
-      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.07, 0.9, 6), stdMaterial(C.trim, { roughness: 0.6 }))
-      post.position.set(-w / 2 + (w * i) / n, 0.45)
-      post.castShadow = true
-      grp.add(post)
-    }
-    grp.position.set(x, y, z)
-    grp.rotation.y = rotY
-    root.add(grp)
-  }
-
-  // 退台石盆（小 urn：座 + 盆身 + 半球盖）
-  const urn = (x: number, y: number, z: number) => {
-    const g = new THREE.Group()
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 0.34, 10), stdMaterial(C.trim))
-    base.position.y = 0.17; base.castShadow = true; g.add(base)
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.2, 0.42, 10), stdMaterial(C.sand))
-    body.position.y = 0.52; body.castShadow = true; g.add(body)
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), stdMaterial(C.trim))
-    cap.position.y = 0.73; g.add(cap)
+    const g = B.railing({ w, color: C.trim })
     g.position.set(x, y, z)
+    g.rotation.y = rotY
     root.add(g)
   }
 
@@ -123,19 +84,42 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     const hw = width / 2
     // 实体核（缩进，被拱廊包住）
     box(width - 1.8, 6.5, width - 1.8, 0, y, 0, C.stone)
-    // 四面拱券柱廊：每面 4 券（券间壁柱位由循环边沿给出）
+    // 四面拱券柱廊：每面 5 券（收分后上层面板渐窄，券同宽递减）
     const panelW = hw * 2 - 0.6
-    const aw = panelW / 4 - 0.55
-    for (let k = 0; k < 4; k++) {
-      const cx = -panelW / 2 + (panelW / 4) * (k + 0.5)
-      archPanel(panelW / 4 + 0.1, 5.6, aw, 4.9, cx, y + 0.35, hw - 0.2, 0)
-      archPanel(panelW / 4 + 0.1, 5.6, aw, 4.9, cx, y + 0.35, -hw + 0.2, Math.PI)
-      archPanel(panelW / 4 + 0.1, 5.6, aw, 4.9, hw - 0.2, y + 0.35, cx, Math.PI / 2)
-      archPanel(panelW / 4 + 0.1, 5.6, aw, 4.9, -hw + 0.2, y + 0.35, cx, -Math.PI / 2)
+    const aw = panelW / 5 - 0.5
+    for (let k = 0; k < 5; k++) {
+      const cx = -panelW / 2 + (panelW / 5) * (k + 0.5)
+      archPanel(panelW / 5 + 0.08, 5.6, aw, 4.9, cx, y + 0.35, hw - 0.2, 0)
+      archPanel(panelW / 5 + 0.08, 5.6, aw, 4.9, cx, y + 0.35, -hw + 0.2, Math.PI)
+      archPanel(panelW / 5 + 0.08, 5.6, aw, 4.9, hw - 0.2, y + 0.35, cx, Math.PI / 2)
+      archPanel(panelW / 5 + 0.08, 5.6, aw, 4.9, -hw + 0.2, y + 0.35, cx, -Math.PI / 2)
     }
-    // 券间壁柱（每面三处间隔位）+ 四角护角柱
-    for (let k = 1; k <= 3; k++) {
-      const bx = -panelW / 2 + (panelW / 4) * k
+    // 券内深景：实体核四面对齐每个券洞贴盲拱浮雕（官方件 archPanel），洞中见拱，纵深成对
+    const coreHw = (width - 1.8) / 2
+    for (let k = 0; k < 5; k++) {
+      const cx = -panelW / 2 + (panelW / 5) * (k + 0.5)
+      const niche = (x: number, z: number, rotY: number) => {
+        const relief = B.archPanel({ w: aw * 0.92, h: 4.4, depth: 0.16, color: C.sand })
+        relief.position.set(x, y + 0.5, z)
+        relief.rotation.y = rotY
+        root.add(relief)
+        if (k % 2 === 0) lift(B.urn({ scale: 0.85, color: C.trim, x, y: y + 0.5, z }), 0)
+      }
+      niche(cx, coreHw + 0.02, 0)
+      niche(cx, -coreHw - 0.02 - 0.16, Math.PI)
+      niche(coreHw + 0.02, cx, Math.PI / 2)
+      niche(-coreHw - 0.02 - 0.16, cx, -Math.PI / 2)
+    }
+    // 核顶棂窗带（官方件 latticePanel，透过拱券上沿可见）
+    for (const [nx, nz, rotY] of [[0, coreHw + 0.03, 0], [0, -coreHw - 0.03, Math.PI], [coreHw + 0.03, 0, Math.PI / 2], [-coreHw - 0.03, 0, -Math.PI / 2]] as const) {
+      const lp = B.latticePanel({ w: panelW - 1.2, h: 1.0, cols: 6, rows: 1, bar: 0.1, color: C.trim })
+      lp.position.set(nx, y + 5.2, nz)
+      lp.rotation.y = rotY
+      root.add(lp)
+    }
+    // 券间壁柱（每面四根）+ 四角护角柱
+    for (let k = 1; k <= 4; k++) {
+      const bx = -panelW / 2 + (panelW / 5) * k
       box(0.44, 5.7, 0.5, bx, y + 0.25, hw - 0.2, C.sand)
       box(0.44, 5.7, 0.5, bx, y + 0.25, -hw + 0.2, C.sand)
       box(0.5, 5.7, 0.44, hw - 0.2, y + 0.25, bx, C.sand)
@@ -153,7 +137,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     railing(rw, rw / 2 - 0.11, y + 6.84, 0, Math.PI / 2)
     railing(rw, -rw / 2 + 0.11, y + 6.84, 0, Math.PI / 2)
     for (const sx of [-1, 1]) for (const sz of [-1, 1])
-      urn(sx * (hw + 0.05), y + 6.84, sz * (hw + 0.05))
+      lift(B.urn({ color: C.trim, x: sx * (hw + 0.05), y: y + 6.84, z: sz * (hw + 0.05) }), 0)
     y += 6.5
     width -= 1.34
   }
@@ -180,6 +164,15 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   )
   lantern.position.y = y + 4.55 + (ahw - 0.3) + 0.4
   root.add(lantern)
+
+  // 圣坛四尊守护碑像（盲拱背光 + 大石盆，立于顶层退台、面朝四方）
+  for (const [gx, gz, rotY] of [[0, ahw - 0.5, 0], [0, -ahw + 0.5, Math.PI], [ahw - 0.5, 0, Math.PI / 2], [-ahw + 0.5, 0, -Math.PI / 2]] as const) {
+    const back = B.archPanel({ w: 1.8, h: 3.2, depth: 0.2, color: C.sand })
+    back.position.set(gx, y + 0.5, gz)
+    back.rotation.y = rotY
+    root.add(back)
+    lift(B.urn({ scale: 1.8, color: C.trim, x: gx, y: y + 0.5, z: gz }), 0)
+  }
 
   // ---- 塔冠：天线 + 常亮「开城之芯」+ 光环 + 航空障碍灯 ----
   const mastTop = y + 4.55 + (ahw - 0.3) + 0.8
@@ -257,6 +250,18 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
     lift(B.hedge({ w: 3.4, d: 0.55, h: 0.75, x: sx * 8.5, z: sz * 9.0 }), 0.98)
     lift(B.hedge({ w: 0.55, d: 3.4, h: 0.75, x: sx * 9.0, z: sz * 8.5 }), 0.98)
+  }
+  // 南轴仪仗旗阵（台基外草皮上、台阶两侧各六根，旗面暖金）
+  for (let i = 0; i < 6; i++) {
+    const z = 9.7 - i * 0.12
+    for (const sx of [-1, 1]) {
+      const px = sx * (5.2 + (i % 2) * 1.1)
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 7, 8), stdMaterial(C.dark, { metalness: 0.5, roughness: 0.5 }))
+      pole.position.set(px, 3.5 + 0.05, z)
+      pole.castShadow = true
+      root.add(pole)
+      box(1.8, 1.0, 0.06, px + sx * -0.92, 6.0 + 0.05, z, C.gold, { emissive: C.gold, emissiveIntensity: 0.35 })
+    }
   }
   // 南轴铺装带 + 长椅（台基外地面）
   box(2.2, 0.1, 1.3, -4.6, 0, 9.55, C.light)
