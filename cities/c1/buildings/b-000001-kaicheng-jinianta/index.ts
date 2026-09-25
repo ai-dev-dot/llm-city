@@ -212,12 +212,37 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   beacon.position.y = mastTop + 3.7
   root.add(beacon)
 
-  // ---- 场地（台基外环带 y=0 与一台顶 y=0.9）----
+  // ---- 场地：地块满铺（草皮 + 铺装环 + 灌木），不裸地交付 ----
+  // 全地块草皮底板（被台基盖住中部，四周环带露出）
+  box(20.0, 0.05, 20.0, 0, 0, 0, '#7D8B64', { roughness: 0.95 })
+  // 一台顶草皮环（二台 ±8.5 外环带）
+  box(18.3, 0.06, 18.3, 0, 0.92, 0, '#77875C', { roughness: 0.95 })
+  // 二台顶草皮环（三台 ±7.75 外环带）
+  box(16.8, 0.06, 16.8, 0, 1.94, 0, '#82906A', { roughness: 0.95 })
+  // 台基外一圈铺装环（浅灰，衔接草皮与台基）
+  box(19.9, 0.07, 1.1, 0, 0.05, 9.2, C.light, { roughness: 0.9 })
+  box(19.9, 0.07, 1.1, 0, 0.05, -9.2, C.light, { roughness: 0.9 })
+  box(1.1, 0.07, 17.9, 9.2, 0.05, 0, C.light, { roughness: 0.9 })
+  box(1.1, 0.07, 17.9, -9.2, 0.05, 0, C.light, { roughness: 0.9 })
+  // 草皮上的灌木球阵（细分 1 二十面体，确定性布点）
+  for (let i = 0; i < 14; i++) {
+    const ang = (i / 14) * Math.PI * 2 + 0.22
+    const r = 9.65 + rng() * 0.15
+    const shrub = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(0.38 + rng() * 0.16, 1),
+      stdMaterial(i % 3 === 0 ? '#8C9E8B' : '#6E7F5C', { roughness: 0.95 }),
+    )
+    shrub.position.set(Math.cos(ang) * r, 0.42, Math.sin(ang) * r)
+    shrub.castShadow = true
+    root.add(shrub)
+  }
+
+  // ---- 场地设施（台基外环带 y=0 与一台顶 y=0.9）----
   // 12 盏灯柱环（r=9.55，让开正南台阶轴线）
   for (let i = 0; i < 12; i++) {
     const ang = (i / 12) * Math.PI * 2
     if (Math.abs(Math.cos(ang)) < 0.3 && Math.sin(ang) > 0.55) continue
-    lift(B.streetLamp({ x: Math.cos(ang) * 9.55, z: Math.sin(ang) * 9.55, h: 4.0 }), 0)
+    lift(B.streetLamp({ x: Math.cos(ang) * 9.55, z: Math.sin(ang) * 9.55, h: 4.0 }), 0.12)
   }
   // 一台顶外圈树阵（r≈8.8，介于二台 ±8.5 与一台边 ±9.25 之间）
   for (let i = 0; i < 12; i++) {
@@ -226,12 +251,12 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     lift(B.tree({
       x: Math.cos(ang) * (8.8 + (rng() - 0.5) * 0.2), z: Math.sin(ang) * (8.8 + (rng() - 0.5) * 0.2),
       scale: 0.85 + rng() * 0.3, seed: i + 1,
-    }), 0.9)
+    }), 0.98)
   }
   // 四角 L 形绿篱（一台顶）
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-    lift(B.hedge({ w: 3.4, d: 0.55, h: 0.75, x: sx * 8.5, z: sz * 9.0 }), 0.9)
-    lift(B.hedge({ w: 0.55, d: 3.4, h: 0.75, x: sx * 9.0, z: sz * 8.5 }), 0.9)
+    lift(B.hedge({ w: 3.4, d: 0.55, h: 0.75, x: sx * 8.5, z: sz * 9.0 }), 0.98)
+    lift(B.hedge({ w: 0.55, d: 3.4, h: 0.75, x: sx * 9.0, z: sz * 8.5 }), 0.98)
   }
   // 南轴铺装带 + 长椅（台基外地面）
   box(2.2, 0.1, 1.3, -4.6, 0, 9.55, C.light)
