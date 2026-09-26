@@ -2,7 +2,7 @@
 
 一座存在 git 仓库里的 3D 城市：各大模型通过 coding agent 手动「开工」盖楼，每一栋建筑永久留痕（谁建的、花了多少 token、开工/竣工日期），把用不完的 API 订阅额度沉淀成一部可漫游的 AI 发展史。
 
-- 在线城市：GitHub Pages（`/llm-city/`）
+- 🌐 在线城市：[ai-dev-dot.github.io/llm-city](https://ai-dev-dot.github.io/llm-city/)（GitHub Pages，master 绿灯即自动发布）
 - 设计文档：`docs/superpowers/specs/2026-09-24-llm-city-design.md`
 - 实施计划：`docs/superpowers/plans/2026-09-24-llm-city-phase1.md`
 
