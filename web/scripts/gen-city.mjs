@@ -65,6 +65,17 @@ const buildings = rows.map((r) => {
   }
 })
 
+// 街区主题名（blockplans/<district>.md 首行标题「# F4 街区总图 · 灯花栖居街区 …」）
+const blockplansDir = resolve(cityDir, 'blockplans')
+const blockNames = {}
+if (existsSync(blockplansDir)) {
+  for (const f of readdirSync(blockplansDir)) {
+    if (!f.endsWith('.md') || f === 'README.md') continue
+    const head = readFileSync(resolve(blockplansDir, f), 'utf8').match(/^#\s+\S+\s+街区总图\s*·\s*(\S+)/m)
+    if (head) blockNames[f.replace(/\.md$/, '')] = head[1]
+  }
+}
+
 // 生成文件位于 web/src/generated/，到仓库根需三级 ../（../../ 会落在 web/ 下，typecheck 与 vite 均不可达）；
 // import 路径省略 .ts 后缀（TS5097，web/tsconfig 裁决不启用 allowImportingTsExtensions），Vite/tsc 均可解析
 const loaders = rows.map((r) => `  '${r.id}': () => import('../../../cities/${cityId}/${r.entry.replace(/\.ts$/, '')}'),`).join('\n')
@@ -88,9 +99,10 @@ export interface CityData {
   grid: { blocks: number; blockPitch: number; roadWidth: number }
   lots: Array<{ id: string; center: [number, number]; size: [number, number]; district: string }>
   buildings: BuildingRecord[]
+  blockNames: Record<string, string>
 }
 
-export const city: CityData = ${JSON.stringify({ id: plan.id, name: plan.name, founded: plan.founded, grid: { blocks: plan.grid.blocks, blockPitch: plan.grid.blockPitch, roadWidth: plan.grid.roadWidth }, lots: plan.lots, buildings }, null, 2)}
+export const city: CityData = ${JSON.stringify({ id: plan.id, name: plan.name, founded: plan.founded, grid: { blocks: plan.grid.blocks, blockPitch: plan.grid.blockPitch, roadWidth: plan.grid.roadWidth }, lots: plan.lots, buildings, blockNames }, null, 2)}
 
 export const buildingLoaders: Record<string, () => Promise<{ default: (ctx: BuildCtx) => Object3D }>> = {
 ${loaders}

@@ -3,6 +3,8 @@ import type { BuildingManager } from '../city/loader'
 import type { FilterSystem, FilterMode } from '../city/filters'
 import type { SceneBundle } from '../city/scene'
 import type { TourRouteId, TourPreset } from '../city/tour'
+import type { BlockInfo } from '../city/blocks'
+import { blockHref, navigateToBlock } from '../city/blocks'
 import { AMBIENCE_PRESETS, applyAmbience } from '../city/ambience'
 import { escapeHtml, formatTokens } from './format'
 
@@ -48,6 +50,7 @@ export function mountHud(
     onTourSpeed: () => number          // 切到下一档速度倍率，返回新倍率（main.ts 调 tour）
     onPreset: (p: TourPreset) => void  // 预设机位（main.ts 调 tour.flyToPreset）
   },
+  nav?: { activeBlock: string | null; blocks: BlockInfo[] },
 ): HudHandle {
   hud.innerHTML = ''
   const s = plaqueStats(city.buildings)
@@ -56,17 +59,20 @@ export function mountHud(
   const plaque = document.createElement('div')
   plaque.className = 'panel'
   plaque.style.cssText = 'position:absolute;left:16px;bottom:16px;padding:14px 18px;font-size:13px;line-height:1.9;'
+  const blockLine = nav?.activeBlock
+    ? `<div style="margin-top:4px;">街区 <b>${escapeHtml(nav.activeBlock)}</b> <a href="${blockHref(null, location.pathname)}" style="color:var(--accent);text-decoration:none;cursor:pointer;">◀ 返回全城</a></div>`
+    : ''
   plaque.innerHTML = `
     <div style="font-size:18px;font-weight:700;letter-spacing:2px;">${city.name} <span style="font-size:12px;color:var(--text-secondary);font-weight:400;">llm-city</span></div>
     <div style="color:var(--text-secondary);">开城 ${city.founded}</div>
     <div class="num" style="margin-top:6px;">${s.buildings} 栋建筑 · ${s.models} 个模型 · ${s.vendors} 家厂商</div>
-    <div class="num" style="color:var(--text-secondary);">累计消耗 token ${s.unknownIn || s.unknownOut ? '≈ ' : ''}${formatTokens({ input: s.tokensIn, output: s.tokensOut })}</div>`
+    <div class="num" style="color:var(--text-secondary);">累计消耗 token ${s.unknownIn || s.unknownOut ? '≈ ' : ''}${formatTokens({ input: s.tokensIn, output: s.tokensOut })}</div>${blockLine}`
   hud.appendChild(plaque)
 
-  // 快捷键提示（铭牌上方小字）
+  // 快捷键提示（铭牌上方小字；动态按铭牌实际高度上移，街区模式铭牌多一行也不重叠）
   const hint = document.createElement('div')
   hint.className = 'panel'
-  hint.style.cssText = 'position:absolute;left:16px;bottom:132px;padding:6px 10px;font-size:12px;color:var(--text-secondary);'
+  hint.style.cssText = `position:absolute;left:16px;bottom:${plaque.offsetHeight + 24}px;padding:6px 10px;font-size:12px;color:var(--text-secondary);`
   hint.textContent = 'H HUD · P 摄影 · F 滤镜 · T 巡航'
   hud.appendChild(hint)
 
@@ -107,6 +113,34 @@ export function mountHud(
     tourBar.appendChild(btn)
   }
   hud.appendChild(tourBar)
+
+  // 街区选择条（右侧巡航条下方）：全城 ↔ 街区模式（?block=<id>），列出有建筑的街区
+  if (nav && nav.blocks.length > 0) {
+    const navBar = document.createElement('div')
+    navBar.className = 'panel'
+    navBar.style.cssText = 'position:absolute;right:16px;top:112px;display:flex;gap:6px;align-items:center;padding:6px 8px;font-size:13px;'
+    const navLabel = document.createElement('span')
+    navLabel.textContent = '街区'
+    navLabel.style.cssText = 'color:var(--text-secondary);padding:0 2px;'
+    navBar.appendChild(navLabel)
+    const select = document.createElement('select')
+    select.style.cssText = 'padding:5px 8px;background:rgba(17,20,28,0.85);color:var(--text-primary);border:1px solid var(--panel-border);border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px;'
+    const optAll = document.createElement('option')
+    optAll.value = ''
+    optAll.textContent = '全城'
+    select.appendChild(optAll)
+    for (const blk of nav.blocks) {
+      const opt = document.createElement('option')
+      opt.value = blk.id
+      opt.textContent = `${blk.id}${blk.name ? ` ${blk.name}` : ''}（${blk.buildings} 栋）`
+      if (blk.id === nav.activeBlock) opt.selected = true
+      select.appendChild(opt)
+    }
+    if (!nav.activeBlock) optAll.selected = true
+    select.addEventListener('change', () => navigateToBlock(select.value || null))
+    navBar.appendChild(select)
+    hud.appendChild(navBar)
+  }
 
   // 错误报告条（右下，常驻；Canvas 异常时 UI 层仍可见——与 Canvas 分层）
   const report = document.createElement('div')

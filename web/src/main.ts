@@ -5,14 +5,37 @@ import { BuildingManager } from './city/loader'
 import { FilterSystem } from './city/filters'
 import { setupPicking } from './city/pick'
 import { TourController, type TourRouteId, type TourPreset } from './city/tour'
+import { collectBlocks, districtLookup, districtOfBuilding, navigateToBlock, parseBlockParam, blockCamera, blockHref } from './city/blocks'
 import { mountTooltip } from './ui/tooltip'
 import { showSidebar } from './ui/sidebar'
 import { mountHud, type HudHandle } from './ui/hud'
 import { PhotoMode } from './ui/photo'
-import { city, buildingLoaders } from './generated/city-data'
+import { city as fullCity, buildingLoaders } from './generated/city-data'
+import type { BuildingRecord, CityData } from './generated/city-data'
+
+// 街区模式（?block=<id>）：同一查看页按街区过滤建筑、相机锚定街区包围盒；
+// 其余街区不动（草皮/道路是合并单 mesh，全量常驻代价为 2 次 draw call）。
+const activeBlock = parseBlockParam(location.search, fullCity)
+const lotDistrict = districtLookup(fullCity)
+const districtOf = (b: BuildingRecord): string | null => districtOfBuilding(fullCity, b, lotDistrict)
+const city: CityData = activeBlock
+  ? { ...fullCity, buildings: fullCity.buildings.filter((b) => districtOf(b) === activeBlock) }
+  : fullCity
+if (activeBlock) {
+  const blk = collectBlocks(fullCity, fullCity.blockNames).find((x) => x.id === activeBlock)
+  if (blk) document.title = `${fullCity.name} · ${activeBlock}${blk.name ? ` ${blk.name}` : ''}`
+}
 
 const canvas = document.getElementById('city-canvas') as HTMLCanvasElement
-const bundle = createScene(canvas, city)
+const bundle = createScene(canvas, fullCity)
+if (activeBlock) {
+  const blk = collectBlocks(fullCity, fullCity.blockNames).find((x) => x.id === activeBlock)
+  if (blk) {
+    const cam = blockCamera(blk)
+    bundle.camera.position.set(...cam.pos)
+    bundle.controls.target.set(...cam.target)
+  }
+}
 const manager = new BuildingManager(bundle.scene, city, buildingLoaders)
 manager.onStatusChange((c) => console.info(`[llm-city] ${c.ok} 栋正常 / ${c.failed} 栋烂尾`))
 
@@ -78,10 +101,13 @@ const hud = document.getElementById('hud')!
 let unmountPicking: (() => void) | null = null
 const mountPicking = () => {
   unmountPicking?.()
-  const tooltip = mountTooltip(hud, canvas)
+  const tooltip = mountTooltip(hud, canvas, {
+    activeBlock,
+    hrefOf: (id) => blockHref(id, location.pathname),
+  })
   unmountPicking = setupPicking(canvas, bundle.camera, bundle.controls, bundle.scene, (id, ev) => {
     const b = id ? city.buildings.find((x) => x.id === id) ?? null : null
-    tooltip(b, ev as PointerEvent)
+    tooltip(b, ev as PointerEvent, b ? districtOf(b) : null)
   }, (id) => {
     const b = city.buildings.find((x) => x.id === id)!
     showSidebar(hud, bundle.camera, bundle.controls, manager.groupOf(id), b, { onOrbit: () => orbitBuilding(id) })
@@ -104,6 +130,9 @@ const mountAll = () => {
     onTour: onTourCycle,
     onTourSpeed: onTourSpeedCycle,
     onPreset: (p: TourPreset) => tour.flyToPreset(p),
+  }, {
+    activeBlock,
+    blocks: collectBlocks(fullCity, fullCity.blockNames).filter((b) => b.buildings > 0),
   })
   // 拖拽即停/预设飞点/环绕建筑不经过 T 键：靠状态回调同步按钮文本（单槽重挂不累积）
   tour.onStateChange = (route) => hudHandle.syncTour(route)
