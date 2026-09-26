@@ -1,4 +1,4 @@
-import { readdirSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { inspectBuilding, inspectCity } from './inspect'
 
@@ -86,22 +86,9 @@ async function main() {
     return
   }
   if (cmd === 'shot') {
-    const { runShot } = await import('./shot/run')
+    const { runShot, runBlockShot } = await import('./shot/run')
     const { loadRegistry, expandParcel, parcelDims } = await import('../../lib/registry')
     const { hashSeed } = await import('../../lib/ctx')
-    const target = args.find((a) => !a.startsWith('--'))
-    if (!target) {
-      console.error('用法：npm run shot -- <建筑目录名|建筑id> [--views street,corner,aerial,top,front,back,left,right] [--amb day,dusk,night] [--width 960] [--out 目录] [--eye x,y,z --target x,y,z --fov 度（自定义机位）]')
-      process.exit(2)
-    }
-    const [city, dir] = locateBuilding(target)
-    const cityDir = cityDirOf(repoRoot, city)
-    const id = dir.match(/^(b-\d{6})-/)?.[1]
-    const row = loadRegistry(cityDir).find((r) => r.id === id)
-    if (!row) {
-      console.error(`登记簿中找不到 ${dir} 的登记行——shot 按登记宗地出图，请先登记骨架`)
-      process.exit(2)
-    }
     // 同时支持 --x=v 与 --x v 两种形式
     const opt = (name: string): string | undefined => {
       const eq = args.find((a) => a.startsWith(`--${name}=`))
@@ -113,7 +100,38 @@ async function main() {
     const ambs = opt('amb')?.split(',') as import('./shot/run').ShotOptions['ambs'] | undefined
     const width = Number(opt('width')) || undefined
     const outDir = opt('out')
-    // 自定义机位：--eye x,y,z --target x,y,z [--fov 度]
+    const block = opt('block')?.toUpperCase()
+    if (block) {
+      // 街区级 shot：定位含该街区的城 → 全部已登记建筑同场出图（总图自评）
+      let cityId: string | null = null
+      for (const c of allCities(repoRoot)) {
+        const plan = JSON.parse(readFileSync(resolve(repoRoot, 'cities', c, 'plan.json'), 'utf8'))
+        if ((plan.lots as Array<{ district: string }>).some((l) => l.district.toUpperCase() === block)) { cityId = c; break }
+      }
+      if (!cityId) { console.error(`所有城的 plan 里都找不到街区 ${block}`); process.exit(2) }
+      const t0 = Date.now()
+      const r = await runBlockShot(repoRoot, cityDirOf(repoRoot, cityId), block, { views, ambs, width, outDir })
+      if (!r.ok) {
+        console.error(`✗ shot 失败：${r.error}${r.stack ? `\n${r.stack}` : ''}`)
+        process.exit(2)
+      }
+      console.log(`● ${cityId} / 街区 ${block}  ${r.triangles?.toLocaleString()} 三角形，包围盒 ${r.size?.join(' × ')}m，渲染 ${r.shots?.length} 张耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s`)
+      for (const s of r.shots ?? []) console.log(`  📷 ${s.view}-${s.amb}.png  (${(s.bytes / 1024).toFixed(0)}KB)  ${s.path}`)
+      return
+    }
+    const target = args.find((a) => !a.startsWith('--'))
+    if (!target) {
+      console.error('用法：npm run shot -- <建筑目录名|建筑id | --block 街区id> [--views street,corner,aerial,top,front,back,left,right] [--amb day,dusk,night] [--width 960] [--out 目录] [--eye x,y,z --target x,y,z --fov 度（自定义机位，单建筑）]')
+      process.exit(2)
+    }
+    const [city, dir] = locateBuilding(target)
+    const cityDir = cityDirOf(repoRoot, city)
+    const id = dir.match(/^(b-\d{6})-/)?.[1]
+    const row = loadRegistry(cityDir).find((r) => r.id === id)
+    if (!row) {
+      console.error(`登记簿中找不到 ${dir} 的登记行——shot 按登记宗地出图，请先登记骨架`)
+      process.exit(2)
+    }
     const vec3 = (s: string | undefined): [number, number, number] | undefined => {
       const v = s?.split(',').map(Number)
       return v?.length === 3 && v.every((n) => Number.isFinite(n)) ? v as [number, number, number] : undefined
@@ -143,6 +161,7 @@ async function main() {
       '  npm run state',
       '  npm run inspect -- [建筑目录名] [--json] [--complete]',
       '  npm run shot -- <建筑目录名|建筑id> [--views ...] [--amb day,dusk,night] [--width 960] [--out 目录] [--eye x,y,z --target x,y,z --fov 度]',
+      '  npm run shot -- --block <街区id> [--views ...] [--amb ...] [--width 1280]   # 街区总图：全部建筑同场 + 底图上下文',
       '  npm run demolish -- <建筑目录名|建筑id> [--yes] [--reason 文本]   # 城主拆除',
       '  npm run check-history -- --from=<rev> --to=<rev|WORKTREE>',
     ].join('\n'))

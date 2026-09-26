@@ -37,6 +37,7 @@
 | `npm run demolish -- <目录\|id> [--yes] [--reason 文本]` | 城主拆除建筑：删目录+登记行+`[city-admin]` commit+复验（缺 `--yes` 为干跑） |
 | `npm run check-history` | 登记簿受限编辑校验（CI 也跑） |
 | `npm run shot -- <目录\|id> [--views ...] [--amb day,dusk,night]` | 建筑多视角渲染图（秒级软件光栅化，无浏览器；施工自评用） |
+| `npm run shot -- --block <街区id> [--views ...] [--amb ...]` | 街区总图渲染：全部建筑同场+底图上下文（总图自评用） |
 | `npm run browser:reap` | 回收被遗弃的无头浏览器孤儿进程（`state`/`preview` 前自动扫荡） |
 | `npm run preview` | 本地城市浏览器 |
 | `npm test` | vitest 全量 |
