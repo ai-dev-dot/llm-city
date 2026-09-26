@@ -45,7 +45,7 @@ export function generatePlanData(): PlanData {
     grid: { origin: [0, 0], blocks: 9, blockPitch: 72, roadWidth: 12 },
     districts,
     lots,
-    policy: { allowedModelIds: ['official', 'glm-5.3', 'mimo-v2.6-flash', 'qwen3.8-flash', 'qwen3.8-max'], sharedBlocks: [] },
+    policy: { allowedModelIds: ['official', 'glm-5.3', 'mimo-v2.6-flash', 'qwen3.8-flash', 'qwen3.8-max', 'doubao-seed-2.1-pro'], sharedBlocks: [] },
   }
 }
 
