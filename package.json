@@ -21,6 +21,7 @@
     "build:web": "npm run gen:city && npm -w web run build",
     "gen:plan": "tsx tools/src/gen-plan.ts",
     "inspect": "tsx tools/src/cli.ts inspect",
+    "shot": "tsx tools/src/cli.ts shot",
     "demolish": "tsx tools/src/cli.ts demolish",
     "state": "tsx tools/src/cli.ts state",
     "check-history": "tsx tools/src/cli.ts check-history",

@@ -84,11 +84,51 @@ async function main() {
     const { buildStateReport } = await import('./state')
     console.log(JSON.stringify(buildStateReport(resolve(repoRoot, 'cities')), null, 2))
     return
+  }
+  if (cmd === 'shot') {
+    const { runShot } = await import('./shot/run')
+    const { loadRegistry, expandParcel, parcelDims } = await import('../../lib/registry')
+    const { hashSeed } = await import('../../lib/ctx')
+    const target = args.find((a) => !a.startsWith('--'))
+    if (!target) {
+      console.error('用法：npm run shot -- <建筑目录名|建筑id> [--views street,corner,aerial,top,front,back,left,right] [--amb day,dusk,night] [--width 960] [--out 目录]')
+      process.exit(2)
+    }
+    const [city, dir] = locateBuilding(target)
+    const cityDir = cityDirOf(repoRoot, city)
+    const id = dir.match(/^(b-\d{6})-/)?.[1]
+    const row = loadRegistry(cityDir).find((r) => r.id === id)
+    if (!row) {
+      console.error(`登记簿中找不到 ${dir} 的登记行——shot 按登记宗地出图，请先登记骨架`)
+      process.exit(2)
+    }
+    // 同时支持 --x=v 与 --x v 两种形式
+    const opt = (name: string): string | undefined => {
+      const eq = args.find((a) => a.startsWith(`--${name}=`))
+      if (eq !== undefined) return eq.slice(name.length + 3)
+      const i = args.indexOf(`--${name}`)
+      return i >= 0 ? args[i + 1] : undefined
+    }
+    const views = opt('views')?.split(',') as import('./shot/run').ShotOptions['views'] | undefined
+    const ambs = opt('amb')?.split(',') as import('./shot/run').ShotOptions['ambs'] | undefined
+    const width = Number(opt('width')) || undefined
+    const outDir = opt('out')
+    const nLots = expandParcel(row).length
+    const t0 = Date.now()
+    const r = await runShot(repoRoot, cityDir, dir, { id: expandParcel(row).join('+'), size: parcelDims(row), maxHeight: 300 }, hashSeed(row.id), { views, ambs, width, outDir })
+    if (!r.ok) {
+      console.error(`✗ shot 失败：${r.error}${r.stack ? `\n${r.stack}` : ''}`)
+      process.exit(2)
+    }
+    console.log(`● ${city} / ${dir}  ${r.triangles?.toLocaleString()} 三角形，包围盒 ${r.size?.join(' × ')}m，渲染 ${r.shots?.length} 张耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s`)
+    for (const s of r.shots ?? []) console.log(`  📷 ${s.view}-${s.amb}.png  (${(s.bytes / 1024).toFixed(0)}KB)  ${s.path}`)
+    return
   } else {
     console.error([
       '用法：',
       '  npm run state',
       '  npm run inspect -- [建筑目录名] [--json] [--complete]',
+      '  npm run shot -- <建筑目录名|建筑id> [--views street,corner,aerial,top,...] [--amb day,dusk,night] [--width 960] [--out 目录]',
       '  npm run demolish -- <建筑目录名|建筑id> [--yes] [--reason 文本]   # 城主拆除',
       '  npm run check-history -- --from=<rev> --to=<rev|WORKTREE>',
     ].join('\n'))
