@@ -7,6 +7,7 @@ const b = (over: Partial<BuildingRecord>): BuildingRecord => ({
   vendor: { id: 'zhipu', name: '智谱 AI', color: '#3B82F6' }, agent: 'zcode', operator: 'Think',
   sessions: [], tokens: { input: 100, output: 50 }, startedAt: '2026-09-24T10:00:00+08:00',
   completedAt: null, notesExcerpt: null, entryDir: 'buildings/b-000001-x',
+  parcel: ['E5-05'], parcelCenter: null, parcelSize: null,
   ...over,
 })
 
