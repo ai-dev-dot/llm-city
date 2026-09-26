@@ -12,6 +12,7 @@ const msg = workerData as {
   views: ViewName[]
   ambs: Array<'day' | 'dusk' | 'night'>
   width: number
+  custom?: { eye: [number, number, number]; target: [number, number, number]; fov?: number }
 }
 
 try {
@@ -110,11 +111,21 @@ try {
 
   // ---- 渲染各视角 × 各环境 ----
   const cams = deriveCameras({ min: bmin, max: bmax }, msg.views)
+  // 自定义机位：调用方给的相机三件套直接生效（与 deriveCameras 同一渲染路径）；先剔除再追加防重复渲染
+  const viewList: ViewName[] = [...msg.views]
+  {
+    const i = viewList.indexOf('custom')
+    if (i >= 0) viewList.splice(i, 1)
+  }
+  if (msg.custom) {
+    cams.custom = { eye: msg.custom.eye, target: msg.custom.target, up: [0, 1, 0], fovDeg: msg.custom.fov ?? 50, orthoH: 0 }
+    viewList.push('custom')
+  }
   const shots: Array<{ view: string; amb: string; png: Buffer }> = []
   for (const ambName of msg.ambs) {
     const amb = AMBIANTS[ambName]
     if (!amb) throw new Error(`未知环境：${ambName}（可选 day/dusk/night）`)
-    for (const viewName of msg.views) {
+    for (const viewName of viewList) {
       const cam = cams[viewName]
       if (!cam) throw new Error(`未知视角：${viewName}（可选 street/corner/aerial/top/front/back/left/right）`)
       const rgb = renderView(soup, cam, amb, msg.width, Math.round(msg.width * 0.667))

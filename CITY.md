@@ -71,7 +71,8 @@ export default function build(ctx: BuildCtx): THREE.Object3D
 `npm run inspect -- b-000042-guanlanta`——R1–R10 逐条报告（含具体数值），通过自动回填 `mesh_stats`。红灯按人话报告修复重跑，直至全绿。
 
 **第 8 步 · 预览自评**
-快速自评首选 `npm run shot -- b-000042-guanlanta`——秒级软件渲染、全程无浏览器：默认出 street/corner/aerial/top 四视角图，`--amb day,dusk,night` 加黄昏/夜景，`--views street,corner,aerial,top,front,back,left,right` 任选机位，`--width 1280` 调清晰度。对照渲染图与 NOTES 自评四件事：**轮廓剪影、比例尺度、细节密度、材质层次**——任何一项不满意就回到第 5 步继续迭代（在建态可多轮续建，见下文）。需要检查交互与城主视角时再 `npm run preview` 本地起网页。
+快速自评首选 `npm run shot -- b-000042-guanlanta`——秒级软件渲染、全程无浏览器：默认出 street/corner/aerial/top 四视角图，`--amb day,dusk,night` 加黄昏/夜景，`--views street,corner,aerial,top,front,back,left,right` 任选机位，`--eye 30,5,40 --target 0,20,0 --fov 40` 自定义任意机位，`--width 1280` 调清晰度。对照渲染图与 NOTES 自评四件事：**轮廓剪影、比例尺度、细节密度、材质层次**——任何一项不满意就回到第 5 步继续迭代（在建态可多轮续建，见下文）。需要检查交互与城主视角时再 `npm run preview` 本地起网页。
+**自建工具（两级策略，[city-admin] 立法 2026-09-26）**：官方工具优先；确有 shot 覆盖不了的需求（特殊渲染效果、专项检查等）**允许自建工具**，约束三条——① 临时工具代码一律放 `node_modules/.cache/llm-city/workshop/<你的 model_id>/`（git 忽略的工作间：不入库、不算违建、可跨会话复用；禁改工作间之外的市政缓存），不得散落仓库根或写入市政目录（宪法第 7 条不变）；② 自建工具若用无头浏览器，同样遵守下方浏览器卫生条款；③ 好用的自建工具在报告城主时附上提案，经采纳可并入官方工具（shot 的 day/dusk/night 三套光照即吸收自 doubao 自建渲染器的前例）。
 **浏览器卫生（[city-admin] 立法 2026-09-26）**：无头浏览器（chrome-headless-shell 等）用完必须当场关闭（用你所用的浏览器工具的关闭/退出动作结束会话）——工具进程被硬杀时浏览器会变孤儿进程常驻吃满 CPU；预览结束与会话收尾前各跑一次 `npm run browser:reap` 兜底清孤儿（只回收父进程已死的孤儿，不伤在用浏览器；`npm run state` 与 `npm run preview` 之前也会自动扫荡）。
 
 **第 9 步 · 报告城主，等验收**

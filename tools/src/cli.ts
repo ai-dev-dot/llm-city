@@ -91,7 +91,7 @@ async function main() {
     const { hashSeed } = await import('../../lib/ctx')
     const target = args.find((a) => !a.startsWith('--'))
     if (!target) {
-      console.error('用法：npm run shot -- <建筑目录名|建筑id> [--views street,corner,aerial,top,front,back,left,right] [--amb day,dusk,night] [--width 960] [--out 目录]')
+      console.error('用法：npm run shot -- <建筑目录名|建筑id> [--views street,corner,aerial,top,front,back,left,right] [--amb day,dusk,night] [--width 960] [--out 目录] [--eye x,y,z --target x,y,z --fov 度（自定义机位）]')
       process.exit(2)
     }
     const [city, dir] = locateBuilding(target)
@@ -113,9 +113,23 @@ async function main() {
     const ambs = opt('amb')?.split(',') as import('./shot/run').ShotOptions['ambs'] | undefined
     const width = Number(opt('width')) || undefined
     const outDir = opt('out')
+    // 自定义机位：--eye x,y,z --target x,y,z [--fov 度]
+    const vec3 = (s: string | undefined): [number, number, number] | undefined => {
+      const v = s?.split(',').map(Number)
+      return v?.length === 3 && v.every((n) => Number.isFinite(n)) ? v as [number, number, number] : undefined
+    }
+    const eye = vec3(opt('eye'))
+    const aim = vec3(opt('target'))
+    if ((opt('eye') || opt('target')) && (!eye || !aim)) {
+      console.error('--eye/--target 均须为 x,y,z 三个有限数字（世界坐标，宗地中心为原点，Y 向上）')
+      process.exit(2)
+    }
+    const custom = eye && aim ? { eye, target: aim, fov: Number(opt('fov')) || undefined } : undefined
+    // 给了自定义机位而未指定 --views 时，默认机位组追加 custom
+    const effViews = views ?? (custom ? ['street', 'corner', 'aerial', 'top', 'custom'] as import('./shot/run').ShotOptions['views'] : undefined)
     const nLots = expandParcel(row).length
     const t0 = Date.now()
-    const r = await runShot(repoRoot, cityDir, dir, { id: expandParcel(row).join('+'), size: parcelDims(row), maxHeight: 300 }, hashSeed(row.id), { views, ambs, width, outDir })
+    const r = await runShot(repoRoot, cityDir, dir, { id: expandParcel(row).join('+'), size: parcelDims(row), maxHeight: 300 }, hashSeed(row.id), { views: effViews, ambs, width, outDir, custom })
     if (!r.ok) {
       console.error(`✗ shot 失败：${r.error}${r.stack ? `\n${r.stack}` : ''}`)
       process.exit(2)
@@ -128,7 +142,7 @@ async function main() {
       '用法：',
       '  npm run state',
       '  npm run inspect -- [建筑目录名] [--json] [--complete]',
-      '  npm run shot -- <建筑目录名|建筑id> [--views street,corner,aerial,top,...] [--amb day,dusk,night] [--width 960] [--out 目录]',
+      '  npm run shot -- <建筑目录名|建筑id> [--views ...] [--amb day,dusk,night] [--width 960] [--out 目录] [--eye x,y,z --target x,y,z --fov 度]',
       '  npm run demolish -- <建筑目录名|建筑id> [--yes] [--reason 文本]   # 城主拆除',
       '  npm run check-history -- --from=<rev> --to=<rev|WORKTREE>',
     ].join('\n'))

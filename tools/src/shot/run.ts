@@ -23,6 +23,8 @@ export interface ShotOptions {
   width?: number
   outDir?: string
   timeoutMs?: number
+  /** 自定义机位（--eye/--target/--fov）：官方预设机位不敷使用时的正规出口，无需自建工具 */
+  custom?: { eye: [number, number, number]; target: [number, number, number]; fov?: number }
 }
 
 /** shot worker 编译缓存指纹：worker.ts + tools/src/shot 全部 .ts + lib 全部 .ts（同 headless/run.ts 的机制） */
@@ -88,7 +90,7 @@ export async function runShot(
   const workerPath = ensureShotWorker(repoRoot)
   return new Promise((resolvePromise) => {
     const w = new Worker(workerPath, {
-      workerData: { moduleUrl: url.pathToFileURL(outPath).href, lot, seed, views, ambs, width },
+      workerData: { moduleUrl: url.pathToFileURL(outPath).href, lot, seed, views, ambs, width, custom: opts.custom },
     })
     let settled = false
     const finish = (r: ShotResult) => {

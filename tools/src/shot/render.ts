@@ -41,7 +41,7 @@ export interface Camera {
   orthoH: number    // 正交时画面纵向覆盖的世界尺寸
 }
 
-export type ViewName = 'street' | 'corner' | 'aerial' | 'top' | 'front' | 'back' | 'left' | 'right'
+export type ViewName = 'street' | 'corner' | 'aerial' | 'top' | 'front' | 'back' | 'left' | 'right' | 'custom'
 export const DEFAULT_VIEWS: ViewName[] = ['street', 'corner', 'aerial', 'top']
 
 const norm3 = (v: [number, number, number]): [number, number, number] => {
@@ -81,12 +81,13 @@ export function deriveCameras(bbox: { min: [number, number, number]; max: [numbe
       cams[v] = { eye: [cx + dir[0] * dist, y0 + dir[1] * dist, cz + dir[2] * dist], target: [cx, y0 + H * 0.35, cz], up: [0, 1, 0], fovDeg: 50, orthoH: 0 }
     } else if (v === 'top') {
       cams[v] = { eye: [cx, bbox.max[1] + diag + 20, cz + 0.01], target: [cx, y0, cz], up: [0, 0, -1], fovDeg: 0, orthoH: Math.max(W, D) * 1.3 }
-    } else {
+    } else if (v === 'front' || v === 'back' || v === 'left' || v === 'right') {
       const s: Record<string, [number, number, number]> = { front: [0, 0, 1], back: [0, 0, -1], left: [-1, 0, 0], right: [1, 0, 0] }
       const d = s[v]
       const dist = diag + 10
       cams[v] = { eye: [cx + d[0] * dist, y0 + H / 2, cz + d[2] * dist], target: [cx, y0 + H / 2, cz], up: [0, 1, 0], fovDeg: 0, orthoH: Math.max(W, H) * 1.2 }
     }
+    // 其他视角名（如 worker 注入的 custom 自定义机位）不在此推导，由调用方自行填入 cams
   }
   return cams
 }
