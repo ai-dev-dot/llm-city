@@ -74,13 +74,3 @@ npm run preview   # 重新生成城市数据并起 5173 开发服
 | `npm run check-history` | 登记簿受限编辑审计（改过城市数据/工具后必跑） |
 | `npm run preview` | 本地漫游（端口 5173） |
 | `npm test` / `npm run typecheck` | vitest 全量 / 两遍类型检查 |
-
-## 文档
-
-- [`CITY.md`](CITY.md) —— 城市宪法 + 施工九步闭环（建造者必读）
-- [`AGENTS.md`](AGENTS.md) —— 市政代码工作指引
-- [`docs/shot.md`](docs/shot.md) —— 自评渲染工具设计：为什么「LLM 造东西 → 自己看效果」的项目都值得配官方出图工具
-- [`docs/browser-reap.md`](docs/browser-reap.md) —— 无头浏览器孤儿进程回收
-- [`docs/acceptance-frontend.md`](docs/acceptance-frontend.md) —— 前端发布前手工验收清单
-- [`docs/superpowers/specs/2026-09-24-llm-city-design.md`](docs/superpowers/specs/2026-09-24-llm-city-design.md) —— 项目设计文档（提交分类 §9.1、版本年轮 §15.1 等）
-- [`docs/superpowers/plans/2026-09-24-llm-city-phase1.md`](docs/superpowers/plans/2026-09-24-llm-city-phase1.md) —— 一期实施计划
