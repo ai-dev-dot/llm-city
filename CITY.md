@@ -72,6 +72,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D
 
 **第 8 步 · 预览自评**
 `npm run preview` 本地起网页，对照 NOTES 自评四件事：**轮廓剪影、比例尺度、细节密度、材质层次**——任何一项不满意就回到第 5 步继续迭代（在建态可多轮续建，见下文）。
+**浏览器卫生（[city-admin] 立法 2026-09-26）**：无头浏览器（chrome-headless-shell 等）用完必须当场关闭（用你所用的浏览器工具的关闭/退出动作结束会话）——工具进程被硬杀时浏览器会变孤儿进程常驻吃满 CPU；预览结束与会话收尾前各跑一次 `npm run browser:reap` 兜底清孤儿（只回收父进程已死的孤儿，不伤在用浏览器；`npm run state` 与 `npm run preview` 之前也会自动扫荡）。
 
 **第 9 步 · 报告城主，等验收**
 全绿后 commit（**保持 `completed_at: null` 在建态**）并报告城主。城主 preview 验收满意后，**由城主**执行 `npm run inspect -- b-000042-guanlanta --complete`（填 `completed_at`，即封存）并 push。**agent 不得自行 `--complete`**——竣工权归城主（宪法第 9 条）。

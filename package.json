@@ -13,6 +13,9 @@
   ],
   "scripts": {
     "test": "vitest run",
+    "browser:reap": "node tools/src/browser-reap.mjs",
+    "prestate": "node tools/src/browser-reap.mjs",
+    "pregen:city": "node tools/src/browser-reap.mjs",
     "gen:city": "node web/scripts/gen-city.mjs",
     "preview": "npm run gen:city && npm -w web run dev",
     "build:web": "npm run gen:city && npm -w web run build",
