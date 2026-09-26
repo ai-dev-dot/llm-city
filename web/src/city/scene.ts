@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import type { CityData } from '../generated/city-data'
 
 export interface SceneBundle {
@@ -53,27 +54,39 @@ export function createScene(canvas: HTMLCanvasElement, city: CityData): SceneBun
   // 地块默认草皮瓦（[city-admin] 2026-09-25：空地不裸灰——每格地块默认铺草皮，
   // 整个街区在俯视下读作一整块草坪；建筑在其上再做自己的园地设计。
   // 0.16 高垫层顶面高于道路层防深度吞没；emissive 补底抵消掠射角把顶面压灰。）
+  // 全城 729 块瓦合并为单个 mesh（729 draw call → 1）。
   const lotGrass = new THREE.MeshStandardMaterial({ color: '#8AA662', roughness: 0.95, emissive: '#42672F', emissiveIntensity: 0.4 })
-  for (const lot of city.lots) {
-    const tile = new THREE.Mesh(new THREE.BoxGeometry(19.6, 0.16, 19.6), lotGrass)
-    tile.position.set(lot.center[0], 0.08, lot.center[1])
-    tile.receiveShadow = true
-    scene.add(tile)
+  {
+    const tileGeos = city.lots.map((lot) => {
+      const g = new THREE.BoxGeometry(19.6, 0.16, 19.6)
+      g.translate(lot.center[0], 0.08, lot.center[1])
+      return g
+    })
+    const tiles = new THREE.Mesh(mergeGeometries(tileGeos)!, lotGrass)
+    tiles.receiveShadow = true
+    scene.add(tiles)
+    for (const g of tileGeos) g.dispose()
   }
 
-  // 道路网格推导（spec §11 道路骨架=场景底色一部分）：街区边界间的 12m 道路条
+  // 道路网格推导（spec §11 道路骨架=场景底色一部分）：街区边界间的 12m 道路条（合并为单 mesh）
   const { blocks, blockPitch, roadWidth } = city.grid
   const span = blocks * blockPitch   // 648
   const roadMat = new THREE.MeshStandardMaterial({ color: '#6E7276', roughness: 0.9 })
   const half = (blocks - 1) / 2
-  for (let i = 0; i <= blocks; i++) {
-    const c = (i - half) * blockPitch - blockPitch / 2   // 街区边界中心
-    const rx = new THREE.Mesh(new THREE.PlaneGeometry(roadWidth, span + roadWidth), roadMat)
-    rx.rotation.x = -Math.PI / 2; rx.position.set(c, 0.05, 0); rx.receiveShadow = true
-    scene.add(rx)
-    const rz = new THREE.Mesh(new THREE.PlaneGeometry(span + roadWidth, roadWidth), roadMat)
-    rz.rotation.x = -Math.PI / 2; rz.position.set(0, 0.05, c); rz.receiveShadow = true
-    scene.add(rz)
+  {
+    const roadGeos: THREE.BufferGeometry[] = []
+    for (let i = 0; i <= blocks; i++) {
+      const c = (i - half) * blockPitch - blockPitch / 2   // 街区边界中心
+      const rx = new THREE.PlaneGeometry(roadWidth, span + roadWidth)
+      rx.rotateX(-Math.PI / 2); rx.translate(c, 0.05, 0)
+      const rz = new THREE.PlaneGeometry(span + roadWidth, roadWidth)
+      rz.rotateX(-Math.PI / 2); rz.translate(0, 0.05, c)
+      roadGeos.push(rx, rz)
+    }
+    const roads = new THREE.Mesh(mergeGeometries(roadGeos)!, roadMat)
+    roads.receiveShadow = true
+    scene.add(roads)
+    for (const g of roadGeos) g.dispose()
   }
 
   const onResize = () => {

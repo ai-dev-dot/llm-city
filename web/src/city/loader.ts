@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { mulberry32, hashSeed, type BuildCtx } from '../../../lib/ctx'
 import { blocks } from '../../../lib/blocks'
+import { bakeBuild } from './bake'
 import type { CityData, BuildingRecord } from '../generated/city-data'
 
 export class LruCache<K, V> {
@@ -117,12 +118,16 @@ export class BuildingManager {
       const mod = await this.loaders[b.id]()                      // 韧性层 1：chunk 加载失败 → 灰盒
       const size = b.parcelSize ?? this.city.lots.find((l) => l.id === b.lot)?.size ?? [20, 20]
       const ctx: BuildCtx = { lot: { id: b.parcel.join('+'), size, maxHeight: 300 }, rng: mulberry32(hashSeed(b.id)), blocks }
-      const root = validateObject3D(mod.default(ctx))             // 韧性层 2/3：build 异常或坏对象 → 灰盒
-      root.traverse((o) => { o.userData.buildingId = b.id })
-      if (this.filterFn) this.filterFn(root)
-      this.groups.get(b.id)!.add(root)
-      this.roots.touch(b.id, root)
-      this.status.set(b.id, { state: 'ok', root })
+      // 静态烘焙（性能地基）：agent 代码常把每根梁柱/每扇窗建成独立 mesh（实测单楼 7k+），
+      // 挂载前合并为「每规约材质 × 每几何签名」一个 mesh，把 draw call 从数千压到几十
+      const root = validateObject3D(mod.default(ctx))
+      const baked = bakeBuild(root)
+      const finalRoot = baked.stats.merged ? baked.root : root
+      finalRoot.traverse((o) => { o.userData.buildingId = b.id })
+      if (this.filterFn) this.filterFn(finalRoot)
+      this.groups.get(b.id)!.add(finalRoot)
+      this.roots.touch(b.id, finalRoot)
+      this.status.set(b.id, { state: 'ok', root: finalRoot })
     } catch (e) {
       console.warn(`[llm-city] 建筑 ${b.id}（${b.name}）加载失败，显示灰盒：`, e)
       this.showGrayBox(b)
