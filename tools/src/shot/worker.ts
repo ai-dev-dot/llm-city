@@ -109,8 +109,8 @@ try {
         const triCount = Math.floor((hi - lo) / 3)
         for (let t = 0; t < triCount; t++) {
           const i0 = idx ? idx.getX(lo + t * 3) : lo + t * 3
-          const i1 = idx ? idx.getX(lo + t * 3 + 1) : lo + t * 3
-          const i2 = idx ? idx.getX(lo + t * 3 + 2) : lo + t * 3
+          const i1 = idx ? idx.getX(lo + t * 3 + 1) : lo + t * 3 + 1
+          const i2 = idx ? idx.getX(lo + t * 3 + 2) : lo + t * 3 + 2
           readV(i0, va); readV(i1, vb); readV(i2, vc)
           // 顶点色：material.color × vertexColor（three 语义）；取三顶点各自值
           const colOf = (i: number): [number, number, number] =>
