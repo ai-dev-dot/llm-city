@@ -39,6 +39,27 @@ describe('官方积木库（spec §6.4 十三件）', () => {
       expect(countTris(o)).toBeGreaterThan(0)
     }
   })
+  it('glassCurtain（增补 2026-09-27）：框架+玻璃结构齐全，玻璃为亮色低金属反射面', () => {
+    const o = blocks.glassCurtain({ w: 12, h: 24, cols: 6, rows: 8 })
+    expect(o).toBeInstanceOf(THREE.Object3D)
+    expect(countTris(o)).toBeGreaterThan(0)
+    const meshes: THREE.Mesh[] = []
+    o.traverse((x) => { const m = x as THREE.Mesh; if (m.isMesh) meshes.push(m) })
+    // 玻璃 1 面 + 竖梃 (6+1) + 横梁 (8+1)
+    expect(meshes.length).toBe(1 + 7 + 9)
+    const glass = meshes.find((m) => (m.material as THREE.MeshStandardMaterial).emissive.getHexString() !== '000000')!
+    expect(glass).toBeDefined()
+    const gm = glass.material as THREE.MeshStandardMaterial
+    expect(gm.color.getHexString().toUpperCase()).toBe('9EC5DD')   // 默认取色板 11 号新亮色
+    expect(gm.metalness).toBeLessThanOrEqual(0.5)                  // 中等金属度：envMap 端反射提亮、无 envMap 端不至近黑
+    expect(gm.emissiveIntensity).toBeGreaterThan(0)                // emissive 兜底：shot 纯 Lambert 端也可见
+    const frames = meshes.filter((m) => m !== glass)
+    for (const f of frames) {
+      const fm = f.material as THREE.MeshStandardMaterial
+      expect(fm.color.getHexString().toUpperCase()).toBe('C4C1BA') // 框架默认色板 2 号铝灰
+      expect(fm.metalness).toBeLessThanOrEqual(0.6)
+    }
+  })
   it('同种子 tree 两次构建一致（确定性，锁叶形随机量）', () => {
     const a = blocks.tree({ seed: 7 }), b = blocks.tree({ seed: 7 })
     const leaves = (root: THREE.Object3D) => {
@@ -54,6 +75,17 @@ describe('官方积木库（spec §6.4 十三件）', () => {
     expect(m).toBeInstanceOf(THREE.MeshStandardMaterial)
     expect(m.map).toBeNull()
     expect([...PALETTE, '#22D3EE']).toContain(m.color.getHexString().toUpperCase() === '22D3EE' ? '#22D3EE' : `#${m.color.getHexString().toUpperCase()}`)
+  })
+  it('PALETTE 索引稳定：增补只追加尾部，既有 0-9 号默认色不被扰动', () => {
+    expect(PALETTE).toHaveLength(12)
+    expect(PALETTE.slice(0, 10)).toEqual([
+      '#E8E6E1', '#D9D6CF', '#C4C1BA', '#A8A5A0', '#7C7A76',
+      '#5B5956', '#3E3C3A', '#8C9E8B', '#B0885E', '#4A5568',
+    ])
+    for (const c of PALETTE.slice(10)) {   // 新席位为亮色：任一分量亮度高于深灰基准
+      const col = new THREE.Color(c)
+      expect(Math.max(col.r, col.g, col.b)).toBeGreaterThan(0.6)
+    }
   })
 })
 

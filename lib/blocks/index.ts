@@ -1,10 +1,13 @@
 import * as THREE from 'three'
-export { makeBoxFloor, makeWall, makeWindowStrip, makePitchedRoof, makeFlatRoofTop, makeColumn, makeTowerCrane, makeStreetLamp, makeTree, makeNeonSign, makePlinth, makeHedge, makeBench, makeArchWall, makeArchPanel, makeRailing, makeUrn, makeLatticePanel } from './parts'
+export { makeBoxFloor, makeWall, makeWindowStrip, makePitchedRoof, makeFlatRoofTop, makeColumn, makeTowerCrane, makeStreetLamp, makeTree, makeNeonSign, makePlinth, makeHedge, makeBench, makeArchWall, makeArchPanel, makeRailing, makeUrn, makeLatticePanel, makeGlassCurtain } from './parts'
 
-/** 官方调色板：中性白灰为基准，深浅与少量点缀色（白天日光下以本色为准，spec §10） */
+/** 官方调色板：中性白灰为基准，深浅与少量点缀色（白天日光下以本色为准，spec §10）。
+ *  10/11 号亮色席位为 [city-admin] 2026-09-27 增补——只在尾部追加、不扰动既有索引
+ *  （积木按索引取默认色），给幕墙/高塔的明亮选色一个官方出口。 */
 export const PALETTE: readonly string[] = [
   '#E8E6E1', '#D9D6CF', '#C4C1BA', '#A8A5A0', '#7C7A76',
   '#5B5956', '#3E3C3A', '#8C9E8B', '#B0885E', '#4A5568',
+  '#F2E9D8', '#9EC5DD',
 ]
 
 export function stdMaterial(
@@ -40,9 +43,10 @@ export interface Blocks {
   railing(o: { w: number; h?: number; color?: string; x?: number; y?: number; z?: number }): THREE.Object3D
   urn(o: { scale?: number; color?: string; x?: number; y?: number; z?: number }): THREE.Object3D
   latticePanel(o: { w: number; h: number; cols?: number; rows?: number; bar?: number; color?: string; x?: number; y?: number; z?: number }): THREE.Object3D
+  glassCurtain(o: { w: number; h: number; cols?: number; rows?: number; bar?: number; glassColor?: string; frameColor?: string; x?: number; y?: number; z?: number }): THREE.Object3D
 }
 
-import { makeBoxFloor, makeWall, makeWindowStrip, makePitchedRoof, makeFlatRoofTop, makeColumn, makeTowerCrane, makeStreetLamp, makeTree, makeNeonSign, makePlinth, makeHedge, makeBench, makeArchWall, makeArchPanel, makeRailing, makeUrn, makeLatticePanel } from './parts'
+import { makeBoxFloor, makeWall, makeWindowStrip, makePitchedRoof, makeFlatRoofTop, makeColumn, makeTowerCrane, makeStreetLamp, makeTree, makeNeonSign, makePlinth, makeHedge, makeBench, makeArchWall, makeArchPanel, makeRailing, makeUrn, makeLatticePanel, makeGlassCurtain } from './parts'
 
 export const blocks: Blocks = {
   boxFloor: makeBoxFloor,
@@ -63,4 +67,5 @@ export const blocks: Blocks = {
   railing: makeRailing,
   urn: makeUrn,
   latticePanel: makeLatticePanel,
+  glassCurtain: makeGlassCurtain,
 }

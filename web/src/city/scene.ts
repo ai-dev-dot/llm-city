@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import type { CityData } from '../generated/city-data'
 
@@ -41,6 +42,15 @@ export function createScene(canvas: HTMLCanvasElement, city: CityData): SceneBun
   sun.shadow.camera.left = -s; sun.shadow.camera.right = s; sun.shadow.camera.top = s; sun.shadow.camera.bottom = -s
   scene.add(sun)
   scene.add(new THREE.HemisphereLight('#E8EEF6', '#B8B2A6', 0.6))
+
+  // 环境反射（IBL）：无 envMap 时 MeshStandardMaterial 的漫反射被 (1-metalness) 压暗——
+  // 高楼玻璃/金属框架（builder 常写 metalness 0.5~0.75）大面积近黑的根因。
+  // RoomEnvironment 经 PMREM 预滤后挂 scene.environment 给 PBR 材质提亮；强度随氛围联动（ambience.ts）。
+  const pmrem = new THREE.PMREMGenerator(renderer)
+  const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04)
+  scene.environment = envRT.texture
+  scene.environmentIntensity = 0.55
+  pmrem.dispose()
 
   // 地面（中性色，不替作品做主）
   const ground = new THREE.Mesh(
@@ -99,6 +109,6 @@ export function createScene(canvas: HTMLCanvasElement, city: CityData): SceneBun
 
   return {
     renderer, scene, camera, controls,
-    dispose() { window.removeEventListener('resize', onResize); controls.dispose(); renderer.dispose() },
+    dispose() { window.removeEventListener('resize', onResize); controls.dispose(); envRT.dispose(); renderer.dispose() },
   }
 }

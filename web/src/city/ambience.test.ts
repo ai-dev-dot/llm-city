@@ -14,4 +14,10 @@ describe('氛围预设（spec §10：白天默认基准、三档）', () => {
       expect(JSON.stringify(p)).not.toMatch(/material|emissive|color.*set/i)
     }
   })
+  it('envIntensity 三档单调：白天最亮、夜景最低（IBL 反射随氛围联动）', () => {
+    expect(AMBIENCE_PRESETS.day.envIntensity).toBeGreaterThan(AMBIENCE_PRESETS.dusk.envIntensity)
+    expect(AMBIENCE_PRESETS.dusk.envIntensity).toBeGreaterThan(AMBIENCE_PRESETS.night.envIntensity)
+    expect(AMBIENCE_PRESETS.night.envIntensity).toBeGreaterThan(0)
+    expect(AMBIENCE_PRESETS.day.envIntensity).toBeLessThanOrEqual(0.6)
+  })
 })

@@ -197,3 +197,27 @@ export function makeLatticePanel(o: { w: number; h: number; cols?: number; rows?
   grp.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0)
   return grp
 }
+
+/** 密梃玻璃幕墙（竖梃 + 横梁框架夹整片亮玻璃），y 为底部，板面朝 ±Z。
+ *  官方给出的高楼幕墙正解（[city-admin] 2026-09-27）：玻璃中等金属度 + 亮青色 + emissive 兜底，
+ *  收敛 builder 自配「深蓝玻璃 + 近黑框架 + 高金属度」在无 envMap 端（shot）近黑、
+ *  有 envMap 端（网页 IBL）压暗的偏色问题；默认取色即色板 10/11 号新增亮色席位。 */
+export function makeGlassCurtain(o: { w: number; h: number; cols?: number; rows?: number; bar?: number; glassColor?: string; frameColor?: string; x?: number; y?: number; z?: number }): THREE.Object3D {
+  const grp = new THREE.Group()
+  const t = o.bar ?? 0.14
+  const cols = o.cols ?? 6, rows = o.rows ?? 8
+  const frameMat = stdMaterial(pick(o.frameColor, 2), { metalness: 0.55, roughness: 0.35 })
+  const glassMat = stdMaterial(o.glassColor ?? '#9EC5DD', { metalness: 0.5, roughness: 0.18, emissive: '#C4DFF0', emissiveIntensity: 0.3 })
+  const glass = mesh(new THREE.BoxGeometry(o.w, o.h, 0.1), glassMat)
+  glass.position.set(0, o.h / 2, 0); grp.add(glass)
+  for (let c = 0; c <= cols; c++) {
+    const v = mesh(new THREE.BoxGeometry(t, o.h, t + 0.1), frameMat)
+    v.position.set(-o.w / 2 + (o.w * c) / cols, o.h / 2, 0); grp.add(v)
+  }
+  for (let r = 0; r <= rows; r++) {
+    const hb = mesh(new THREE.BoxGeometry(o.w, t, t + 0.1), frameMat)
+    hb.position.set(0, (o.h * r) / rows, 0); grp.add(hb)
+  }
+  grp.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0)
+  return grp
+}
