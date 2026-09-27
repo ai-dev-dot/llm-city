@@ -45,14 +45,21 @@ agent 工作流里高频发生（会话结束、窗口关闭、快捷键杀进�
    ```jsonc
    {
      "scripts": {
-       "browser:reap": "node tools/src/browser-reap.mjs",   // 手动：随时清孤儿
-       "prestate": "node tools/src/browser-reap.mjs",       // 自动：每次 npm run state 前扫荡（施工第 1 步 = 每个会话入口）
-       "pregen:city": "node tools/src/browser-reap.mjs"     // 自动：每次 npm run preview / build:web 前扫荡（浏览器使用前）
+       "browser:reap": "node tools/src/browser-reap.mjs",                        // 手动：随时清孤儿
+       "prestate": "node tools/src/browser-reap.mjs --max-cpu 300",              // 自动：每次 npm run state 前扫荡（施工第 1 步 = 每个会话入口）
+       "pregen:city": "node tools/src/browser-reap.mjs --max-cpu 300"            // 自动：每次 npm run preview / build:web 前扫荡（浏览器使用前）
      }
    }
    ```
 
    默认模式回收失败**恒退出 0**——钩子里绝不能因清理失败拖垮主命令。
+
+   钩子里带 `--max-cpu 300`（2026-09-27 事故后加）：失控的浏览器**不会阻塞 agent**——
+   事故当天 Bash 60 秒超时后任务被挪到后台，agent 继续在跑命令，所以 `npm run state`
+   这类钩子确实能在失控进行中触发。阈值取 300 秒的理由：远高于任何合法突发
+   （本仓审计过 gstack 单张截图 ~9.4 秒），又能在 8~15 分钟的失控窗口**中途**拦下；
+   且本仓已禁无头截 WebGL（CITY.md「网页截图禁令」），所以无头浏览器累计烧到几分钟
+   CPU 本身就是违规或失控，不存在「合法的长时间软渲染」。
 3. **agent 纪律**：CITY.md 第 8 步「浏览器卫生」条款——用完当场关闭 +
    会话收尾前跑一次 `npm run browser:reap`。
 
@@ -64,6 +71,9 @@ agent 工作流里高频发生（会话结束、窗口关闭、快捷键杀进�
 1. **复制** `tools/src/browser-reap.mjs` 到你的仓库（如 `scripts/browser-reap.mjs`）。
 2. **package.json** 加钩子（照抄上面的三行，路径按你的放置调整；至少要
    `browser:reap` 手动命令 + 一个你工作流里的高频入口 pre-钩子）。
+   若你的项目也存在「浏览器跑飞」的风险（无头软渲染重 WebGL 页、或任何会长跑的
+   浏览器任务），把 `--max-cpu <秒>` 一起挂进钩子——阈值按你项目的正常单次耗时定，
+   宁可保守（本仓取 300 秒）。
 3. **给 agent 加纪律**（可选但推荐），在你的 AGENTS.md / CLAUDE.md 里加一段：
 
    ```markdown
