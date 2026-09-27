@@ -4,7 +4,7 @@ import { createScene } from './city/scene'
 import { BuildingManager } from './city/loader'
 import { FilterSystem } from './city/filters'
 import { setupPicking } from './city/pick'
-import { TourController, type TourRouteId, type TourPreset } from './city/tour'
+import { TourController, type TourArea, type TourRouteId, type TourPreset } from './city/tour'
 import { collectBlocks, districtLookup, districtOfBuilding, navigateToBlock, parseBlockParam, blockCamera, blockHref } from './city/blocks'
 import { mountTooltip } from './ui/tooltip'
 import { showSidebar } from './ui/sidebar'
@@ -21,20 +21,19 @@ const districtOf = (b: BuildingRecord): string | null => districtOfBuilding(full
 const city: CityData = activeBlock
   ? { ...fullCity, buildings: fullCity.buildings.filter((b) => districtOf(b) === activeBlock) }
   : fullCity
+const activeBlk = activeBlock
+  ? collectBlocks(fullCity, fullCity.blockNames).find((x) => x.id === activeBlock) ?? null
+  : null
 if (activeBlock) {
-  const blk = collectBlocks(fullCity, fullCity.blockNames).find((x) => x.id === activeBlock)
-  if (blk) document.title = `${fullCity.name} · ${activeBlock}${blk.name ? ` ${blk.name}` : ''}`
+  document.title = `${fullCity.name} · ${activeBlock}${activeBlk?.name ? ` ${activeBlk.name}` : ''}`
 }
 
 const canvas = document.getElementById('city-canvas') as HTMLCanvasElement
 const bundle = createScene(canvas, fullCity)
-if (activeBlock) {
-  const blk = collectBlocks(fullCity, fullCity.blockNames).find((x) => x.id === activeBlock)
-  if (blk) {
-    const cam = blockCamera(blk)
-    bundle.camera.position.set(...cam.pos)
-    bundle.controls.target.set(...cam.target)
-  }
+if (activeBlk) {
+  const cam = blockCamera(activeBlk)
+  bundle.camera.position.set(...cam.pos)
+  bundle.controls.target.set(...cam.target)
 }
 const manager = new BuildingManager(bundle.scene, city, buildingLoaders)
 manager.onStatusChange((c) => console.info(`[llm-city] ${c.ok} 栋正常 / ${c.failed} 栋烂尾`))
@@ -61,13 +60,25 @@ canvas.addEventListener('webglcontextrestored', () => {
 // 巡航导览（spec §10，Task 19）：mountAll 外构造一次——构造函数挂的 controls 'start'
 // 监听（用户拖拽即停）只允许挂一次，重挂 HUD 不重建。
 const tour = new TourController(bundle)
+// 巡航范围个性化：街区模式=以该街区为中心，全城=以全城为中心；topY 从已挂载建筑
+// 实测（mesh_stats 无高度）——每次切路线重算，高街区看得到楼顶、矮街区贴地看街景
+const measureTourArea = (): TourArea => {
+  let topY = 0
+  for (const b of city.buildings) {
+    const g = manager.groupOf(b.id)
+    if (g) topY = Math.max(topY, new THREE.Box3().setFromObject(g).max.y)
+  }
+  if (activeBlk) return { center: activeBlk.center, radius: activeBlk.extent * 0.6 + 12, topY }
+  return { center: [0, 0], radius: 210, topY }
+}
 const TOUR_SEQ: TourRouteId[] = ['plazaOrbit', 'boulevard', 'ascend']
 const onTourCycle = (): TourRouteId => {
-  if (tour.current === 'off') tour.start(TOUR_SEQ[0])
+  const area = measureTourArea()
+  if (tour.current === 'off') tour.start(TOUR_SEQ[0], { area })
   else {
     const i = TOUR_SEQ.indexOf(tour.current)
     if (i === -1 || i === TOUR_SEQ.length - 1) tour.stop()   // buildingOrbit 视作末位：T 一步归关
-    else tour.start(TOUR_SEQ[i + 1])
+    else tour.start(TOUR_SEQ[i + 1], { area })
   }
   return tour.current
 }
@@ -138,6 +149,16 @@ const mountAll = () => {
   tour.onStateChange = (route) => hudHandle.syncTour(route)
 }
 mountAll()
+
+// 浏览器自动化验证句柄（只读引用+巡航重算，不进任何渲染路径）：shot/QA 脚本经
+// window.__city 摆巡航机位截图，核对「街区为中心、楼顶入画」无需改产品代码
+;(window as unknown as { __city: Record<string, unknown> }).__city = {
+  camera: bundle.camera,
+  controls: bundle.controls,
+  tour,
+  manager,
+  measureTourArea,
+}
 
 let last = performance.now()
 bundle.renderer.setAnimationLoop((now: number) => {

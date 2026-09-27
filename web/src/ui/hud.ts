@@ -41,6 +41,13 @@ const TOUR_LABEL: Record<TourRouteId, string> = {
   off: '关', plazaOrbit: '广场环绕', boulevard: '主干道', ascend: '上升揭示', buildingOrbit: '环绕本建筑',
 }
 
+// 街区模式下环绕/穿行以当前街区为心（main.ts 传 TourArea），按钮文案随之；全城保持原称呼
+const tourLabel = (route: TourRouteId, inBlock: boolean): string => {
+  if (inBlock && route === 'plazaOrbit') return '街区环绕'
+  if (inBlock && route === 'boulevard') return '街区穿越'
+  return TOUR_LABEL[route]
+}
+
 export function mountHud(
   hud: HTMLElement, city: CityData, manager: BuildingManager, filterSystem: FilterSystem,
   bundle: SceneBundle,
@@ -96,7 +103,8 @@ export function mountHud(
   const tourBtnStyle = 'padding:6px 10px;background:transparent;color:var(--text-primary);border:1px solid var(--panel-border);border-radius:6px;cursor:pointer;font-family:inherit;'
   const tourBtn = document.createElement('button')
   tourBtn.textContent = `巡航: ${TOUR_LABEL.off}`
-  tourBtn.title = 'T 键同义：广场环绕 ▸ 主干道 ▸ 上升揭示 ▸ 关'
+  const inBlock = !!nav?.activeBlock
+  tourBtn.title = `T 键同义：${tourLabel('plazaOrbit', inBlock)} ▸ ${tourLabel('boulevard', inBlock)} ▸ ${tourLabel('ascend', inBlock)} ▸ 关`
   tourBtn.style.cssText = tourBtnStyle
   tourBtn.addEventListener('click', () => handle.cycleTour())
   tourBar.appendChild(tourBtn)
@@ -196,11 +204,11 @@ export function mountHud(
       filterBadge.style.display = mode === 'off' ? 'none' : ''
       filterBadge.textContent = FILTER_LABEL[mode]
     },
-    cycleTour() { tourBtn.textContent = `巡航: ${TOUR_LABEL[hooks.onTour()]}` },
+    cycleTour() { tourBtn.textContent = `巡航: ${tourLabel(hooks.onTour(), inBlock)}` },
     cycleSpeed() { speedBtn.textContent = `速度 ${hooks.onTourSpeed()}x` },
     flyToPreset(p) { hooks.onPreset(p) },
     // 巡航状态经 tour.onStateChange 推送（拖拽即停/预设飞点/环绕建筑），按钮文本随之同步
-    syncTour(route) { tourBtn.textContent = `巡航: ${TOUR_LABEL[route]}` },
+    syncTour(route) { tourBtn.textContent = `巡航: ${tourLabel(route, inBlock)}` },
   }
   return handle
 }

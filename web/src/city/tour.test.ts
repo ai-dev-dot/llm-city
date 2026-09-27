@@ -1,7 +1,9 @@
 import * as THREE from 'three'
 import { describe, expect, it } from 'vitest'
-import { buildRoutePoints, TourController, type TourRouteId } from './tour'
+import { buildRoutePoints, tourAreaGeometry, TourController, type TourArea, type TourRouteId } from './tour'
 import type { SceneBundle } from './scene'
+
+const HALF_FOV_RAD = (55 / 2) * (Math.PI / 180)   // scene.ts 相机 fov55 的竖直半角
 
 describe('巡航路线（spec §10 三路线+单建筑慢旋）', () => {
   it('三条全局路线点数合理且闭合（首尾呼应）', () => {
@@ -17,6 +19,66 @@ describe('巡航路线（spec §10 三路线+单建筑慢旋）', () => {
     const pts = buildRoutePoints('buildingOrbit', { buildingCenter: c, buildingRadius: 30 })
     expect(pts.length).toBeGreaterThanOrEqual(8)
     for (const p of pts) expect(p.distanceTo(c)).toBeGreaterThan(25)
+  })
+})
+
+// 巡航范围个性化（2026-09-27 城主反馈：街区页巡航绕中央广场、超高层只见楼身不见顶）：
+// 三条全局路线接 TourArea——以街区/全城为心，高度按范围内最高楼顶适配。
+describe('巡航范围个性化（TourArea）', () => {
+  const highRise: TourArea = { center: [-40, 200], radius: 100, topY: 200 }   // 原点塔式超高层街区
+  const lowRise: TourArea = { center: [300, -500], radius: 55, topY: 12 }     // 低层商业街区
+
+  it('环绕线绕范围中心（不再固定绕原点），半径与高度按公式派生', () => {
+    const g = tourAreaGeometry(highRise)
+    const pts = buildRoutePoints('plazaOrbit', { area: highRise })
+    expect(pts).toHaveLength(8)
+    for (const p of pts) {
+      const dxz = Math.hypot(p.x - highRise.center[0], p.z - highRise.center[1])
+      expect(dxz).toBeCloseTo(g.r, 6)
+      expect(p.y).toBeCloseTo(g.orbitY, 6)
+    }
+  })
+  it('最高楼楼顶入画：楼顶相对视线的仰角小于相机竖直半角', () => {
+    for (const a of [highRise, lowRise]) {
+      const g = tourAreaGeometry(a)
+      const elevation = Math.atan((a.topY - g.orbitLookY) / g.r)
+      expect(elevation).toBeLessThan(HALF_FOV_RAD)
+    }
+  })
+  it('矮街区贴地环绕：高度贴近街区尺度，而非硬编码的 95', () => {
+    const g = tourAreaGeometry(lowRise)
+    expect(g.orbitY).toBeGreaterThan(10)
+    expect(g.orbitY).toBeLessThan(30)
+  })
+  it('穿街线低飞过街区（y=穿街高度，两端伸出范围半径外）', () => {
+    const g = tourAreaGeometry(lowRise)
+    const pts = buildRoutePoints('boulevard', { area: lowRise })
+    for (const p of pts) expect(p.y).toBeCloseTo(g.boulevardY, 6)
+    const ends = [pts[0], pts[3]]
+    for (const p of ends) {
+      const dxz = Math.hypot(p.x - lowRise.center[0], p.z - lowRise.center[1])
+      expect(dxz).toBeGreaterThan(g.r)
+    }
+    const mids = [pts[1], pts[2], pts[4], pts[5]]
+    for (const p of mids) {
+      const dxz = Math.hypot(p.x - lowRise.center[0], p.z - lowRise.center[1])
+      expect(dxz).toBeLessThan(g.r)
+    }
+  })
+  it('爬升线从街区一角地面爬到范围上空俯瞰', () => {
+    const g = tourAreaGeometry(lowRise)
+    const pts = buildRoutePoints('ascend', { area: lowRise })
+    expect(pts[0].y).toBeLessThan(10)   // 近地面起步（实现有 6m 离地下限）
+    expect(pts[pts.length - 1].y).toBeCloseTo(g.ascendEndY, 6)
+    for (let i = 1; i < pts.length; i++) expect(pts[i].y).toBeGreaterThan(pts[i - 1].y)
+  })
+  it('无 area 保持原全城硬编码路线（向后兼容）', () => {
+    const orbit = buildRoutePoints('plazaOrbit')
+    expect(orbit[0].x).toBeCloseTo(210, 6)
+    expect(orbit[0].y).toBe(95)
+    expect(orbit[0].z).toBeCloseTo(0, 6)
+    const ascend = buildRoutePoints('ascend')
+    expect(ascend[ascend.length - 1].y).toBe(460)
   })
 })
 
