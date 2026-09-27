@@ -90,9 +90,9 @@ function arcTorus(r: number, tube: number, a0: number, len: number, radSeg = 10,
 /* ---------- 材质 ---------- */
 
 const C = (h: string) => new THREE.Color(h)
-const matSolid = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.62, roughness: 0.45 })
+const matSolid = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.45, roughness: 0.45 })
 const matPave  = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.06, roughness: 0.92 })
-const matGlass = new THREE.MeshStandardMaterial({ color: '#2A3644', metalness: 0.85, roughness: 0.16, transparent: true, opacity: 0.74, emissive: '#141F2A', emissiveIntensity: 0.55, side: THREE.DoubleSide })
+const matGlass = new THREE.MeshStandardMaterial({ color: '#41607E', metalness: 0.6, roughness: 0.18, transparent: true, opacity: 0.78, emissive: '#1C2E42', emissiveIntensity: 0.45, side: THREE.DoubleSide })
 const matLit   = new THREE.MeshStandardMaterial({ color: '#23282F', emissive: '#FFE0AC', emissiveIntensity: 1.1, side: THREE.DoubleSide })
 const matGlow  = new THREE.MeshStandardMaterial({ color: '#FFD9A0', emissive: '#FFC878', emissiveIntensity: 2.5 })
 const matGlowW = new THREE.MeshStandardMaterial({ color: '#FFF3DC', emissive: '#FFEED2', emissiveIntensity: 2.1 })
@@ -295,7 +295,7 @@ function originCourt(parent: THREE.Object3D): void {
   disk.position.set(ORG.x, -1.14, ORG.z); parent.add(disk)
   const ring1 = mesh(arcTorus(2.1, 0.06, 0, Math.PI * 2), matGlow)
   ring1.position.set(ORG.x, -1.17, ORG.z); parent.add(ring1)
-  const ring2 = mesh(arcTorus(2.45, 0.035, 0, Math.PI * 2), stdMaterial('#C9AE8A', { metalness: 0.8, roughness: 0.3 }))
+  const ring2 = mesh(arcTorus(2.45, 0.035, 0, Math.PI * 2), stdMaterial('#C9AE8A', { metalness: 0.7, roughness: 0.3 }))
   ring2.position.set(ORG.x, -1.17, ORG.z); parent.add(ring2)
   const colSink = newSink()                              // 环形柱廊（东南开口段，西北由弧墙收）
   const open0 = ARC_A0 + ARC_LEN                         // 开口段起点
@@ -457,7 +457,7 @@ function crown(parent: THREE.Object3D, cx: number, cz: number): void {
   const halo = mesh(new THREE.TorusGeometry(7, 1.3, 28, 96), matGlow)                    // 原点环
   halo.rotateX(Math.PI / 2); halo.position.set(cx, 209.8, cz); parent.add(halo)
   for (const rr of [8.25, 5.75]) {                       // 环内外金边
-    const rim = mesh(new THREE.TorusGeometry(rr, 0.15, 10, 96), stdMaterial('#C9AE8A', { metalness: 0.85, roughness: 0.25 }))
+    const rim = mesh(new THREE.TorusGeometry(rr, 0.15, 10, 96), stdMaterial('#C9AE8A', { metalness: 0.72, roughness: 0.25 }))
     rim.rotateX(Math.PI / 2); rim.position.set(cx, 209.8, cz); parent.add(rim)
   }
   const hang = newSink()                                 // 环下悬吊杆
