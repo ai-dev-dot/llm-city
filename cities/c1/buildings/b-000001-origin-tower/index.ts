@@ -111,6 +111,9 @@ const matGlass = new THREE.MeshStandardMaterial({ color: '#55789F', metalness: 0
 const matGlassPav = new THREE.MeshStandardMaterial({ color: '#55789F', metalness: 0.6, roughness: 0.12, transparent: true, opacity: 0.88, emissive: '#4A6C96', emissiveIntensity: 0.45, envMapIntensity: 1.3, side: THREE.DoubleSide })
 // [九轮] 灯条本体色换暗蓝灰（白天隐入蓝玻璃，夜里 emissive 暖白主导——蓝塔暖灯带对比）
 const matLit   = new THREE.MeshStandardMaterial({ color: '#26364A', emissive: '#FFE0AC', emissiveIntensity: 1.1, side: THREE.DoubleSide })
+// [十三轮·内透灯带] 与塔身玻璃完全同参的「亮窗」材质：白天与玻璃融为一体近隐形（仅暖白
+// 微光如开着灯的楼层），夜里 emissive 暖白主导——灯是玻璃自己的光，非外挂件
+const matGlassLit = new THREE.MeshStandardMaterial({ color: '#55789F', metalness: 0.62, roughness: 0.12, emissive: '#FFE0AC', emissiveIntensity: 0.55, envMapIntensity: 1.35, side: THREE.DoubleSide })
 const matGlow  = new THREE.MeshStandardMaterial({ color: '#FFD9A0', emissive: '#FFC878', emissiveIntensity: 2.5 })
 const matGlowW = new THREE.MeshStandardMaterial({ color: '#FFF3DC', emissive: '#FFEED2', emissiveIntensity: 2.1 })
 const matWater = new THREE.MeshStandardMaterial({ color: '#3F6E80', metalness: 0.35, roughness: 0.06, transparent: true, opacity: 0.82 })
@@ -169,17 +172,20 @@ function facadeLayer(
   // [十一轮] 灯条从玻璃内侧移到面外 0.045m 凸出竖灯槽：实心玻璃不再遮挡，夜里 emissive 暖白
   // 直接可见（白天深蓝灰与深蓝玻璃低对比近隐）
   if (lit) {
+    // [十三轮·内透灯带] 城主反馈「灯条漏在外面很奇怪」——外凸灯槽删除，改为与玻璃共面
+    // 0.015m 的同色竖条挂 matGlassLit（底色/金属度/粗糙度与塔身玻璃完全一致=白天近隐形，
+    // 仅暖白 emissive 微光如「这层开着灯」；夜里 emissive 主导暖白亮起）——灯是玻璃自身的光
     const ls = newSink()
     const nLit = 3 + Math.floor(rng() * 2)
     for (let k = 0; k < nLit; k++) {
       const i = Math.floor(rng() * n)
       const off = -f.w / 2 + cw * (i + 0.5)
       const lh = glassH * (0.55 + rng() * 0.25)
-      box(ls, Math.min(0.36, cw * 0.3), lh, 0.04,
-        f.cx + tx * off + nx * 0.045, y0 + beamH + 0.35 + (glassH - 0.5 - lh) * 0.42,
-        f.cz + tz * off + nz * 0.045, WHITE, f.dir)
+      quad(ls, Math.min(0.5, cw * 0.45), lh,
+        f.cx + tx * off + nx * 0.015, y0 + beamH + 0.35 + (glassH - 0.5 - lh) * 0.42,
+        f.cz + tz * off + nz * 0.015, f.dir, WHITE)
     }
-    parent.add(sinkMesh(ls, matLit))
+    parent.add(sinkMesh(ls, matGlassLit))
   }
 }
 
