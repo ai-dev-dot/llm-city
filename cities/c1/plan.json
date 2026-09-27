@@ -9338,7 +9338,8 @@
       "mimo-v2.6-flash",
       "qwen3.8-flash",
       "qwen3.8-max",
-      "doubao-seed-2.1-pro"
+      "doubao-seed-2.1-pro",
+      "deepseek-v4.1-flash"
     ],
     "sharedBlocks": []
   }
