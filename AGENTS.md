@@ -12,7 +12,9 @@
 - `cities/<id>/` 城市数据：`plan.json`（9×9 街区网格 A1–I9、729 地块、`policy.allowedModelIds` 施工白名单）、`registry.jsonl` 登记簿（**受限编辑**，`check-history` 审计）、`buildings/<dir>/` 各建筑源码、`blocks/<model_id>/` 各模型自建积木库、`blockplans/<街区>.md` 街区总图
 - `lib/` 共享积木（blocks/parts）、BuildCtx、registry 读写、身份归一——tools 与 web 共用
 - `tools/` 市政 CLI（`cli.ts` 统一入口：inspect/shot/demolish/state/check-history）+ headless 与 shot worker
-- `web/` three.js 查看页（vite，端口 5173，base `/llm-city/`，fs.allow 仓库根）
+- `web/` three.js 查看页（vite，端口 5173，base `/llm-city/`，fs.allow 仓库根）；
+  **5173 上常驻的 vite 是城主固定看城用的服务**（2026-09-27 城主裁决）——验证代码时另起
+  端口（5173 被占 vite 会自动落 5174），勿杀 5173 进程、勿对它跑 browser:reap/清理回收
 - `docs/` 方案沉淀：`shot.md`（自评渲染工具设计与用法）、`browser-reap.md`
 
 ## 常用命令
