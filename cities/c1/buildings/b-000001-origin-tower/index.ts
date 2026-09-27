@@ -103,12 +103,13 @@ const matPave  = new THREE.MeshStandardMaterial({ vertexColors: true, metalness:
 // [十一轮·深镜收敛] 城主四条验收：颜色太淡→深一档饱和 #55789F；透明度太高→实心镜面
 // transparent:false（反射主导，塔身内部结构不再透出）；再高亮→metal 0.62 / envMap 1.35
 // [十二轮·全天候光泽] 城主指图：受光面「光打上去的质感」是目标，背光面无光逊色——镜面
-// 反射只集中在受光角，背光面吃不到环境。手术：emissive 换「天空光」色系 #4A6C96 提亮
-// ×0.5（模拟天空对背光面的漫射补光——全楼任何角度都有光感）+ rough 0.08→0.12（反射锥
-// 加宽，背光面也能吃到 envMap，受光高光仍锐）
-const matGlass = new THREE.MeshStandardMaterial({ color: '#55789F', metalness: 0.62, roughness: 0.12, emissive: '#4A6C96', emissiveIntensity: 0.58, envMapIntensity: 1.35, side: THREE.DoubleSide })
+// 反射只集中在受光角，背光面吃不到环境。手术：emissive 换「天空光」色系提亮（模拟天空对
+// 背光面的漫射补光——全楼任何角度都有光感）+ rough 0.08→0.12（反射锥加宽，背光面也能
+// 吃到 envMap，受光高光仍锐）
+// [十四轮] 城主「背光面光感再强一点」：emissive 0.58→0.72、天光色 #4A6C96→#5476A2 亮半档
+const matGlass = new THREE.MeshStandardMaterial({ color: '#55789F', metalness: 0.62, roughness: 0.12, emissive: '#5476A2', emissiveIntensity: 0.72, envMapIntensity: 1.35, side: THREE.DoubleSide })
 // [十一轮] 观景亭玻璃拆独立材质：塔身实心镜面后亭子保留微透（亭内楼梯间/藻井是可看的）
-const matGlassPav = new THREE.MeshStandardMaterial({ color: '#55789F', metalness: 0.6, roughness: 0.12, transparent: true, opacity: 0.88, emissive: '#4A6C96', emissiveIntensity: 0.45, envMapIntensity: 1.3, side: THREE.DoubleSide })
+const matGlassPav = new THREE.MeshStandardMaterial({ color: '#55789F', metalness: 0.6, roughness: 0.12, transparent: true, opacity: 0.88, emissive: '#5476A2', emissiveIntensity: 0.62, envMapIntensity: 1.3, side: THREE.DoubleSide })
 // [九轮] 灯条本体色换暗蓝灰（白天隐入蓝玻璃，夜里 emissive 暖白主导——蓝塔暖灯带对比）
 const matLit   = new THREE.MeshStandardMaterial({ color: '#26364A', emissive: '#FFE0AC', emissiveIntensity: 1.1, side: THREE.DoubleSide })
 // [十三轮·内透灯带] 与塔身玻璃完全同参的「亮窗」材质：白天与玻璃融为一体近隐形（仅暖白
@@ -146,26 +147,29 @@ function facadeLayer(
   const tx = Math.cos(f.dir), tz = -Math.sin(f.dir)     // 面内横向
   box(s, f.w, beamH, 0.42, f.cx, y0 + beamH / 2, f.cz, SILVER, f.dir)     // 楼板边梁带（淡银低对比）
   box(s, f.w + 0.05, 0.1, 0.46, f.cx, y0 + beamH - 0.05, f.cz, SILVER_L, f.dir) // 楼板沿口亮银细线
-  // [十一轮] 梃收疏 0.95→1.35m（数量 -30%）+ 换玻璃同族深青两档（视觉隐框——叠加删百叶后
-  // 格子感大减）；T 型型材截面（腹板+双翼，真实幕墙型材，斜侧光下有细微明暗）兼补 R11 三角
-  const n = Math.max(4, Math.round(f.w / 1.35))
+  // [十五轮·银肋整面玻璃] 城主诊断「每格竖黑线太多」：十一轮 T 型梃（腹板+双翼三片深青）
+  // 视觉上每格冒三根黑线切碎玻璃。反转：分格收疏 1.35→2.2m + 梃改**单根凸出亮银肋**
+  // （哈利法塔式不锈钢竖肋——受光面是高光亮线=光泽元素而非黑线）+ bay 玻璃微弧三段
+  // （中段外凸 0.05，真实单元玻璃的鼓胀反光层次）
+  const n = Math.max(4, Math.round(f.w / 2.2))
   const cw = f.w / n
   for (let i = 0; i <= n; i++) {
     const off = -f.w / 2 + cw * i
-    const px = f.cx + tx * off + nx * 0.05, pz = f.cz + tz * off + nz * 0.05
-    const mullC = i % 6 === 0 ? STEEL_BLUE_D : STEEL_BLUE
-    box(s, 0.07, h - beamH + 0.12, 0.1, px, y0 + beamH + (h - beamH) / 2, pz, mullC, f.dir)          // 腹板
-    box(s, 0.02, h - beamH + 0.12, 0.26, px + nx * 0.08, y0 + beamH + (h - beamH) / 2, pz + nz * 0.08, mullC, f.dir) // 双翼
-    box(s, 0.02, h - beamH + 0.12, 0.26, px - nx * 0.08, y0 + beamH + (h - beamH) / 2, pz - nz * 0.08, mullC, f.dir)
-    if (i === 0 || i === n) {                          // 四角转角肋（银色高光锚点，中间鳍已删）
+    const px = f.cx + tx * off + nx * 0.09, pz = f.cz + tz * off + nz * 0.09
+    box(s, 0.09, h - beamH + 0.12, 0.24, px, y0 + beamH + (h - beamH) / 2, pz, SILVER, f.dir)   // 凸出银肋主杆
+    box(s, 0.04, h - beamH + 0.12, 0.34, px + nx * 0.04, y0 + beamH + (h - beamH) / 2, pz + nz * 0.04, SILVER_L, f.dir) // 肋缘亮银细线
+    box(s, 0.16, h - beamH + 0.1, 0.1, px - nx * 0.08, y0 + beamH + (h - beamH) / 2, pz - nz * 0.08, STEEL_BLUE, f.dir) // 肋背衬板（银肋的深青底座勾边）
+    if (i === 0 || i === n) {                          // 四角转角肋加强（银肋+亮银缘）
       const fx = f.cx + tx * off + nx * 0.24, fz = f.cz + tz * off + nz * 0.24
       box(s, 0.06, glassH + 0.08, 0.42, fx, y0 + beamH + glassH / 2, fz, SILVER, f.dir)
       box(s, 0.028, glassH + 0.08, 0.1, fx + nx * 0.21, y0 + beamH + glassH / 2, fz + nz * 0.21, SILVER_L, f.dir)
     }
   }
-  for (let i = 0; i < n; i++) {                         // 整幅通高实心镜面玻璃（bay 一块，无分格无百叶）
+  for (let i = 0; i < n; i++) {                         // 整幅微弧玻璃（每 bay 三段，中段外凸——鼓胀反光）
     const off = -f.w / 2 + cw * (i + 0.5)
-    quad(gs, cw - 0.05, glassH, f.cx + tx * off + nx * 0.02, y0 + beamH + glassH / 2, f.cz + tz * off + nz * 0.02, f.dir, FRAME)
+    quad(gs, cw / 3 - 0.06, glassH, f.cx + tx * (off - cw / 3) + nx * 0.02, y0 + beamH + glassH / 2, f.cz + tz * (off - cw / 3) + nz * 0.02, f.dir, FRAME)
+    quad(gs, cw / 3 - 0.04, glassH, f.cx + tx * off + nx * 0.07, y0 + beamH + glassH / 2, f.cz + tz * off + nz * 0.07, f.dir, FRAME)
+    quad(gs, cw / 3 - 0.06, glassH, f.cx + tx * (off + cw / 3) + nx * 0.02, y0 + beamH + glassH / 2, f.cz + tz * (off + cw / 3) + nz * 0.02, f.dir, FRAME)
   }
   parent.add(sinkMesh(s, matSolid))
   parent.add(sinkMesh(gs, matGlass))
@@ -176,7 +180,7 @@ function facadeLayer(
     // 0.015m 的同色竖条挂 matGlassLit（底色/金属度/粗糙度与塔身玻璃完全一致=白天近隐形，
     // 仅暖白 emissive 微光如「这层开着灯」；夜里 emissive 主导暖白亮起）——灯是玻璃自身的光
     const ls = newSink()
-    const nLit = 3 + Math.floor(rng() * 2)
+    const nLit = 5 + Math.floor(rng() * 4)
     for (let k = 0; k < nLit; k++) {
       const i = Math.floor(rng() * n)
       const off = -f.w / 2 + cw * (i + 0.5)
@@ -314,13 +318,13 @@ function skyTerrace(
 
 function originCourt(parent: THREE.Object3D): void {
   const steps = newSink()
-  for (let i = 0; i < 4; i++) {                          // 四级下沉台阶
+  for (let i = 0; i < 4; i++) {                          // 四级下沉台阶（96 seg）
     const r0 = ARC_R - 0.62 * i
-    const g = new THREE.RingGeometry(r0 - 0.62, r0, 72, 1)
+    const g = new THREE.RingGeometry(r0 - 0.62, r0, 96, 1)
     g.rotateX(-Math.PI / 2)
     g.translate(ORG.x, -0.31 * i, ORG.z)
     pushGeo(steps, g, i % 2 === 0 ? PAVE_M : PAVE_D)
-    const rim = new THREE.CylinderGeometry(r0 + 0.04, r0 + 0.04, 0.31, 72, 1, true)
+    const rim = new THREE.CylinderGeometry(r0 + 0.04, r0 + 0.04, 0.31, 96, 1, true)
     rim.translate(ORG.x, -0.31 * i - 0.155, ORG.z)
     pushGeo(steps, rim, PAVE_D)
   }
@@ -328,7 +332,7 @@ function originCourt(parent: THREE.Object3D): void {
   floorG.rotateX(-Math.PI / 2)
   floorG.translate(ORG.x, -1.24, ORG.z)
   pushGeo(steps, floorG, PAVE_D)
-  for (let i = 0; i < 24; i++) {                         // 底盘放射刻度缝（[十一轮] 12→24 补 R11）
+  for (let i = 0; i < 36; i++) {                         // 底盘放射刻度缝（[十五轮] 24→36 补 R11）
     const a = (i / 24) * Math.PI * 2
     const g = new THREE.PlaneGeometry(0.1, ARC_R - 3.2)
     g.rotateX(-Math.PI / 2)
@@ -346,7 +350,7 @@ function originCourt(parent: THREE.Object3D): void {
   const colSink = newSink()                              // 环形柱廊（东南开口段，西北由弧墙收）
   const open0 = ARC_A0 + ARC_LEN                         // 开口段起点
   const openLen = Math.PI * 2 - ARC_LEN
-  const nCol = 14                                        // [十一轮] 10→14 柱补 R11
+  const nCol = 18                                        // [十五轮] 14→18 柱补 R11
   for (let i = 0; i < nCol; i++) {
     const a = open0 + (openLen / (nCol - 1)) * i
     const g = new THREE.CylinderGeometry(0.17, 0.2, 4.6, 10)
@@ -357,13 +361,13 @@ function originCourt(parent: THREE.Object3D): void {
     cap.translate(ORG.x + Math.cos(a) * 5.35, 4.72, ORG.z + Math.sin(a) * 5.35)
     pushGeo(colSink, cap, GOLD_D)
   }
-  pushGeo(colSink, arcTorus(5.35, 0.24, open0, openLen), WHITE)
-  pushGeo(colSink, arcTorus(5.35, 0.07, open0, openLen, 8, 72), GOLD_D)
+  pushGeo(colSink, arcTorus(5.35, 0.24, open0, openLen, 8, 96), WHITE)
+  pushGeo(colSink, arcTorus(5.35, 0.07, open0, openLen, 8, 144), GOLD_D)
   parent.add(sinkMesh(colSink, matPave))
   const seat = mesh(arcTorus(3.05, 0.26, open0 + 0.3, openLen - 0.6), stdMaterial('#8A6E4E', { roughness: 0.8 }))
   seat.position.set(ORG.x, -0.67, ORG.z); parent.add(seat)
-  for (let i = 0; i < 8; i++) {                          // 庭外环矮柱灯阵（开口段）
-    const a = open0 + 0.25 + ((openLen - 0.5) / 7) * i
+  for (let i = 0; i < 12; i++) {                          // 庭外环矮柱灯阵（开口段，[十五轮] 8→12）
+    const a = open0 + 0.25 + ((openLen - 0.5) / 11) * i
     parent.add(bollardLight({ x: ORG.x + Math.cos(a) * 7.2, z: ORG.z + Math.sin(a) * 7.2 }))
   }
 }
@@ -391,7 +395,7 @@ function podium(parent: THREE.Object3D, rng: () => number): void {
     const band = new THREE.CylinderGeometry(ARC_R + 0.05, ARC_R + 0.05, 2.5, 48, 1, true, Math.PI / 2 - arc0 - 0.06 - (arcLen - 0.12), arcLen - 0.12)
     band.translate(ORG.x, yy + 1.25, ORG.z)
     pushGeo(shopG, band, FRAME)
-    for (let i = 0; i <= 22; i++) {                      // 竖筋（[十一轮] 14→22 补 R11；按方位角 φw 定位，θ = π/2 − φw 转向）
+    for (let i = 0; i <= 30; i++) {                      // 竖筋（[十五轮] 22→30 补 R11；按方位角 φw 定位，θ = π/2 − φw 转向）
       const a = arc0 + 0.08 + ((arcLen - 0.16) * i) / 14
       const g = new THREE.BoxGeometry(0.1, 3.4, 0.5)
       const rot = new THREE.Matrix4().makeRotationY(Math.PI / 2 - a)
@@ -431,13 +435,21 @@ function podium(parent: THREE.Object3D, rng: () => number): void {
   facadeLayer(south, yBase + 4.4, 4.2, rng, parent, false)
   facadeLayer(south, yBase + 8.6, 4.2, rng, parent, true)
   facadeLayer(south, yBase + 12.8, 3.76, rng, parent, false)
-  // 屋面：女儿墙 + 机组
+  // 屋面：女儿墙 + 机组（[十五轮] 机组群扩：冷却塔阵+桥架补 R11）
   const roof = newSink()
   box(roof, 5.42 + 17.8, 0.8, 30, (-17.8 + 5.42) / 2, yTop + 0.4, 3, CONC_D)
   box(roof, 12 - 5.42, 0.8, 17.8 + 5.42, (5.42 + 12) / 2, yTop + 0.4, (17.8 - 5.42) / 2, CONC_D)
   box(roof, 3.2, 1.6, 2.4, -13, yTop + 1.4, 12, STEEL_D)
   box(roof, 2.6, 1.2, 3.6, -1, yTop + 1.2, 13.5, STEEL_D)
   box(roof, 1.8, 2.2, 1.8, -15, yTop + 1.7, -6, STEEL)
+  for (let i = 0; i < 3; i++) {                          // 冷却塔阵（圆筒）
+    const ct = new THREE.CylinderGeometry(0.7, 0.7, 1.6, 14)
+    ct.translate(-9.5 - i * 2.1, yTop + 1.4, -11.5 + i * 1.3)
+    pushGeo(roof, ct, STEEL_D)
+  }
+  for (let i = 0; i < 6; i++) box(roof, 0.24, 0.18, 4.2, -7 - i * 1.6, yTop + 0.95, 8, STEEL)  // 检修桥架
+  box(roof, 9.5, 0.15, 0.5, -4.5, yTop + 0.95, 8.6, STEEL)
+  box(roof, 9.5, 0.15, 0.5, -4.5, yTop + 0.95, 7.4, STEEL)
   parent.add(sinkMesh(roof, matPave))
   // 主入口雨棚（弧墙中点外挑环板，外缘收在 17.9 内）+ 双柱门斗
   const mid = arc0 + arcLen / 2
@@ -508,22 +520,22 @@ function crown(parent: THREE.Object3D, cx: number, cz: number): void {
     const rim = mesh(new THREE.TorusGeometry(rr, 0.15, 16, 192), stdMaterial('#C9AE8A', { metalness: 0.72, roughness: 0.25 }))
     rim.rotateX(Math.PI / 2); rim.position.set(cx, 209.8, cz); parent.add(rim)
   }
-  const hang = newSink()                                 // 环下悬吊杆（[十一轮] 8→16 补 R11）
-  for (let i = 0; i < 16; i++) {
-    const a = (i / 16) * Math.PI * 2 + Math.PI / 16
+  const hang = newSink()                                 // 环下悬吊杆（[十五轮] 16→24 补 R11）
+  for (let i = 0; i < 24; i++) {
+    const a = (i / 24) * Math.PI * 2 + Math.PI / 24
     const g = new THREE.CylinderGeometry(0.07, 0.07, 3.6, 8)
     g.translate(cx + Math.cos(a) * 6.4, 207.9, cz + Math.sin(a) * 6.4)
     pushGeo(hang, g, STEEL)
   }
   parent.add(sinkMesh(hang, matSolid))
-  const coffer = newSink()                               // 观景亭天花金藻井（三环+放射肋 24）
+  const coffer = newSink()                               // 观景亭天花金藻井（三环+放射肋 36）
   for (const [r, t] of [[3.2, 0.18], [4.4, 0.15], [5.5, 0.12]] as Array<[number, number]>) {
-    const g = arcTorus(r, t, 0, Math.PI * 2, 8, 48)
+    const g = arcTorus(r, t, 0, Math.PI * 2, 8, 72)
     g.translate(cx, 203.9, cz)
     pushGeo(coffer, g, GOLD)
   }
-  for (let i = 0; i < 24; i++) {
-    const a = (i / 24) * Math.PI * 2
+  for (let i = 0; i < 36; i++) {
+    const a = (i / 36) * Math.PI * 2
     const g = new THREE.BoxGeometry(5.6, 0.06, 0.12)
     g.rotateY(-a)
     g.translate(cx + Math.cos(a) * 2.8, 203.95, cz + Math.sin(a) * 2.8)
@@ -551,8 +563,8 @@ function site(parent: THREE.Object3D, rng: () => number): void {
   box(green, 0.9, 0.05, 37.3, -18.5, 0.055, 0, PAVE_M)
   box(green, 37.3, 0.05, 0.9, 0, 0.055, 18.5, PAVE_M)
   parent.add(sinkMesh(green, matPave))
-  for (let i = 0; i < 5; i++) {                          // 步道树（积木自带 site 豁免）
-    parent.add(gardenTree({ x: -18.9, z: -14 + i * 7, scale: 0.9, seed: 41 + i * 13 }))
+  for (let i = 0; i < 8; i++) {                          // 步道树（[十五轮] 5→8 补 R11；积木自带 site 豁免）
+    parent.add(gardenTree({ x: -18.9, z: -14 + i * 4.6, scale: i % 2 ? 0.8 : 0.9, seed: 41 + i * 13 }))
   }
   // —— 前广场：以原点为心的放射楔形铺装（径向外缘按宗地边界裁剪，严格界内） ——
   const plaza = newSink()
@@ -564,7 +576,7 @@ function site(parent: THREE.Object3D, rng: () => number): void {
     return Math.max(rInner, r)
   }
   const PHI0 = -Math.PI / 2 - 0.3, PHI1 = 0.3
-  const NSEC = 42
+  const NSEC = 84
   const bandC = [PAVE_L, PAVE_M, PAVE_D]
   for (let i = 0; i < NSEC; i++) {
     const p0 = PHI0 + ((PHI1 - PHI0) * i) / NSEC
@@ -597,20 +609,24 @@ function site(parent: THREE.Object3D, rng: () => number): void {
     tri(plaza, a0[0], a0[1], c1[0], c1[1], c0[0], c0[1], 0.065, SILVER_LINE)
   }
   parent.add(sinkMesh(plaza, matPave))
-  const pond = newSink()                                 // 镜面水景：池缘 + 水面 + 汀步
-  box(pond, 6.4, 0.32, 5.2, 14.6, 0.16, -14.6, PAVE_D)
+  const pond = newSink()                                 // 镜面水景：池缘 + 压顶线 + 汀步（[十五轮]扩 6.4×5.2→8.4×6.6）
+  box(pond, 8.4, 0.32, 6.6, 14.2, 0.16, -14.6, PAVE_D)
+  box(pond, 8.7, 0.1, 6.9, 14.2, 0.36, -14.6, PAVE_M)
   parent.add(sinkMesh(pond, matPave))
-  const water = mesh(new THREE.BoxGeometry(5.9, 0.08, 4.7), matWater)
-  water.position.set(14.6, 0.3, -14.6); parent.add(water)
+  for (let wx = 0; wx < 4; wx++) for (let wz = 0; wz < 4; wz++) {  // 水面 4×4 分块（微错高 0.006 波光层次）
+    const wmesh = mesh(new THREE.BoxGeometry(1.85, 0.06, 1.45), matWater)
+    wmesh.position.set(14.2 - 2.78 + wx * 1.855, 0.3 + ((wx + wz) % 2) * 0.006, -14.6 - 2.19 + wz * 1.46)
+    parent.add(wmesh)
+  }
   const st = newSink()
-  for (let i = 0; i < 3; i++) box(st, 0.9, 0.12, 0.9, 12.6 + i * 1.35, 0.38, -14.6, PAVE_L)
+  for (let i = 0; i < 6; i++) box(st, 0.9, 0.12, 0.9, 11.4 + i * 1.05, 0.38, -14.6, PAVE_L)
   parent.add(sinkMesh(st, matPave))
-  const trees: Array<[number, number]> = [[5.2, -16.6], [9.4, -17.6], [13.6, -18.2], [16.8, -4.6], [17.8, -8.8], [18.2, -13.0], [3.4, -14.6], [17.6, -16.6], [6.0, -12.4], [10.2, -14.2], [14.8, -14.4], [18.0, -6.6], [3.0, -16.4], [12.6, -16.6], [15.4, -11.4], [18.4, -10.8]]  // [十一轮] 8→16 补 R11（新增位内收防冠幅超界）
+  const trees: Array<[number, number]> = [[5.2, -16.6], [9.4, -17.6], [13.6, -18.2], [16.8, -4.6], [17.8, -8.8], [18.2, -13.0], [3.4, -14.6], [17.6, -16.6], [6.0, -12.4], [10.2, -14.2], [14.8, -14.4], [18.0, -6.6], [3.0, -16.4], [12.6, -16.6], [15.4, -11.4], [18.4, -10.8], [7.6, -17.6], [11.4, -12.8], [16.2, -15.6], [4.6, -11.2], [13.2, -11.8], [17.0, -18.2], [8.8, -11.0], [16.4, -13.6], [5.8, -9.6], [10.8, -10.4], [15.0, -9.4], [12.0, -15.4], [6.8, -13.4], [17.4, -12.2], [9.6, -9.8], [14.0, -10.6], [4.0, -9.4], [16.0, -8.2]]  // [十五轮] 30→36 补 R11（新增位全部内收防冠幅超界）
   trees.forEach(([tx, tz], i) => {                       // 树阵（树池坐凳 + 修剪树）
     parent.add(planterBench({ x: tx, z: tz, size: 2.2 }))
     parent.add(gardenTree({ x: tx, z: tz, scale: i < 8 ? 1.25 : 1.1, seed: 11 + i * 7 }))
   })
-  const lamps: Array<[number, number]> = [[4.0, -17.5], [9.0, -18.6], [14.0, -18.4], [17.6, -14.6], [19.0, -9.6], [19.2, -4.6], [7.0, -11.6], [12.4, -13.8], [16.0, -16.4], [18.6, -7.0]]  // [十一轮] 6→10（新增位内收）
+  const lamps: Array<[number, number]> = [[4.0, -17.5], [9.0, -18.6], [14.0, -18.4], [17.6, -14.6], [19.0, -9.6], [19.2, -4.6], [7.0, -11.6], [12.4, -13.8], [16.0, -16.4], [18.6, -7.0], [5.6, -14.8], [11.0, -16.4], [14.4, -12.2], [18.8, -16.0]]  // [十五轮] 10→14
   for (const [lx, lz] of lamps) {                        // 广场灯柱（弧线布点，界内）
     parent.add(modernLamp({ x: lx, z: lz, rotY: Math.atan2(-(lz - ORG.z), -(lx - ORG.x)) }))
   }
