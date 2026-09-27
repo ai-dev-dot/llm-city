@@ -1,4 +1,4 @@
-import * as THREE from 'three'
+﻿import * as THREE from 'three'
 import type { BuildCtx } from '../../../../lib/ctx'
 import { stdMaterial } from '../../../../lib/blocks'
 import { mergeBoxMesh, type BoxPart } from '../../blocks/mimo-v2.6-flash/geo'
@@ -10,9 +10,9 @@ import { paving, turf } from '../../blocks/mimo-v2.6-flash/paving'
  * 东向正对镜湖公园的玻璃橱窗塔：底层骑楼拱廊 + 商业裙房四层 + 退台景观塔 75m。
  * 局部原点 = 宗地中心；东 +x 临园，北 +z 接二期骑楼街。 */
 
-const GLASS = '#5E8FB3'
-const GLASS_EMIT = '#2A5674'
-const FRAME = '#3E3C3A'
+const GLASS = '#9EC5DD'   // 色板11 天青浅蓝（城主同步后提亮，原 #5E8FB3）
+const GLASS_EMIT = '#5E8FB3'   // 提亮兜底（原暗蓝 #2A5674）
+const FRAME = '#7C7A76'   // 铝灰（原近黑 #3E3C3A，IBL 修复后改亮两档）
 const ALUM = '#C4C1BA'
 const STONE = '#E8E6E1'
 const BASE = '#A8A5A0'
@@ -205,12 +205,12 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     { w: 0.6, h: 0.3, d: 1.9, x: -7.5, y: 3.7, z: 11.5 },
   ]
   root.add(mergeBoxMesh(logoTower, stdMaterial('#4ADFC4', { emissive: '#4ADFC4', emissiveIntensity: 1.2, roughness: 0.4 })))
-  root.add(finArray({ w: 1.5, h: 10.8, y: 4.05, x: -7.62, z: 11.5, ry: -Math.PI / 2, count: 14, depth: 0.4, thick: 0.1, color: '#3E3C3A' }))
+  root.add(finArray({ w: 1.5, h: 10.8, y: 4.05, x: -7.62, z: 11.5, ry: -Math.PI / 2, count: 14, depth: 0.4, thick: 0.1, color: '#7C7A76' }))
   // 西立面底层南段设备百叶
   root.add(finArray({ w: 9.5, h: 3.4, y: 0.5, x: -7.3, z: -7.5, ry: -Math.PI / 2, count: 26, depth: 0.3, thick: 0.1, color: '#7C7A76' }))
   root.add(mergeBoxMesh(
     [{ w: 0.3, h: 3.8, d: 10.2, x: -7.3, y: 2.2, z: -7.5 }],
-    stdMaterial('#5B5956', { roughness: 0.8 }),
+    stdMaterial('#8A8783', { roughness: 0.8 }),
   ))
   // 西立面 2-4 层幕墙
   root.add(curtainGrid({
@@ -254,7 +254,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
       w: f.w, h: 43.4, y: 16.85, x: f.x, z: f.z, ry: f.ry,
       cols: f.cols, rows: 15, subCols: 3, subRows: 3,
       frameColor: FRAME, glassColor: GLASS, glassEmissive: GLASS_EMIT,
-      spandrel: 0.75, spandrelColor: ALUM, sunshade: true, shadeOut: 0.3, lit: { ratio: 0.24, seed: seed() },
+      spandrel: 0.75, spandrelColor: ALUM, sunshade: true, shadeOut: 0.3, lit: { ratio: 0.4, seed: seed() },
     }))
   }
   // 段 A 顶（60.3）退台露台：核心顶环铺 + 沿幕墙皮栏杆
@@ -280,7 +280,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
       w: f.w, h: 14.4, y: 60.35, x: f.x, z: f.z, ry: f.ry,
       cols: f.cols, rows: 5, subCols: 2, subRows: 3,
       frameColor: FRAME, glassColor: GLASS, glassEmissive: GLASS_EMIT,
-      spandrel: 0.75, spandrelColor: ALUM, sunshade: true, shadeOut: 0.28, lit: { ratio: 0.3, seed: seed() },
+      spandrel: 0.75, spandrelColor: ALUM, sunshade: true, shadeOut: 0.28, lit: { ratio: 0.42, seed: seed() },
     }))
   }
 
@@ -335,7 +335,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     { w: 5.0, h: 1.6, d: 3.2, x: 4.6, y: 17.6, z: 15.6 },
     { w: 4.4, h: 1.2, d: 2.8, x: 4.6, y: 17.4, z: 4.2 },
   ]
-  root.add(mergeBoxMesh(plantBox, stdMaterial('#5B5956', { metalness: 0.4, roughness: 0.6 })))
+  root.add(mergeBoxMesh(plantBox, stdMaterial('#8A8783', { metalness: 0.4, roughness: 0.6 })))
 
   // ---------------------------------------------------------------- 裙房屋顶花园（南段 y16.8）
   root.add(paving({ w: 13.4, d: 17.6, y: 16.8, z: -8.4, cell: 0.5, gap: 0.07, colorA: '#D9D6CF', colorB: '#C4C1BA', accent: 4, inset: '#A8A5A0' }))
