@@ -296,7 +296,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     else if (s < 11.0 + 13.4) { x = 5.5; z = 9.8 + 6.7 - (s - 11.0); ry = Math.PI / 2 }
     else if (s < 22.0 + 13.4) { x = 5.5 - (s - 24.4); z = 9.8 - 6.7; ry = 0 }
     else { x = -5.5; z = 9.8 - 6.7 + (s - 35.4); ry = -Math.PI / 2 }
-    crown.push({ w: 0.14, h: 2.2, d: 0.5, x, y: 78.7, z, ry })
+    crown.push({ w: 0.14, h: 4.15, d: 0.5, x, y: 77.7, z, ry })
   }
   // 冠部灯带环（暖金发光）
   const lampMat = stdMaterial(CROWN, { emissive: CROWN, emissiveIntensity: 1.6, roughness: 0.4 })
@@ -307,7 +307,9 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     { w: 0.3, h: 0.5, d: 13.7, x: -5.65, y: 77.7, z: 9.8 },
   ], lampMat)
   root.add(lampRing)
-  // 顶部压顶 + 天线
+  // 格栅下/上环梁（下承冠部座1、上盖 44 竖条顶，消 75.4–77.2 悬空断层）+ 顶部压顶 + 天线
+  crown.push({ w: 11.0, h: 0.35, d: 13.4, x: 0, y: 75.55, z: 9.8 })
+  crown.push({ w: 11.0, h: 0.35, d: 13.4, x: 0, y: 79.9, z: 9.8 })
   crown.push({ w: 8.6, h: 0.5, d: 11.0, x: 0, y: 80.0, z: 9.8 })
   root.add(mergeBoxMesh(crown, stdMaterial(FRAME, { metalness: 0.7, roughness: 0.35 })))
   const mast: BoxPart[] = [
