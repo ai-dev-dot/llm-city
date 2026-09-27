@@ -92,15 +92,15 @@ function arcTorus(r: number, tube: number, a0: number, len: number, radSeg = 10,
 const C = (h: string) => new THREE.Color(h)
 const matSolid = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.7, roughness: 0.22 })
 const matPave  = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.06, roughness: 0.92 })
-const matGlass = new THREE.MeshStandardMaterial({ color: '#4E6E92', metalness: 0.68, roughness: 0.12, transparent: true, opacity: 0.78, emissive: '#1C2E42', emissiveIntensity: 0.35, side: THREE.DoubleSide })
+const matGlass = new THREE.MeshStandardMaterial({ color: '#9EC5DD', metalness: 0.68, roughness: 0.12, transparent: true, opacity: 0.72, emissive: '#22344A', emissiveIntensity: 0.3, side: THREE.DoubleSide })
 const matLit   = new THREE.MeshStandardMaterial({ color: '#23282F', emissive: '#FFE0AC', emissiveIntensity: 1.1, side: THREE.DoubleSide })
 const matGlow  = new THREE.MeshStandardMaterial({ color: '#FFD9A0', emissive: '#FFC878', emissiveIntensity: 2.5 })
 const matGlowW = new THREE.MeshStandardMaterial({ color: '#FFF3DC', emissive: '#FFEED2', emissiveIntensity: 2.1 })
 const matWater = new THREE.MeshStandardMaterial({ color: '#3F6E80', metalness: 0.35, roughness: 0.06, transparent: true, opacity: 0.82 })
 
-/** 立面色板（「银塔金冠」：塔身冷银铝系=官方色板 3/4/5 号 + 9 号石墨蓝灰；金收缩至冠部/入口/光庭点睛） */
+/** 立面色板（「亮塔」：全塔亮银两档框体系+天青高反玻璃（官方 11 号），深色只留背光阴影；金收缩至冠部/入口/光庭点睛） */
 const GOLD = C('#C9AE8A'), GOLD_D = C('#8F7452'), STEEL = C('#3A3F46'), STEEL_D = C('#2A2E34')
-const SILVER = C('#C4C1BA'), SILVER_M = C('#A8A5A0'), SILVER_D = C('#7C7A76'), GRAPHITE = C('#4A5568')
+const SILVER = C('#C4C1BA'), SILVER_M = C('#A8A5A0')
 const WHITE = C('#DDD8CE'), CONC = C('#B7B3AC'), CONC_D = C('#8F8C86'), FRAME = C('#4A4F56')
 const PAVE_L = C('#9C9890'), PAVE_M = C('#7E7A73'), PAVE_D = C('#5E5B56')
 const GRASS_C = C('#667A54'), WOOD = C('#8A6E4E'), GOLD_LINE = C('#A8906B')
@@ -119,10 +119,10 @@ function facadeLayer(
   const glassH = h - beamH - 0.06
   const nx = Math.sin(f.dir), nz = Math.cos(f.dir)      // 面外法线
   const tx = Math.cos(f.dir), tz = -Math.sin(f.dir)     // 面内横向
-  box(s, f.w, beamH, 0.42, f.cx, y0 + beamH / 2, f.cz, SILVER_M, f.dir)     // 楼板边梁带（银灰）
+  box(s, f.w, beamH, 0.42, f.cx, y0 + beamH / 2, f.cz, SILVER, f.dir)      // 楼板边梁带（亮银）
   box(s, f.w + 0.06, 0.16, 0.5, f.cx, y0 + beamH - 0.08, f.cz, WHITE, f.dir) // 楼板沿口白铝
-  box(s, f.w + 0.04, 0.07, 0.1, f.cx, y0 + 0.06, f.cz, SILVER_D, f.dir)    // 层底线脚
-  box(s, f.w + 0.04, 0.07, 0.1, f.cx, y0 + h - 0.06, f.cz, SILVER_D, f.dir) // 层顶线脚
+  box(s, f.w + 0.04, 0.07, 0.1, f.cx, y0 + 0.06, f.cz, SILVER_M, f.dir)   // 层底线脚
+  box(s, f.w + 0.04, 0.07, 0.1, f.cx, y0 + h - 0.06, f.cz, SILVER_M, f.dir) // 层顶线脚
   const n = Math.max(6, Math.round(f.w / 0.8))
   const cw = f.w / n
   const rows = glassH > 3.0 ? 2 : 1                     // 玻璃竖向分格
@@ -130,10 +130,10 @@ function facadeLayer(
     const off = -f.w / 2 + cw * i
     box(s, 0.09, h - beamH + 0.12, 0.14,
       f.cx + tx * off + nx * 0.03, y0 + beamH + (h - beamH) / 2, f.cz + tz * off + nz * 0.03,
-      i % 6 === 0 ? SILVER_D : SILVER)
+      i % 6 === 0 ? SILVER_M : SILVER)
   }
   for (let r = 1; r < rows; r++) {                      // 分格横梃
-    box(s, f.w, 0.09, 0.13, f.cx, y0 + beamH + (glassH * r) / rows, f.cz, SILVER_D, f.dir)
+    box(s, f.w, 0.09, 0.13, f.cx, y0 + beamH + (glassH * r) / rows, f.cz, SILVER_M, f.dir)
   }
   for (let i = 0; i < n; i++) {                         // 玻璃分格 + 遮阳百叶
     const off = -f.w / 2 + cw * (i + 0.5)
@@ -167,7 +167,7 @@ function towerSegment(
     for (const [px, pz] of [[cx + t, cz - hw], [cx + t, cz + hw], [cx - hw, cz + t], [cx + hw, cz + t]] as Array<[number, number]>) colPts.push([px, pz, 0.55])
   }
   for (const [px, pz, cw2] of colPts) {
-    box(colSink, cw2, y1 - y0, cw2, px, y0 + (y1 - y0) / 2, pz, GRAPHITE)
+    box(colSink, cw2, y1 - y0, cw2, px, y0 + (y1 - y0) / 2, pz, SILVER_M)
     for (const cy of [y0 + 0.18, y1 - 0.18]) {           // 柱顶底箍
       box(colSink, cw2 + 0.22, 0.3, cw2 + 0.22, px, cy, pz, SILVER_M)
     }
@@ -189,7 +189,7 @@ function towerSegment(
   }
   const capSink = newSink()
   box(capSink, w, 0.5, w, cx, y1 - 0.25, cz, CONC)
-  box(capSink, w + 0.2, 0.22, w + 0.2, cx, y1 + 0.11, cz, SILVER_D)
+  box(capSink, w + 0.2, 0.22, w + 0.2, cx, y1 + 0.11, cz, SILVER_M)
   parent.add(sinkMesh(capSink, matPave))
 }
 
@@ -203,10 +203,10 @@ function trussBand(parent: THREE.Object3D, cx: number, cz: number, w: number, y0
   ]
   for (const f of faces) quad(gs, f.w, h, f.cx, y0 + h / 2, f.cz, f.dir, STEEL_D)
   for (const yy of [y0 + 0.22, y1 - 0.22]) {             // 上下弦杆（周圈）
-    box(s, 0.3, 0.3, w - 0.1, cx + w / 2 - 0.15, yy, cz, STEEL)
-    box(s, 0.3, 0.3, w - 0.1, cx - w / 2 + 0.15, yy, cz, STEEL)
-    box(s, w - 0.7, 0.3, 0.3, cx, yy, cz + w / 2 - 0.15, STEEL)
-    box(s, w - 0.7, 0.3, 0.3, cx, yy, cz - w / 2 + 0.15, STEEL)
+    box(s, 0.3, 0.3, w - 0.1, cx + w / 2 - 0.15, yy, cz, SILVER_M)
+    box(s, 0.3, 0.3, w - 0.1, cx - w / 2 + 0.15, yy, cz, SILVER_M)
+    box(s, w - 0.7, 0.3, 0.3, cx, yy, cz + w / 2 - 0.15, SILVER_M)
+    box(s, w - 0.7, 0.3, 0.3, cx, yy, cz - w / 2 + 0.15, SILVER_M)
   }
   for (const f of faces) {                               // 每面 4 组 X 斜撑 + 竖腹杆
     const tx = Math.cos(f.dir), tz = -Math.sin(f.dir)
@@ -215,16 +215,16 @@ function trussBand(parent: THREE.Object3D, cx: number, cz: number, w: number, y0
     for (let i = 0; i < 4; i++) {
       const off = -f.w / 2 + (f.w * (i + 0.5)) / 4
       const mx = f.cx + tx * off, mz = f.cz + tz * off
-      box(s, diag, 0.16, 0.16, mx, y0 + h / 2, mz, STEEL, f.dir, ang)
-      box(s, diag, 0.16, 0.16, mx, y0 + h / 2, mz, STEEL, f.dir, -ang)
+      box(s, diag, 0.16, 0.16, mx, y0 + h / 2, mz, SILVER_M, f.dir, ang)
+      box(s, diag, 0.16, 0.16, mx, y0 + h / 2, mz, SILVER_M, f.dir, -ang)
     }
     for (let i = 0; i <= 4; i++) {
       const off = -f.w / 2 + (f.w * i) / 4
-      box(s, 0.14, h - 0.44, 0.14, f.cx + tx * off, y0 + h / 2, f.cz + tz * off, STEEL)
+      box(s, 0.14, h - 0.44, 0.14, f.cx + tx * off, y0 + h / 2, f.cz + tz * off, SILVER_M)
     }
   }
-  box(s, w, 0.28, w, cx, y0 + 0.14, cz, CONC_D)          // 转换层底板
-  box(s, w, 0.28, w, cx, y1 - 0.14, cz, CONC_D)          // 转换层顶板（兼露台基层）
+  box(s, w, 0.28, w, cx, y0 + 0.14, cz, CONC)           // 转换层底板
+  box(s, w, 0.28, w, cx, y1 - 0.14, cz, CONC)           // 转换层顶板（兼露台基层）
   parent.add(sinkMesh(s, matSolid))
   parent.add(sinkMesh(gs, matGlass))
 }
@@ -242,10 +242,10 @@ function skyTerrace(
   const sx0 = ox - ow / 2 + 0.6
   box(s, ex1 - ex0, 0.12, ow - 1.2, (ex0 + ex1) / 2, y + 0.06, oz, PAVE_M)
   box(s, ex0 - sx0, 0.12, sz1 - sz0, (sx0 + ex0) / 2, y + 0.06, (sz0 + sz1) / 2, PAVE_M)
-  box(s, ex1 - ex0, 0.5, 0.1, (ex0 + ex1) / 2, y + 0.25, oz - ow / 2 + 0.55, SILVER_D)   // 矮栏
-  box(s, 0.1, 0.5, sz1 - sz0, ox + ow / 2 - 0.55, y + 0.25, (sz0 + sz1) / 2, SILVER_D)
+  box(s, ex1 - ex0, 0.5, 0.1, (ex0 + ex1) / 2, y + 0.25, oz - ow / 2 + 0.55, SILVER_M)  // 矮栏
+  box(s, 0.1, 0.5, sz1 - sz0, ox + ow / 2 - 0.55, y + 0.25, (sz0 + sz1) / 2, SILVER_M)
   for (let i = 0; i < 6; i++) {                         // 矮栏竖杆加密
-    box(s, 0.07, 0.5, 0.07, (ex0 + ex1) / 2, y + 0.25, oz - ow / 2 + 0.55 + 1 + i * ((ow - 2.5) / 6), SILVER_D)
+    box(s, 0.07, 0.5, 0.07, (ex0 + ex1) / 2, y + 0.25, oz - ow / 2 + 0.55 + 1 + i * ((ow - 2.5) / 6), SILVER_M)
   }
   parent.add(sinkMesh(s, matPave))
   if (ex1 - ex0 > 3.4) {                                 // 树池 + 修剪树
@@ -447,9 +447,9 @@ function crown(parent: THREE.Object3D, cx: number, cz: number): void {
   }
   parent.add(sinkMesh(mull, matSolid))
   box(s, w + 0.6, 0.7, w + 0.6, cx, 204.3, cz, GOLD_D)   // 亭顶板
-  box(s, 5.5, 1.6, 5.5, cx, 205.4, cz, STEEL_D)          // 设备间收束
+  box(s, 5.5, 1.6, 5.5, cx, 205.4, cz, STEEL)          // 设备间收束
   box(s, 6.1, 0.3, 6.1, cx, 206.3, cz, GOLD_D)
-  box(s, 13.6, 1.2, 13.6, cx, 190.9, cz, STEEL)          // 亭底收腰裙板
+  box(s, 13.6, 1.2, 13.6, cx, 190.9, cz, SILVER_M)          // 亭底收腰裙板
   box(s, 2.6, 9, 2.6, cx + 3.2, 195.5, cz - 3.2, CONC_D) // 亭内楼梯间体块
   parent.add(sinkMesh(s, matSolid))
   parent.add(sinkMesh(gs, matGlass))
