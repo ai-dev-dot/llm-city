@@ -27,6 +27,9 @@ export function litgrid(o: {
   frame?: string
   sill?: string
   glass?: string
+  /** 玻璃自发光兜底色（默认暗蓝，保持深色幕墙老观感）；浅青玻璃宜配同系浅青，如 #C4DFF0 */
+  glassEmissive?: string
+  glassEmissiveIntensity?: number
 }): THREE.Object3D {
   const grp = new THREE.Group()
   const cells = o.cells ?? Math.max(2, Math.round(o.w / 1.3))
@@ -40,7 +43,7 @@ export function litgrid(o: {
   const frameMat = stdMaterial(o.frame ?? '#D9D5CC', { roughness: 0.68 })
   const sillMat = stdMaterial(o.sill ?? '#C8C4BA', { roughness: 0.82 })
   const beamMat = stdMaterial(o.frame ?? '#D9D5CC', { roughness: 0.7 })
-  const glassMat = stdMaterial(o.glass ?? '#22344C', { metalness: 0.55, roughness: 0.18, emissive: '#0E1A2A', emissiveIntensity: 0.4 })
+  const glassMat = stdMaterial(o.glass ?? '#22344C', { metalness: 0.55, roughness: 0.18, emissive: o.glassEmissive ?? '#0E1A2A', emissiveIntensity: o.glassEmissiveIntensity ?? 0.4 })
   // 亮窗三档暖色温：米白 / 暖黄 / 暖橙，混色更像真实住家
   const litMats = ['#FFF0D2', '#FFD98F', '#FFBE7A'].map(c =>
     stdMaterial(c, { roughness: 0.5, emissive: c, emissiveIntensity: 1.35 }))

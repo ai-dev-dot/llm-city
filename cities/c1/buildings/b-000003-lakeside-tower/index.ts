@@ -52,9 +52,11 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   const matPave = stdMaterial('#CFCCC4', { roughness: 0.9 })
   const matWhite = stdMaterial('#E7E3D9', { roughness: 0.72 })
   const matWood = stdMaterial('#A9805A', { roughness: 0.85 })
-  const matGlass = stdMaterial('#22344C', { metalness: 0.55, roughness: 0.18, emissive: '#0E1A2A', emissiveIntensity: 0.5 })
-  const matMetal = stdMaterial('#8E8B84', { metalness: 0.6, roughness: 0.4 })
-  const matDarkMetal = stdMaterial('#4E4C48', { metalness: 0.5, roughness: 0.5 })
+  // 2026-09-27 观感续建：深蓝黑玻璃 → 天青浅蓝反射玻璃（与官方 glassCurtain 同配方），
+  // emissive 同系浅青低强度兜底——白天透亮、夜间不抢亮窗；金属件降金属度回归中灰本色
+  const matGlass = stdMaterial('#9EC5DD', { metalness: 0.5, roughness: 0.18, emissive: '#C4DFF0', emissiveIntensity: 0.3 })
+  const matMetal = stdMaterial('#8E8B84', { metalness: 0.3, roughness: 0.4 })
+  const matDarkMetal = stdMaterial('#4E4C48', { metalness: 0.3, roughness: 0.5 })
 
   // ===================================================================
   // 场地（宗地 20×40，全域）：基底面 + 沿街人行道环带
@@ -84,19 +86,21 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     const col = M(new THREE.BoxGeometry(0.5, 72, 0.5), matWhite)
     col.position.set(sx, 36, sz); tower.add(col)
   }
-  // 四面飘窗灯幕墙（净宽 14.16，11 格，24 层）
+  // 四面飘窗灯幕墙（净宽 14.16，11 格，24 层）：浅青反射玻璃（官方 PALETTE 11 号）
   const faceW = 14.16
-  const northFace = litgrid({ w: faceW, h: 66, floors: 22, cells: 11, seed: 7, y0: 6 })
+  const towerGlass = { glass: '#9EC5DD', glassEmissive: '#C4DFF0', glassEmissiveIntensity: 0.3 } as const
+  const northFace = litgrid({ w: faceW, h: 66, floors: 22, cells: 11, seed: 7, y0: 6, ...towerGlass })
   northFace.position.set(0, 0, 17.58); tower.add(northFace)
-  const southFace = litgrid({ w: faceW, h: 66, floors: 22, cells: 11, seed: 13, y0: 6 })
+  const southFace = litgrid({ w: faceW, h: 66, floors: 22, cells: 11, seed: 13, y0: 6, ...towerGlass })
   southFace.rotation.y = Math.PI; southFace.position.set(0, 0, 2.42); tower.add(southFace)
-  const eastFace = litgrid({ w: faceW, h: 66, floors: 22, cells: 11, seed: 21, y0: 6 })
+  const eastFace = litgrid({ w: faceW, h: 66, floors: 22, cells: 11, seed: 21, y0: 6, ...towerGlass })
   eastFace.rotation.y = Math.PI / 2; eastFace.position.set(7.58, 0, 10); tower.add(eastFace)
-  const westFace = litgrid({ w: faceW, h: 66, floors: 22, cells: 11, seed: 29, y0: 6 })
+  const westFace = litgrid({ w: faceW, h: 66, floors: 22, cells: 11, seed: 29, y0: 6, ...towerGlass })
   westFace.rotation.y = -Math.PI / 2; westFace.position.set(-7.58, 0, 10); tower.add(westFace)
 
   // ---- 6m 通高入户大堂：南/东/西落地玻璃（内退），北向入口 + 雨棚 ----
-  const lobbyGlass = stdMaterial('#1B2C42', { metalness: 0.65, roughness: 0.12, emissive: '#0A1422', emissiveIntensity: 0.4 })
+  // 大堂落地玻璃：比标准层深半档的中青蓝，保基座稳重，夜间仅低青微光（暖光大门仍是视觉焦点）
+  const lobbyGlass = stdMaterial('#7FA6C0', { metalness: 0.5, roughness: 0.15, emissive: '#AFCBE0', emissiveIntensity: 0.3 })
   const lh = 5.6
   const ls = M(new THREE.BoxGeometry(14.6, lh, 0.1), lobbyGlass); ls.position.set(0, 3, 2.7); tower.add(ls)
   const le = M(new THREE.BoxGeometry(0.1, lh, 14.6), lobbyGlass); le.position.set(7.3, 3, 10); tower.add(le)
