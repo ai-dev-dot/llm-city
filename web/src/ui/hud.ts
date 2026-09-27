@@ -56,8 +56,9 @@ export function mountHud(
     onTour: () => TourRouteId          // 切到下一条巡航路线，返回新路线（main.ts 调 tour）
     onTourSpeed: () => number          // 切到下一档速度倍率，返回新倍率（main.ts 调 tour）
     onPreset: (p: TourPreset) => void  // 预设机位（main.ts 调 tour.flyToPreset）
+    onToggleLabels?: () => boolean     // 切换锚定标签层显隐（main.ts 调 labelLayer），返回新状态
   },
-  nav?: { activeBlock: string | null; blocks: BlockInfo[] },
+  nav?: { activeBlock: string | null; blocks: BlockInfo[]; labelsOn?: boolean },
 ): HudHandle {
   hud.innerHTML = ''
   const s = plaqueStats(city.buildings)
@@ -80,7 +81,7 @@ export function mountHud(
   const hint = document.createElement('div')
   hint.className = 'panel'
   hint.style.cssText = `position:absolute;left:16px;bottom:${plaque.offsetHeight + 24}px;padding:6px 10px;font-size:12px;color:var(--text-secondary);`
-  hint.textContent = 'H HUD · P 摄影 · F 滤镜 · T 巡航'
+  hint.textContent = 'H HUD · P 摄影 · F 滤镜 · T 巡航 · L 标注'
   hud.appendChild(hint)
 
   // 氛围预设按钮组（spec §10：白天/夜景/黄昏，默认白天；只调光照，不染建筑本色）
@@ -93,6 +94,18 @@ export function mountHud(
     btn.style.cssText = 'padding:6px 10px;background:transparent;color:var(--text-primary);border:1px solid var(--panel-border);border-radius:6px;cursor:pointer;font-family:inherit;'
     btn.addEventListener('click', () => applyAmbience(bundle, AMBIENCE_PRESETS[key]))
     ambienceBar.appendChild(btn)
+  }
+  // 锚定标签层开关（全城=街区模型名 / 街区=建筑名；L 键同义）。航拍要纯净画面时也可
+  // 按 H/摄影模式——标签层挂 hud 内，随整层隐藏，此开关只管标签本身
+  let labelBtn: HTMLButtonElement | null = null
+  const labelBtnText = (on: boolean) => { if (labelBtn) labelBtn.textContent = `标注:${on ? '开' : '关'}` }
+  if (hooks.onToggleLabels) {
+    labelBtn = document.createElement('button')
+    labelBtn.textContent = `标注:${nav?.labelsOn ?? true ? '开' : '关'}`
+    labelBtn.title = 'L 键同义：街区/建筑名锚定标签开关'
+    labelBtn.style.cssText = 'padding:6px 10px;background:transparent;color:var(--text-primary);border:1px solid var(--panel-border);border-radius:6px;cursor:pointer;font-family:inherit;'
+    labelBtn.addEventListener('click', () => { labelBtnText(hooks.onToggleLabels!()) })
+    ambienceBar.appendChild(labelBtn)
   }
   hud.appendChild(ambienceBar)
 
@@ -150,6 +163,18 @@ export function mountHud(
     hud.appendChild(navBar)
   }
 
+  // 街区页右上角模型名（第 4 行，选择条下方）：航拍者不 hover 就能一眼看到该街区出自哪家模型。
+  // 一个街区一个模型（城主裁决 2026-09-28），mountHud 收到的 city 在街区模式已过滤 → 取首栋即可
+  if (nav?.activeBlock && city.buildings[0]) {
+    const b0 = city.buildings[0]
+    const maker = document.createElement('div')
+    maker.className = 'panel'
+    maker.style.cssText = 'position:absolute;right:16px;top:160px;padding:6px 10px;font-size:13px;'
+    maker.title = `本街区模型：${b0.model}${b0.vendor ? `（${b0.vendor.name}）` : ''}`
+    maker.innerHTML = `${b0.vendor ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${b0.vendor.color};margin-right:5px;vertical-align:1px;"></span>` : ''}<b>${escapeHtml(b0.modelId)}</b>`
+    hud.appendChild(maker)
+  }
+
   // 错误报告条（右下，常驻；Canvas 异常时 UI 层仍可见——与 Canvas 分层）
   const report = document.createElement('div')
   report.className = 'panel'
@@ -191,6 +216,9 @@ export function mountHud(
     }
     if (e.key === 'p' || e.key === 'P') hooks.onPhoto()
     if (e.key === 't' || e.key === 'T') handle.cycleTour()
+    if ((e.key === 'l' || e.key === 'L') && hooks.onToggleLabels) {
+      labelBtnText(hooks.onToggleLabels())
+    }
   }
   if (activeKeyHandler) window.removeEventListener('keydown', activeKeyHandler)
   activeKeyHandler = onKey

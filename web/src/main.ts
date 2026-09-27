@@ -7,6 +7,7 @@ import { setupPicking } from './city/pick'
 import { TourController, type TourArea, type TourRouteId, type TourPreset } from './city/tour'
 import { collectBlocks, districtLookup, districtOfBuilding, navigateToBlock, parseBlockParam, blockCamera, blockHref } from './city/blocks'
 import { mountTooltip } from './ui/tooltip'
+import { mountLabelLayer, blockLabelHtml, buildingLabelHtml, type LabelItem, type LabelLayerHandle } from './ui/labels'
 import { showSidebar } from './ui/sidebar'
 import { mountHud, type HudHandle } from './ui/hud'
 import { PhotoMode } from './ui/photo'
@@ -21,9 +22,8 @@ const districtOf = (b: BuildingRecord): string | null => districtOfBuilding(full
 const city: CityData = activeBlock
   ? { ...fullCity, buildings: fullCity.buildings.filter((b) => districtOf(b) === activeBlock) }
   : fullCity
-const activeBlk = activeBlock
-  ? collectBlocks(fullCity, fullCity.blockNames).find((x) => x.id === activeBlock) ?? null
-  : null
+const allBlocks = collectBlocks(fullCity, fullCity.blockNames)
+const activeBlk = activeBlock ? allBlocks.find((x) => x.id === activeBlock) ?? null : null
 if (activeBlock) {
   document.title = `${fullCity.name} · ${activeBlock}${activeBlk?.name ? ` ${activeBlk.name}` : ''}`
 }
@@ -37,6 +37,56 @@ if (activeBlk) {
 }
 const manager = new BuildingManager(bundle.scene, city, buildingLoaders)
 manager.onStatusChange((c) => console.info(`[llm-city] ${c.ok} 栋正常 / ${c.failed} 栋烂尾`))
+
+// —— 锚定标签层：全城页=街区上空「模型名·街区名」，街区页=每栋建筑上方名字（L 键/标注按钮开关）——
+// 楼顶实测缓存：建筑异步挂载，Box3 实测 maxY 后锚点才抬到楼群上空；onStatusChange（每批挂载）重算。
+// 一个街区一个模型（城主裁决 2026-09-28），标签取该街区首栋登记的 builder 信息。
+const labelTops = new Map<string, number>()
+let labelsOn = true
+let labelLayer: LabelLayerHandle | null = null
+const labeledBlocks = allBlocks
+  .map((blk) => ({ blk, bs: fullCity.buildings.filter((b) => districtOf(b) === blk.id) }))
+  .filter((x) => x.bs.length > 0)
+const groupTopY = (id: string): number => {
+  const g = manager.groupOf(id)
+  return g && g.children.length > 0 ? new THREE.Box3().setFromObject(g).max.y : 0   // 灰盒也计入（failed 兜底高度）
+}
+const refreshLabelTops = () => {
+  if (activeBlk) {
+    for (const b of city.buildings) {
+      const y = groupTopY(b.id)
+      if (y > 0) labelTops.set(b.id, y)
+    }
+  } else {
+    for (const { blk, bs } of labeledBlocks) {
+      let m = 0
+      for (const b of bs) m = Math.max(m, groupTopY(b.id))
+      if (m > 0) labelTops.set(blk.id, m)
+    }
+  }
+}
+manager.onStatusChange(refreshLabelTops)
+refreshLabelTops()
+const labelItems = (): LabelItem[] => {
+  if (activeBlk) {
+    return city.buildings.map((b) => {
+      const pos = b.parcelCenter ?? fullCity.lots.find((l) => l.id === b.lot)?.center ?? [0, 0]
+      return {
+        key: `b:${b.id}`,
+        html: buildingLabelHtml(b.name),
+        anchor: () => [pos[0], (labelTops.get(b.id) ?? 24) + 4, pos[1]] as const,
+      }
+    })
+  }
+  return labeledBlocks.map(({ blk, bs }) => {
+    const b0 = bs[0]
+    return {
+      key: `d:${blk.id}`,
+      html: blockLabelHtml(b0.modelId, b0.vendor?.color ?? null, blk.id, blk.name),
+      anchor: () => [blk.center[0], (labelTops.get(blk.id) ?? 28) + 10, blk.center[1]] as const,
+    }
+  })
+}
 
 // 滤镜系统（spec §10）：只做临时渲染效果，不改作品本体（F 键循环在 Task 16 统一接）
 const filterSystem = new FilterSystem(city.buildings)
@@ -141,10 +191,17 @@ const mountAll = () => {
     onTour: onTourCycle,
     onTourSpeed: onTourSpeedCycle,
     onPreset: (p: TourPreset) => tour.flyToPreset(p),
+    onToggleLabels: () => { labelsOn = !labelsOn; labelLayer?.setEnabled(labelsOn); return labelsOn },
   }, {
     activeBlock,
-    blocks: collectBlocks(fullCity, fullCity.blockNames).filter((b) => b.buildings > 0),
+    blocks: allBlocks.filter((b) => b.buildings > 0),
+    labelsOn,
   })
+  // 标签层须在 mountHud **之后**挂载：mountHud 开头 hud.innerHTML='' 会清掉先插的节点
+  // （sync 会写 detached 节点静默失效）；后插还能让标签 z 序压在面板/tooltip 之下
+  labelLayer = mountLabelLayer(hud, bundle.camera)
+  labelLayer.setItems(labelItems())
+  labelLayer.setEnabled(labelsOn)
   // 拖拽即停/预设飞点/环绕建筑不经过 T 键：靠状态回调同步按钮文本（单槽重挂不累积）
   tour.onStateChange = (route) => hudHandle.syncTour(route)
 }
@@ -165,5 +222,6 @@ bundle.renderer.setAnimationLoop((now: number) => {
   const dt = (now - last) / 1000; last = now
   bundle.controls.update()
   manager.update(bundle.camera, now)
+  labelLayer?.sync()
   bundle.renderer.render(bundle.scene, bundle.camera)
 })
