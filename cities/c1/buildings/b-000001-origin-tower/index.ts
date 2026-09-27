@@ -208,10 +208,11 @@ function towerSegment(
     for (const [px, pz] of [[cx + t, cz - hw], [cx + t, cz + hw], [cx - hw, cz + t], [cx + hw, cz + t]] as Array<[number, number]>) colPts.push([px, pz, 0.55])
   }
   for (const [px, pz, cw2] of colPts) {
-    // [九轮] 角巨柱（cw2>1）换石墨蓝灰（官方 9 号，二轮验证），中柱深银——三层明暗：石墨巨柱>深银中柱>银梃
-    box(colSink, cw2, y1 - y0, cw2, px, y0 + (y1 - y0) / 2, pz, cw2 > 1 ? GRAPHITE : SILVER_M)
-    for (const cy of [y0 + 0.18, y1 - 0.18]) {           // 柱顶底箍
-      box(colSink, cw2 + 0.22, 0.3, cw2 + 0.22, px, cy, pz, SILVER)
+    // [十六轮·银柱通天] 城主指认四角石墨柱压光泽——改亮银（粗高光竖柱，哈利法塔式），
+    // 全塔再无深色构件；中柱深银保持层次（银巨柱>深银中柱>玻璃）
+    box(colSink, cw2, y1 - y0, cw2, px, y0 + (y1 - y0) / 2, pz, cw2 > 1 ? SILVER : SILVER_M)
+    for (const cy of [y0 + 0.18, y1 - 0.18]) {           // 柱顶底箍（亮银强调）
+      box(colSink, cw2 + 0.22, 0.3, cw2 + 0.22, px, cy, pz, SILVER_L)
     }
     if (cw2 > 1) for (let fl = 1; fl < floors; fl++) {   // 角巨柱层间银箍（竹节韵律）
       box(colSink, cw2 + 0.12, 0.16, cw2 + 0.12, px, y0 + fl * ((y1 - y0) / floors), pz, SILVER_L)
@@ -481,7 +482,7 @@ function crown(parent: THREE.Object3D, cx: number, cz: number): void {
   for (const [dx, dz] of [[-hw, -hw], [hw, -hw], [hw, hw], [-hw, hw]] as Array<[number, number]>) {
     const g = new THREE.BoxGeometry(0.75, 14, 0.75)
     g.translate(cx + dx, 197, cz + dz)
-    pushGeo(s, g, GRAPHITE)
+    pushGeo(s, g, SILVER)   // [十六轮] 亭角柱石墨→亮银（与塔身巨柱同系）
   }
   const faces: Array<{ dir: number; x: number; z: number; ew: boolean }> = [
     { dir: Math.PI / 2, x: cx + hw, z: cz, ew: true },
