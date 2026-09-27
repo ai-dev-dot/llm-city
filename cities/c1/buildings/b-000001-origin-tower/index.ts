@@ -106,17 +106,19 @@ const matPave  = new THREE.MeshStandardMaterial({ vertexColors: true, metalness:
 // 抹平了对比。手术反转方向正确但矫枉过正：rough 0.05 完美镜面的高光带物理上只出现在
 // 「反射角对准」的一段高度（200m 立面=一条窄横带，其余全暗）——城主误读为「阳光够不到
 // 高处」（已查证阴影视锥 s=420/far500 完整覆盖 211m 塔，光照算法无 bug）。
-// [十八轮·缎面金属] 高光带变宽成片+暗区回底光：rough 0.05→0.20（缎面——高光覆盖大段
-// 立面且反射仍清晰，中国尊缎面谱系）、emissive 0.18→0.30（暗区深蓝垫底防死黑）、
-// metal 0.85→0.80；银件 rough 0.15 高光条变宽成亮带
-const matGlass = new THREE.MeshStandardMaterial({ color: '#3D5A85', metalness: 0.80, roughness: 0.20, emissive: '#2E4A70', emissiveIntensity: 0.30, envMapIntensity: 1.5, side: THREE.DoubleSide })
+// [十八轮·缎面金属] 高光带变宽成片+暗区回底光：rough 0.20 缎面、emissive 0.30、metal 0.80
+// [十九轮·亮缎] 城主给出理想效果参照图（红框框定塔身一段）：像素定标——高光带 #8BBFFF
+// 亮蓝白渐变流淌、中间调 #6E98D9 中亮蓝基线、暗部 #455D82 中深蓝（非黑）。十八轮暗部
+// (#2F3D5B) 比理想深一倍——色域整体上移：基线 #3D5A85→#567CA8、底光 #4A6C96×0.42；
+// 高光带参数不动（metal 0.80/rough 0.20/envMap 1.5 的缎面反射就是框内亮带的来源）
+const matGlass = new THREE.MeshStandardMaterial({ color: '#567CA8', metalness: 0.80, roughness: 0.20, emissive: '#4A6C96', emissiveIntensity: 0.42, envMapIntensity: 1.5, side: THREE.DoubleSide })
 // [十一轮] 观景亭玻璃拆独立材质：塔身实心镜面后亭子保留微透（亭内楼梯间/藻井是可看的）
-const matGlassPav = new THREE.MeshStandardMaterial({ color: '#3D5A85', metalness: 0.80, roughness: 0.20, transparent: true, opacity: 0.88, emissive: '#2E4A70', emissiveIntensity: 0.28, envMapIntensity: 1.4, side: THREE.DoubleSide })
+const matGlassPav = new THREE.MeshStandardMaterial({ color: '#567CA8', metalness: 0.80, roughness: 0.20, transparent: true, opacity: 0.88, emissive: '#4A6C96', emissiveIntensity: 0.40, envMapIntensity: 1.4, side: THREE.DoubleSide })
 // [九轮] 灯条本体色换暗蓝灰（白天隐入蓝玻璃，夜里 emissive 暖白主导——蓝塔暖灯带对比）
 const matLit   = new THREE.MeshStandardMaterial({ color: '#26364A', emissive: '#FFE0AC', emissiveIntensity: 1.1, side: THREE.DoubleSide })
 // [十三轮·内透灯带] 与塔身玻璃同参的「亮窗」材质：白天与玻璃融为一体近隐形，夜里 emissive
-// 暖白主导——灯是玻璃自己的光，非外挂件。[十八轮] 同步缎面参数
-const matGlassLit = new THREE.MeshStandardMaterial({ color: '#3D5A85', metalness: 0.80, roughness: 0.20, emissive: '#FFE0AC', emissiveIntensity: 0.45, envMapIntensity: 1.5, side: THREE.DoubleSide })
+// 暖白主导——灯是玻璃自己的光，非外挂件。[十九轮] 同步亮缎参数
+const matGlassLit = new THREE.MeshStandardMaterial({ color: '#567CA8', metalness: 0.80, roughness: 0.20, emissive: '#FFE0AC', emissiveIntensity: 0.45, envMapIntensity: 1.5, side: THREE.DoubleSide })
 const matGlow  = new THREE.MeshStandardMaterial({ color: '#FFD9A0', emissive: '#FFC878', emissiveIntensity: 2.5 })
 const matGlowW = new THREE.MeshStandardMaterial({ color: '#FFF3DC', emissive: '#FFEED2', emissiveIntensity: 2.1 })
 const matWater = new THREE.MeshStandardMaterial({ color: '#3F6E80', metalness: 0.35, roughness: 0.06, transparent: true, opacity: 0.82 })
