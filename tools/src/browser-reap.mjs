@@ -13,6 +13,9 @@
  * 用法：
  *   node browser-reap.mjs                  默认：仅回收孤儿（自动化钩子用，安静无副作用）
  *   node browser-reap.mjs --older-than 60  额外回收存活超过 60 分钟的（父进程还活着也算——长期挂着的无头浏览器几乎必是被遗弃的）
+ *   node browser-reap.mjs --max-cpu 120    额外回收累计 CPU 时间超 120 秒的无头浏览器（失控判定：正常截图只花
+ *                                          几秒 CPU，烧到分钟级必是病态。2026-09-27 事故实测：SIGTERM 杀不死 Chrome，
+ *                                          `timeout` 完全限不住——"加个超时"是假防护，本项才是兜底）
  *   node browser-reap.mjs --all            无差别回收全部无头浏览器（手动总清；会杀掉正在使用的）
  *   node browser-reap.mjs --dry-run        只列出不执行
  *   node browser-reap.mjs --json           机器可读输出
@@ -43,6 +46,7 @@ const JSON_OUT = flag('--json')
 const ALL = flag('--all')
 const STRICT = flag('--strict')
 const OLDER_THAN_MS = optValue('--older-than') ? Number(optValue('--older-than')) * 60_000 : 0
+const MAX_CPU_MS = optValue('--max-cpu') ? Number(optValue('--max-cpu')) * 1000 : 0
 const NAMES = new Set(
   (optValue('--names') ?? DEFAULT_NAMES.join(','))
     .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
@@ -72,26 +76,34 @@ function parseCimDate(s) {
   return null
 }
 
-/** 枚举当前用户可见全部进程 → [{ pid, ppid, name, born }]；born=epoch ms 或 null（拿不到时跳过年龄与 PID 复用判定） */
+/** 枚举当前用户可见全部进程 → [{ pid, ppid, name, born, cpu }]；
+ *  born=epoch ms 或 null（拿不到时跳过年龄与 PID 复用判定）；cpu=累计 CPU 毫秒或 null（拿不到时跳过 --max-cpu 判定） */
 async function listProcesses() {
   if (process.platform === 'win32') {
+    // u/k = UserModeTime / KernelModeTime，单位 100ns（UInt64）
     const script = `$ErrorActionPreference='Stop'; Get-CimInstance Win32_Process | ` +
-      `ForEach-Object { [pscustomobject]@{ n=$_.Name; p=[int]$_.ProcessId; q=[int]$_.ParentProcessId; c=$_.CimInstanceProperties['CreationDate'].Value } } | ConvertTo-Json -Compress -Depth 3`
+      `ForEach-Object { [pscustomobject]@{ n=$_.Name; p=[int]$_.ProcessId; q=[int]$_.ParentProcessId; c=$_.CimInstanceProperties['CreationDate'].Value; u=[long]$_.UserModeTime; k=[long]$_.KernelModeTime } } | ConvertTo-Json -Compress -Depth 3`
     const { stdout } = await execFileAsync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { timeout: 30_000, maxBuffer: 64 * 1024 * 1024 })
     const raw = JSON.parse(stdout.trim())
     return (Array.isArray(raw) ? raw : [raw]).map((o) => ({
       pid: o.p, ppid: o.q, name: String(o.n ?? '').toLowerCase(), born: parseCimDate(o.c),
+      cpu: Math.round((Number(o.u ?? 0) + Number(o.k ?? 0)) / 10_000),
     }))
   }
   if (process.platform === 'darwin') {
     // best-effort：ps 拿不到创建时间戳，用 etime 折算年龄；PID 复用防御在 mac 上退化为不启用
-    const { stdout } = await execFileAsync('ps', ['-axo', 'pid=,ppid=,etime=,comm='], { timeout: 30_000, maxBuffer: 64 * 1024 * 1024 })
+    const { stdout } = await execFileAsync('ps', ['-axo', 'pid=,ppid=,etime=,time=,comm='], { timeout: 30_000, maxBuffer: 64 * 1024 * 1024 })
     const now = Date.now()
     return stdout.trim().split('\n').filter(Boolean).map((line) => {
-      const m = line.trim().match(/^(\d+)\s+(\d+)\s+(\S+)\s+(.+)$/)
+      const m = line.trim().match(/^(\d+)\s+(\d+)\s+(\S+)\s+(\S+)\s+(.+)$/)
       if (!m) return null
       const ageMs = m[3].split(/[-:]/).reduce((acc, x) => (acc * 60) + (+x || 0), 0) * 1000
-      return { pid: +m[1], ppid: +m[2], name: basename(m[4].trim()).toLowerCase(), born: ageMs ? now - ageMs : null }
+      // time= 形如 [[dd-]hh:]mm:ss
+      const t = m[4].split(/[-:]/).reduce((acc, x) => (acc * 60) + (+x || 0), 0) * 1000
+      return {
+        pid: +m[1], ppid: +m[2], name: basename(m[5].trim()).toLowerCase(),
+        born: ageMs ? now - ageMs : null, cpu: t,
+      }
     }).filter(Boolean)
   }
   // linux：/proc 全量读取；starttime 为开机起 clock ticks，配 btime 折算 epoch ms（HZ 按通用默认 100）
@@ -113,6 +125,7 @@ async function listProcesses() {
       out.push({
         pid: +d.name, ppid: +fields[1], name,
         born: btime ? btime + Math.round(+fields[19] * 10) : null,   // ticks/HZ(100) → ms
+        cpu: (+fields[11] + +fields[12]) * 10,                       // utime+stime（field 14/15），ticks/HZ(100) → ms
       })
     } catch { /* 进程可能恰好在枚举间隙退出 */ }
   }
@@ -147,7 +160,9 @@ const isOrphan = (p) => {
 
 const targets = procs.filter((p) =>
   NAMES.has(p.name) && !myAncestors.has(p.pid) && !myAncestors.has(p.ppid === 0 ? -1 : p.pid)
-  && (ALL || isOrphan(p) || (OLDER_THAN_MS > 0 && p.born && now - p.born > OLDER_THAN_MS)))
+  && (ALL || isOrphan(p)
+    || (OLDER_THAN_MS > 0 && p.born && now - p.born > OLDER_THAN_MS)
+    || (MAX_CPU_MS > 0 && p.cpu != null && p.cpu > MAX_CPU_MS)))
 
 // 连带回收目标的全部后代（renderer/gpu/crashpad 等子进程），后代不限进程名
 const doomed = new Set()
@@ -163,8 +178,11 @@ for (const t of targets) {
 
 const report = { ok: true, dryRun: DRY, matched: [], reaped: [], failed: [], skippedBySelf: 0 }
 for (const t of targets) {
-  const parentAlive = !ALL && !isOrphan(t)
-  const reason = ALL ? '全量模式' : parentAlive ? `存活超 ${Math.round(OLDER_THAN_MS / 60_000)} 分钟` : `父进程 ${t.ppid} 已退出（孤儿）`
+  const reason = ALL ? '全量模式'
+    : isOrphan(t) ? `父进程 ${t.ppid} 已退出（孤儿）`
+      : (MAX_CPU_MS > 0 && t.cpu != null && t.cpu > MAX_CPU_MS)
+        ? `累计 CPU 超 ${Math.round(MAX_CPU_MS / 1000)} 秒（失控）`
+        : `存活超 ${Math.round(OLDER_THAN_MS / 60_000)} 分钟`
   report.matched.push({ pid: t.pid, name: t.name, age: t.born ? formatAge(now - t.born) : null, reason })
 }
 for (const pid of doomed) {

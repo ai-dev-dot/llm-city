@@ -78,12 +78,27 @@ agent 工作流里高频发生（会话结束、窗口关闭、快捷键杀进�
 ```
 node browser-reap.mjs                     默认：仅回收孤儿（钩子用；无孤儿时静默，恒 exit 0）
 node browser-reap.mjs --older-than 60     额外回收存活超 60 分钟的（驱动进程还活着但浏览器被遗弃数小时也清）
+node browser-reap.mjs --max-cpu 120       额外回收累计 CPU 超 120 秒的（失控兜底，见下）
 node browser-reap.mjs --all               无差别回收全部无头浏览器（手动总清；会杀在用的，勿挂钩子）
 node browser-reap.mjs --dry-run           只列出不执行
 node browser-reap.mjs --json              机器可读输出（matched/reaped/failed）
 node browser-reap.mjs --strict            失败以非零码退出（默认恒 0）
 node browser-reap.mjs --names a,b         自定义进程名（默认两个无头内核名）
 ```
+
+### `--max-cpu`：失控兜底（2026-09-27 事故后新增）
+
+孤儿回收只能救「没人管的浏览器」；**管着它的进程还活着、但浏览器自己跑飞了**是另一类故障——
+2026-09-27 的整机僵死正是这一类：无头浏览器截 WebGL 页面时烧满 CPU 8~15 分钟，父进程一直活着
+（只是卡在等它），孤儿判定永远不会命中。
+
+**关键教训：SIGTERM 杀不死 Chrome。** 事故复盘里 `timeout 90` 完全没能限住，单次跑到数分钟——
+所以 agent 侧任何「加个超时」都是假防护，必须有按 CPU 时间判定的硬回收兜底。
+
+判据取「累计 CPU 时间」而非墙钟：正常截图只花**几秒** CPU，烧到分钟级必是病态，与页面复杂度无关。
+默认关闭（避免误伤将来可能的合法长任务）；想挂进钩子就把 `package.json` 的
+`prestate`/`pregen:city` 改成 `node tools/src/browser-reap.mjs --max-cpu 120`。
+只匹配两个纯自动化二进制名，**绝不碰日常 chrome.exe**。
 
 ## 已知边界
 

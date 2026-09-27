@@ -72,8 +72,9 @@ export default function build(ctx: BuildCtx): THREE.Object3D
 
 **第 8 步 · 预览自评**
 快速自评首选 `npm run shot -- b-000042-guanlanta`——秒级软件渲染、全程无浏览器：默认出 street/corner/aerial/top 四视角图，`--amb day,dusk,night` 加黄昏/夜景，`--views street,corner,aerial,top,front,back,left,right` 任选机位，`--eye 30,5,40 --target 0,20,0 --fov 40` 自定义任意机位，`--width 1280` 调清晰度。对照渲染图与 NOTES 自评四件事：**轮廓剪影、比例尺度、细节密度、材质层次**——任何一项不满意就回到第 5 步继续迭代（在建态可多轮续建，见下文）。需要检查交互与城主视角时再 `npm run preview` 本地起网页。
-**自建工具（两级策略，[city-admin] 立法 2026-09-26）**：官方工具优先；确有 shot 覆盖不了的需求（特殊渲染效果、专项检查等）**允许自建工具**，约束三条——① 临时工具代码一律放 `node_modules/.cache/llm-city/workshop/<你的 model_id>/`（git 忽略的工作间：不入库、不算违建、可跨会话复用；禁改工作间之外的市政缓存），不得散落仓库根或写入市政目录（宪法第 7 条不变）；② 自建工具若用无头浏览器，同样遵守下方浏览器卫生条款；③ 好用的自建工具在报告城主时附上提案，经采纳可并入官方工具（shot 的 day/dusk/night 三套光照即吸收自 doubao 自建渲染器的前例）。
-**浏览器卫生（[city-admin] 立法 2026-09-26）**：无头浏览器（chrome-headless-shell 等）用完必须当场关闭（用你所用的浏览器工具的关闭/退出动作结束会话）——工具进程被硬杀时浏览器会变孤儿进程常驻吃满 CPU；预览结束与会话收尾前各跑一次 `npm run browser:reap` 兜底清孤儿（只回收父进程已死的孤儿，不伤在用浏览器；`npm run state` 与 `npm run preview` 之前也会自动扫荡）。
+**自建工具（两级策略，[city-admin] 立法 2026-09-26）**：官方工具优先；确有 shot 覆盖不了的需求（特殊渲染效果、专项检查等）**允许自建工具**，约束三条——① 临时工具代码一律放 `node_modules/.cache/llm-city/workshop/<你的 model_id>/`（git 忽略的工作间：不入库、不算违建、可跨会话复用；禁改工作间之外的市政缓存），不得散落仓库根或写入市政目录（宪法第 7 条不变）；② 自建工具若用浏览器，一律遵守下方「网页截图禁令」与「浏览器卫生」条；③ 好用的自建工具在报告城主时附上提案，经采纳可并入官方工具（shot 的 day/dusk/night 三套光照即吸收自 doubao 自建渲染器的前例）。
+**网页截图禁令（[city-admin] 立法 2026-09-27）**：`shot` 覆盖不了、确需浏览器看网页实景时，**只准 llm_test 方式——有头浏览器 + 真实时间等待**（配方与可复制模板见 `docs/shot-web.md`，依赖是系统级现成的 Python + Playwright，本仓无需新增依赖）。**禁止一切无头截 WebGL**：无头 Chrome 拿不到 GPU，WebGL 退回 SwiftShader 纯 CPU 软渲染，再叠加虚拟时间等待，一次截图会变成 8~15 分钟 100% CPU，2 核机器直接整机僵死——**2026-09-27 实测事故，一天四次硬重启（一张图 8 分 21 秒），这不是性能建议，是安全红线**。禁用清单（任一即触发）：`--headless`、`--virtual-time-budget`、`--disable-gpu`、`--use-angle=swiftshader`、`--enable-unsafe-swiftshader`。
+**浏览器卫生（[city-admin] 立法 2026-09-26）**：浏览器用完必须当场关闭（用你所用的浏览器工具的关闭/退出动作结束会话）——工具进程被硬杀时浏览器会变孤儿进程常驻吃满 CPU；预览结束与会话收尾前各跑一次 `npm run browser:reap` 兜底清孤儿（只回收父进程已死的孤儿，不伤在用浏览器；`npm run state` 与 `npm run preview` 之前也会自动扫荡）。
 
 **第 9 步 · 报告城主，等验收**
 全绿后 commit（**保持 `completed_at: null` 在建态**）并报告城主。城主 preview 验收满意后，**由城主**执行 `npm run inspect -- b-000042-guanlanta --complete`（填 `completed_at`，即封存）并 push。**agent 不得自行 `--complete`**——竣工权归城主（宪法第 9 条）。

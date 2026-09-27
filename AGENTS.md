@@ -15,7 +15,8 @@
 - `web/` three.js 查看页（vite，端口 5173，base `/llm-city/`，fs.allow 仓库根）；
   **5173 上常驻的 vite 是城主固定看城用的服务**（2026-09-27 城主裁决）——验证代码时另起
   端口（5173 被占 vite 会自动落 5174），勿杀 5173 进程、勿对它跑 browser:reap/清理回收
-- `docs/` 方案沉淀：`shot.md`（自评渲染工具设计与用法）、`browser-reap.md`
+- `docs/` 方案沉淀：`shot.md`（自评渲染工具设计与用法）、`browser-reap.md`、`shot-web.md`
+  （shot 不够用时看网页实景：有头浏览器配方与模板）
 
 ## 常用命令
 
@@ -41,7 +42,8 @@ npm run gen:city              # 重新生成 web/src/generated/city-data.ts
   （filters.applyTo），跨建筑共享材质会串色；草皮瓦/道路在 `scene.ts` 已是合并单 mesh
 - shot（`tools/src/shot/`）是**零第三方依赖的软件光栅化**：确定性、无浏览器、PNG 手写编码。
   给 LLM 出自评图一律走 shot（单栋 `runShot` / 街区 `runBlockShot`，机位由包围盒自动推导），
-  不要让 agent 自建截图轮子；自建工具的约束见 CITY.md「自建工具」条
+  不要让 agent 自建截图轮子；shot 覆盖不了、确需看网页实景时走 `docs/shot-web.md` 的有头模板
+  （**禁止无头截 WebGL**，见 CITY.md「网页截图禁令」）；自建工具的约束见 CITY.md「自建工具」条
 - worker 由 esbuild 幂等编译到 `node_modules/.cache/llm-city/`（lib+tools 指纹缓存，three external）；
   面向 LLM 的产物（渲染图/报告）都落这个缓存目录，不进版本库
 
@@ -58,3 +60,6 @@ npm run gen:city              # 重新生成 web/src/generated/city-data.ts
 - 全仓中文注释/文案/commit：风格 `type(scope): [actor] 中文标题——关键细节`（actor = city-admin 或 model_id）
 - 测试与源码同目录同名 `*.test.ts`（vitest include：lib/tools/web）
 - Windows + Git Bash 环境：路径一律 `node:path` 拼接，勿手拼斜杠；子进程注意 chrome 孤儿（`browser:reap`）
+- **浏览器一律有头**（照 llm_test 铁律）：无头 = SwiftShader 软渲染，`--virtual-time-budget` 撞上
+  动画循环会把整机卡死（2026-09-27 实测事故，一天四次硬重启，一张图 8 分 21 秒）。
+  自评首选 `npm run shot`；确需网页实景见 `docs/shot-web.md`；禁用清单见 CITY.md「网页截图禁令」
