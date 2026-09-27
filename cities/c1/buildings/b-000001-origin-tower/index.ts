@@ -92,7 +92,7 @@ function arcTorus(r: number, tube: number, a0: number, len: number, radSeg = 10,
 const C = (h: string) => new THREE.Color(h)
 const matSolid = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.6, roughness: 0.15, envMapIntensity: 0.7 })
 const matPave  = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.06, roughness: 0.92 })
-const matGlass = new THREE.MeshStandardMaterial({ color: '#7FA6C8', metalness: 0.55, roughness: 0.1, transparent: true, opacity: 0.92, emissive: '#22344A', emissiveIntensity: 0.25, envMapIntensity: 0.55, side: THREE.DoubleSide })
+const matGlass = new THREE.MeshStandardMaterial({ color: '#C7A26E', metalness: 0.6, roughness: 0.1, transparent: true, opacity: 0.92, emissive: '#5A4226', emissiveIntensity: 0.18, envMapIntensity: 0.75, side: THREE.DoubleSide })
 const matLit   = new THREE.MeshStandardMaterial({ color: '#23282F', emissive: '#FFE0AC', emissiveIntensity: 1.1, side: THREE.DoubleSide })
 const matGlow  = new THREE.MeshStandardMaterial({ color: '#FFD9A0', emissive: '#FFC878', emissiveIntensity: 2.5 })
 const matGlowW = new THREE.MeshStandardMaterial({ color: '#FFF3DC', emissive: '#FFEED2', emissiveIntensity: 2.1 })
@@ -100,8 +100,8 @@ const matWater = new THREE.MeshStandardMaterial({ color: '#3F6E80', metalness: 0
 
 /** 立面色板（「亮塔」：全塔亮银两档框体系+天青高反玻璃（官方 11 号），深色只留背光阴影；金收缩至冠部/入口/光庭点睛） */
 const GOLD = C('#C9AE8A'), GOLD_D = C('#8F7452'), STEEL = C('#3A3F46'), STEEL_D = C('#2A2E34')
-const SILVER = C('#C4C1BA'), SILVER_M = C('#A8A5A0')
-const WHITE = C('#DDD8CE'), CONC = C('#B7B3AC'), CONC_D = C('#8F8C86'), FRAME = C('#4A4F56')
+const SILVER = C('#D8C9A6'), SILVER_M = C('#B5A67E')
+const WHITE = C('#E6D9BE'), CONC = C('#B7B3AC'), CONC_D = C('#8F8C86'), FRAME = C('#4A4F56')
 const PAVE_L = C('#9C9890'), PAVE_M = C('#7E7A73'), PAVE_D = C('#5E5B56')
 const GRASS_C = C('#667A54'), WOOD = C('#8A6E4E'), GOLD_LINE = C('#A8906B')
 
@@ -115,7 +115,7 @@ function facadeLayer(
   lit: boolean, louverP: number,
 ): void {
   const s = newSink(), gs = newSink()
-  const beamH = 0.85
+  const beamH = 0.4
   const glassH = h - beamH - 0.06
   const nx = Math.sin(f.dir), nz = Math.cos(f.dir)      // 面外法线
   const tx = Math.cos(f.dir), tz = -Math.sin(f.dir)     // 面内横向
@@ -123,17 +123,17 @@ function facadeLayer(
   box(s, f.w + 0.06, 0.16, 0.5, f.cx, y0 + beamH - 0.08, f.cz, WHITE, f.dir) // 楼板沿口白铝
   box(s, f.w + 0.04, 0.07, 0.1, f.cx, y0 + 0.06, f.cz, SILVER_M, f.dir)   // 层底线脚
   box(s, f.w + 0.04, 0.07, 0.1, f.cx, y0 + h - 0.06, f.cz, SILVER_M, f.dir) // 层顶线脚
-  const n = Math.max(6, Math.round(f.w / 0.8))
+  const n = Math.max(6, Math.round(f.w / 0.95))
   const cw = f.w / n
-  const rows = glassH > 3.0 ? 2 : 1                     // 玻璃竖向分格
+  const rows = glassH > 3.0 ? 7 : 5                     // 玻璃竖向分格（细密鼎纹）
   for (let i = 0; i <= n; i++) {                        // 竖梃密勒（银铝，1/6 石墨深档交替）
     const off = -f.w / 2 + cw * i
-    box(s, 0.09, h - beamH + 0.12, 0.14,
+    box(s, 0.05, h - beamH + 0.12, 0.1,
       f.cx + tx * off + nx * 0.03, y0 + beamH + (h - beamH) / 2, f.cz + tz * off + nz * 0.03,
       i % 6 === 0 ? SILVER_M : SILVER)
   }
-  for (let r = 1; r < rows; r++) {                      // 分格横梃
-    box(s, f.w, 0.09, 0.13, f.cx, y0 + beamH + (glassH * r) / rows, f.cz, SILVER_M, f.dir)
+  for (let r = 1; r < rows; r++) {                      // 分格横梃（细密鼎纹线）
+    box(s, f.w, 0.035, 0.06, f.cx, y0 + beamH + (glassH * r) / rows, f.cz, r % 2 === 0 ? SILVER_M : SILVER, f.dir)
   }
   for (let i = 0; i < n; i++) {                         // 玻璃分格 + 遮阳百叶
     const off = -f.w / 2 + cw * (i + 0.5)
@@ -181,7 +181,7 @@ function towerSegment(
   ]
   for (let fl = 0; fl < floors; fl++) {
     const ly = y0 + fl * h
-    const lit = rng() < 0.4
+    const lit = Math.sin(fl * 0.9 + 0.7) > 0.45 || rng() < 0.12   // 竖向亮带+少量随机
     for (let fi = 0; fi < 4; fi++) {
       const louverP = fi === 0 || fi === 3 ? 0.66 : fi === 2 ? 0.32 : 0.15   // 东/南向阳面百叶多
       facadeLayer(faces[fi], ly, h, rng, parent, lit && (fi === 0 || fi === 3 || rng() < 0.6), louverP)
