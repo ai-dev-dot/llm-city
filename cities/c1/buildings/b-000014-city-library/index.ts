@@ -23,7 +23,7 @@ const P = {
   /** 建筑本体东西半宽 */
   hx: 7.0,
   /** 台基顶面标高 */
-  plinth: 0.5,
+  plinth: 0.6,
   /** 北端入口体：z 区间与高度 */
   northZ0: 9.0,
   northZ1: 17.4,
@@ -70,6 +70,8 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   // =====================================================================
   const site = new THREE.Group()
   site.userData.site = true
+  // 城市草皮瓦顶面 y=0.16：场地整体抬 0.12，铺装顶 0.26、草地顶 0.18 均在瓦面之上。
+  site.position.y = 0.12
   site.add(batch([{ x: 0, y: 0.03, z: 0, w: 19.9, h: 0.06, d: 39.9 }], matGrass))
   // 北前庭铺装（对蓝图馆）
   site.add(pavingGrid({ w: 19.6, d: 2.4, z: 18.8, y: 0.14, cell: 0.5, material: matPave }))
@@ -84,7 +86,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   // 主入口台阶（4 级，深 0.42 ≤0.5 走薄板豁免）
   {
     const st: BoxSpec[] = []
-    for (let i = 0; i < 4; i++) st.push({ x: 0, y: (P.plinth / 4) * (i + 0.5), z: 17.8 + i * 0.42, w: 13.0, h: P.plinth / 4, d: 0.42 })
+    for (let i = 0; i < 4; i++) st.push({ x: 0, y: 0.14 + (0.34 / 4) * (i + 0.5), z: 17.8 + i * 0.42, w: 13.0, h: 0.34 / 4, d: 0.42 })
     site.add(batch(st, matStoneDim))
   }
   // 绿篱 / 树 / 灯 / 凳 / 石盆

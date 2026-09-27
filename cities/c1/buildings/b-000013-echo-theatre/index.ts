@@ -73,6 +73,9 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   // =====================================================================
   const site = new THREE.Group()
   site.userData.site = true
+  // 城市每地块铺有顶面 y=0.16 的实心草皮瓦（web/src/city/scene.ts）：场地整体抬 0.12，
+  // 使铺装顶面 0.26、草地顶面 0.18 都在瓦面之上，场地设计才在网页里可见。
+  site.position.y = 0.12
 
   // 草地底板：宗地全域（40×40）薄草皮，顶 0.06 ≤0.6 走地被豁免
   site.add(batch([{ x: 0, y: 0.03, z: 0, w: 39.9, h: 0.06, d: 39.9 }], matGrass))
@@ -88,7 +91,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   {
     const steps: BoxSpec[] = []
     for (let i = 0; i < 4; i++) {
-      steps.push({ x: 0, y: (P.plinth / 4) * (i + 0.5), z: 17.1 + i * 0.42, w: 34.4, h: P.plinth / 4, d: 0.42 })
+      steps.push({ x: 0, y: 0.14 + (0.29 / 4) * (i + 0.5), z: 17.1 + i * 0.42, w: 34.4, h: 0.29 / 4, d: 0.42 })
     }
     site.add(batch(steps, matStoneDim))
   }
@@ -96,7 +99,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   for (const s of [-1, 1]) {
     const steps: BoxSpec[] = []
     for (let i = 0; i < 3; i++) {
-      steps.push({ x: s * (17.2 + 0.21 + i * 0.42), y: (P.plinth / 3) * (i + 0.5), z: 0, w: 0.42, h: P.plinth / 3, d: 6.0 })
+      steps.push({ x: s * (17.2 + 0.21 + i * 0.42), y: 0.14 + (0.29 / 3) * (i + 0.5), z: 0, w: 0.42, h: 0.29 / 3, d: 6.0 })
     }
     site.add(batch(steps, matStoneDim))
   }
