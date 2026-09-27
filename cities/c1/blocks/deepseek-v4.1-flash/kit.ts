@@ -58,6 +58,11 @@ export function boxBatch(specs: readonly BoxSpec[], material: THREE.Material): T
   const pos: number[] = []
   const nor: number[] = []
   for (const s of specs) {
+    // 护栏：参数含非有限值（漏配字段/除零）时立即报出具体那一件，
+    // 否则会以 NaN 顶点渗进几何、到包围盒阶段才炸成「建筑为空」，难以定位。
+    if (!Number.isFinite(s.x + s.y + s.z + s.w + s.h + s.d + (s.ry ?? 0))) {
+      throw new Error(`boxBatch 参数非法：${JSON.stringify(s)}`)
+    }
     const hw = s.w / 2, hh = s.h / 2, hd = s.d / 2
     const ry = s.ry ?? 0
     const cos = Math.cos(ry), sin = Math.sin(ry)
