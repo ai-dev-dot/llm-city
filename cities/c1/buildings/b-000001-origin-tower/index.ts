@@ -90,9 +90,9 @@ function arcTorus(r: number, tube: number, a0: number, len: number, radSeg = 10,
 /* ---------- 材质 ---------- */
 
 const C = (h: string) => new THREE.Color(h)
-const matSolid = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.55, roughness: 0.38 })
+const matSolid = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.7, roughness: 0.22 })
 const matPave  = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.06, roughness: 0.92 })
-const matGlass = new THREE.MeshStandardMaterial({ color: '#41607E', metalness: 0.6, roughness: 0.18, transparent: true, opacity: 0.78, emissive: '#1C2E42', emissiveIntensity: 0.45, side: THREE.DoubleSide })
+const matGlass = new THREE.MeshStandardMaterial({ color: '#4E6E92', metalness: 0.68, roughness: 0.12, transparent: true, opacity: 0.78, emissive: '#1C2E42', emissiveIntensity: 0.35, side: THREE.DoubleSide })
 const matLit   = new THREE.MeshStandardMaterial({ color: '#23282F', emissive: '#FFE0AC', emissiveIntensity: 1.1, side: THREE.DoubleSide })
 const matGlow  = new THREE.MeshStandardMaterial({ color: '#FFD9A0', emissive: '#FFC878', emissiveIntensity: 2.5 })
 const matGlowW = new THREE.MeshStandardMaterial({ color: '#FFF3DC', emissive: '#FFEED2', emissiveIntensity: 2.1 })
