@@ -90,10 +90,18 @@ function arcTorus(r: number, tube: number, a0: number, len: number, radSeg = 10,
 /* ---------- 材质 ---------- */
 
 const C = (h: string) => new THREE.Color(h)
-const matSolid = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.6, roughness: 0.15, envMapIntensity: 0.7 })
+const matSolid = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.5, roughness: 0.13, envMapIntensity: 0.78 })
 const matPave  = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.06, roughness: 0.92 })
-const matGlass = new THREE.MeshStandardMaterial({ color: '#C7A26E', metalness: 0.6, roughness: 0.1, transparent: true, opacity: 0.92, emissive: '#5A4226', emissiveIntensity: 0.18, envMapIntensity: 0.75, side: THREE.DoubleSide })
-const matLit   = new THREE.MeshStandardMaterial({ color: '#23282F', emissive: '#FFE0AC', emissiveIntensity: 1.1, side: THREE.DoubleSide })
+// [七轮·整幅玻璃] 光泽 = 大片连续玻璃上拉得出的镜面高光长带：分格缝会把高光切碎成格子。
+// [八轮·三调] 背光面提亮：metal 0.72→0.58（漫反射 28%→42%，背光面金色本体撑起来，向光
+// 镜面高光不受影响）+ emissive 0.22→0.3 全域暖金垫亮（夜景琥珀底同步变暖亮）
+// [八轮·四调] 背光面仍不够亮——病根在 rough 0.06 完美镜面：反射能量集中单方向，背光面
+// 从观察角吃不到 envMap。缎面金属化 rough 0.06→0.16（反射分布拉宽，全域吃环境反射=中国
+// 尊暖金缎面质感）+ metal→0.5 + envMap 0.78→0.88 + emissive→0.38 四件套
+const matGlass = new THREE.MeshStandardMaterial({ color: '#D9B87C', metalness: 0.5, roughness: 0.16, transparent: true, opacity: 0.92, emissive: '#6B4E2A', emissiveIntensity: 0.38, envMapIntensity: 0.88, side: THREE.DoubleSide })
+// [八轮·金镜] 亮窗降级为稀疏窄灯条：本体色从冷深灰换暗琥珀（白天隐入金玻璃如拉帘暗室，
+// 夜里 emissive 暖白主导——灯条而非暗板，整幅金玻璃不再被整层换色打断）
+const matLit   = new THREE.MeshStandardMaterial({ color: '#4A3A24', emissive: '#FFE0AC', emissiveIntensity: 1.1, side: THREE.DoubleSide })
 const matGlow  = new THREE.MeshStandardMaterial({ color: '#FFD9A0', emissive: '#FFC878', emissiveIntensity: 2.5 })
 const matGlowW = new THREE.MeshStandardMaterial({ color: '#FFF3DC', emissive: '#FFEED2', emissiveIntensity: 2.1 })
 const matWater = new THREE.MeshStandardMaterial({ color: '#3F6E80', metalness: 0.35, roughness: 0.06, transparent: true, opacity: 0.82 })
@@ -109,47 +117,65 @@ const GRASS_C = C('#667A54'), WOOD = C('#8A6E4E'), GOLD_LINE = C('#A8906B')
 
 interface FaceDef { dir: number; cx: number; cz: number; w: number }
 
-/** 一面一层的幕墙：固态件（梁带/横梃/竖梃/百叶/线脚）+ 玻璃件各一 mesh */
+/** 一面一层的幕墙：整幅通高玻璃（bay 一块、无缝无分格——大片连续=高光长带不断）+ 层间
+ *  香槟金梁带 + 稀疏细梃 + 垂直金鳍；亮窗=玻璃内侧稀疏窄灯条（非整层换色）。[八轮·金镜] */
 function facadeLayer(
   f: FaceDef, y0: number, h: number, rng: () => number, parent: THREE.Object3D,
   lit: boolean, louverP: number,
 ): void {
   const s = newSink(), gs = newSink()
-  const beamH = 0.4
+  const beamH = 0.22
   const glassH = h - beamH - 0.06
   const nx = Math.sin(f.dir), nz = Math.cos(f.dir)      // 面外法线
   const tx = Math.cos(f.dir), tz = -Math.sin(f.dir)     // 面内横向
-  box(s, f.w, beamH, 0.42, f.cx, y0 + beamH / 2, f.cz, SILVER, f.dir)      // 楼板边梁带（亮银）
-  box(s, f.w + 0.06, 0.16, 0.5, f.cx, y0 + beamH - 0.08, f.cz, WHITE, f.dir) // 楼板沿口白铝
-  box(s, f.w + 0.04, 0.07, 0.1, f.cx, y0 + 0.06, f.cz, SILVER_M, f.dir)   // 层底线脚
-  box(s, f.w + 0.04, 0.07, 0.1, f.cx, y0 + h - 0.06, f.cz, SILVER_M, f.dir) // 层顶线脚
-  const n = Math.max(6, Math.round(f.w / 0.95))
+  // [八轮·二调] 梁带瘦身减淡：层高 4.2m 里横件投影 0.6→0.3m（~7%），且换淡金与玻璃
+  // 低对比——横线不再是立面主导，挺拔竖线接管节奏；删上下线脚（它们加深横带轮廓）
+  box(s, f.w, beamH, 0.42, f.cx, y0 + beamH / 2, f.cz, SILVER, f.dir)     // 楼板边梁带（淡金低对比）
+  box(s, f.w + 0.05, 0.1, 0.46, f.cx, y0 + beamH - 0.05, f.cz, WHITE, f.dir) // 楼板沿口亮金细线
+  // [八轮] 玻璃内侧楼层隐线（0.4m 进深）：外立面保持整幅金镜无分格，层线在玻璃后隐现
+  // ——真实幕墙的楼板进深感
+  box(s, f.w - 0.3, 0.05, 0.05, f.cx - nx * 0.4, y0 + h - 0.35, f.cz - nz * 0.4, GOLD_D, f.dir)
+  const n = Math.max(5, Math.round(f.w / 0.95))
   const cw = f.w / n
-  const rows = glassH > 3.0 ? 7 : 5                     // 玻璃竖向分格（细密鼎纹）
-  for (let i = 0; i <= n; i++) {                        // 竖梃密勒（银铝，1/6 石墨深档交替）
+  for (let i = 0; i <= n; i++) {                        // 竖梃（细淡金隐框，1/6 深档交替）
     const off = -f.w / 2 + cw * i
-    box(s, 0.05, h - beamH + 0.12, 0.1,
+    box(s, 0.06, h - beamH + 0.12, 0.1,
       f.cx + tx * off + nx * 0.03, y0 + beamH + (h - beamH) / 2, f.cz + tz * off + nz * 0.03,
       i % 6 === 0 ? SILVER_M : SILVER)
+    if (i % 2 === 1 || i === 0 || i === n) {            // 垂直金鳍（每两间一根+四角转角肋：金肋+亮金缘）
+      const fx = f.cx + tx * off + nx * 0.24, fz = f.cz + tz * off + nz * 0.24
+      box(s, 0.06, glassH + 0.08, 0.42, fx, y0 + beamH + glassH / 2, fz, GOLD, f.dir)
+      box(s, 0.028, glassH + 0.08, 0.1, fx + nx * 0.21, y0 + beamH + glassH / 2, fz + nz * 0.21, WHITE, f.dir)
+    }
   }
-  for (let r = 1; r < rows; r++) {                      // 分格横梃（细密鼎纹线）
-    box(s, f.w, 0.035, 0.06, f.cx, y0 + beamH + (glassH * r) / rows, f.cz, r % 2 === 0 ? SILVER_M : SILVER, f.dir)
-  }
-  for (let i = 0; i < n; i++) {                         // 玻璃分格 + 遮阳百叶
+  for (let i = 0; i < n; i++) {                         // 整幅通高玻璃（bay 一块）+ 亮金遮阳百叶
     const off = -f.w / 2 + cw * (i + 0.5)
     const px = f.cx + tx * off + nx * 0.02, pz = f.cz + tz * off + nz * 0.02
-    for (let r = 0; r < rows; r++) {
-      quad(gs, cw - 0.06, glassH / rows - 0.08, px, y0 + beamH + (glassH * (r + 0.5)) / rows, pz, f.dir, FRAME)
-    }
+    quad(gs, cw - 0.05, glassH, px, y0 + beamH + glassH / 2, pz, f.dir, FRAME)
     if (rng() < louverP) {
-      const ln = 5
+      const ln = 7
       for (let k = 0; k < ln; k++) {
-        box(s, cw - 0.12, 0.028, 0.36, px + nx * 0.27, y0 + beamH + 0.42 + (k * (glassH - 0.6)) / ln, pz + nz * 0.27, WHITE, f.dir)
+        box(s, cw - 0.12, 0.028, 0.36, px + nx * 0.27, y0 + beamH + 0.42 + (k * (glassH - 0.6)) / ln, pz + nz * 0.27, GOLD, f.dir)
       }
     }
   }
   parent.add(sinkMesh(s, matSolid))
-  parent.add(sinkMesh(gs, lit ? matLit : matGlass))
+  // [八轮·金镜] 玻璃恒定金镜不再整层换色；亮窗 = 玻璃内侧 2–3 根稀疏窄灯条（竖向 sin 带
+  // 节奏保留）：白天是金镜上几缕暗琥珀竖影（如拉帘办公室），夜里 emissive 暖白亮成灯带
+  parent.add(sinkMesh(gs, matGlass))
+  if (lit) {
+    const ls = newSink()
+    const nLit = 2 + Math.floor(rng() * 2)
+    for (let k = 0; k < nLit; k++) {
+      const i = Math.floor(rng() * n)
+      const off = -f.w / 2 + cw * (i + 0.5)
+      const lh = glassH * (0.55 + rng() * 0.25)
+      quad(ls, Math.min(0.36, cw * 0.3), lh,
+        f.cx + tx * off - nx * 0.03, y0 + beamH + 0.35 + (glassH - 0.5 - lh) * 0.42,
+        f.cz + tz * off - nz * 0.03, f.dir, WHITE)
+    }
+    parent.add(sinkMesh(ls, matLit))
+  }
 }
 
 /** 一段塔身：巨柱（带柱冠箍）+ 逐层四向幕墙 + 段顶收头 */
@@ -171,6 +197,9 @@ function towerSegment(
     for (const cy of [y0 + 0.18, y1 - 0.18]) {           // 柱顶底箍
       box(colSink, cw2 + 0.22, 0.3, cw2 + 0.22, px, cy, pz, SILVER_M)
     }
+    if (cw2 > 1) for (let fl = 1; fl < floors; fl++) {   // 角巨柱层间金箍（竹节韵律）
+      box(colSink, cw2 + 0.12, 0.16, cw2 + 0.12, px, y0 + fl * ((y1 - y0) / floors), pz, GOLD)
+    }
   }
   parent.add(sinkMesh(colSink, matSolid))
   const faces: FaceDef[] = [
@@ -181,9 +210,9 @@ function towerSegment(
   ]
   for (let fl = 0; fl < floors; fl++) {
     const ly = y0 + fl * h
-    const lit = Math.sin(fl * 0.9 + 0.7) > 0.45 || rng() < 0.12   // 竖向亮带+少量随机
+    const lit = Math.sin(fl * 0.9 + 0.7) > 0.45 || rng() < 0.12   // 灯条层（竖向 sin 带+少量随机）
     for (let fi = 0; fi < 4; fi++) {
-      const louverP = fi === 0 || fi === 3 ? 0.66 : fi === 2 ? 0.32 : 0.15   // 东/南向阳面百叶多
+      const louverP = fi === 0 || fi === 3 ? 0.34 : fi === 2 ? 0.15 : 0.06   // 向阳面百叶多（八轮收疏一档保整幅金镜）
       facadeLayer(faces[fi], ly, h, rng, parent, lit && (fi === 0 || fi === 3 || rng() < 0.6), louverP)
     }
   }
@@ -201,7 +230,9 @@ function trussBand(parent: THREE.Object3D, cx: number, cz: number, w: number, y0
     { dir: Math.PI / 2, cx: cx + w / 2, cz, w }, { dir: 0, cx, cz: cz + w / 2, w },
     { dir: -Math.PI / 2, cx: cx - w / 2, cz, w }, { dir: Math.PI, cx, cz: cz - w / 2, w },
   ]
-  for (const f of faces) quad(gs, f.w, h, f.cx, y0 + h / 2, f.cz, f.dir, STEEL_D)
+  // [八轮·二调] 桁架背板暗金化（原石墨深板是两道 3.6m 大深色横带）：matGlass 挂 GOLD_D
+  // 顶点色 = 暗金玻璃，X 撑亮银浮于其上——全塔从头到脚金色一体，无断色横带
+  for (const f of faces) quad(gs, f.w, h, f.cx, y0 + h / 2, f.cz, f.dir, GOLD_D)
   for (const yy of [y0 + 0.22, y1 - 0.22]) {             // 上下弦杆（周圈）
     box(s, 0.3, 0.3, w - 0.1, cx + w / 2 - 0.15, yy, cz, SILVER_M)
     box(s, 0.3, 0.3, w - 0.1, cx - w / 2 + 0.15, yy, cz, SILVER_M)
@@ -366,26 +397,26 @@ function podium(parent: THREE.Object3D, rng: () => number): void {
     { dir: 0, cx: -6.19, cz: 17.45, w: 22.5 },          // 北面
   ]
   for (const f of hallW) {
-    facadeLayer(f, yBase, 7.2, rng, parent, true, 0.12)
-    facadeLayer(f, yBase + 7.2, 4.2, rng, parent, rng() < 0.5, 0.12)
-    facadeLayer(f, yBase + 11.4, 4.2, rng, parent, rng() < 0.5, 0.12)
+    facadeLayer(f, yBase, 7.2, rng, parent, true, 0.06)
+    facadeLayer(f, yBase + 7.2, 4.2, rng, parent, rng() < 0.5, 0.06)
+    facadeLayer(f, yBase + 11.4, 4.2, rng, parent, rng() < 0.5, 0.06)
   }
   // 东立面（块 B 东墙，面向前广场）四层橱窗 + 块 A 东墙橱窗
   const eastFace: FaceDef = { dir: Math.PI / 2, cx: 12, cz: 6.19, w: 22.5 }
-  facadeLayer(eastFace, yBase, 5.2, rng, parent, true, 0.25)
-  facadeLayer(eastFace, yBase + 5.2, 4.2, rng, parent, false, 0.25)
-  facadeLayer(eastFace, yBase + 9.4, 4.2, rng, parent, true, 0.25)
-  facadeLayer(eastFace, yBase + 13.6, 2.96, rng, parent, false, 0.25)
+  facadeLayer(eastFace, yBase, 5.2, rng, parent, true, 0.1)
+  facadeLayer(eastFace, yBase + 5.2, 4.2, rng, parent, false, 0.1)
+  facadeLayer(eastFace, yBase + 9.4, 4.2, rng, parent, true, 0.1)
+  facadeLayer(eastFace, yBase + 13.6, 2.96, rng, parent, false, 0.1)
   const eastA: FaceDef = { dir: Math.PI / 2, cx: 5.42, cz: -8.71, w: 6.5 }
-  facadeLayer(eastA, yBase, 5.2, rng, parent, true, 0.25)
-  facadeLayer(eastA, yBase + 5.2, 4.2, rng, parent, false, 0.25)
-  facadeLayer(eastA, yBase + 9.4, 4.2, rng, parent, true, 0.25)
+  facadeLayer(eastA, yBase, 5.2, rng, parent, true, 0.1)
+  facadeLayer(eastA, yBase + 5.2, 4.2, rng, parent, false, 0.1)
+  facadeLayer(eastA, yBase + 9.4, 4.2, rng, parent, true, 0.1)
   // 南面（块 A 南墙）店铺四层
   const south: FaceDef = { dir: Math.PI, cx: -6.19, cz: -12, w: 20 }
-  facadeLayer(south, yBase, 4.4, rng, parent, true, 0.3)
-  facadeLayer(south, yBase + 4.4, 4.2, rng, parent, false, 0.3)
-  facadeLayer(south, yBase + 8.6, 4.2, rng, parent, true, 0.3)
-  facadeLayer(south, yBase + 12.8, 3.76, rng, parent, false, 0.3)
+  facadeLayer(south, yBase, 4.4, rng, parent, true, 0.12)
+  facadeLayer(south, yBase + 4.4, 4.2, rng, parent, false, 0.12)
+  facadeLayer(south, yBase + 8.6, 4.2, rng, parent, true, 0.12)
+  facadeLayer(south, yBase + 12.8, 3.76, rng, parent, false, 0.12)
   // 屋面：女儿墙 + 机组
   const roof = newSink()
   box(roof, 5.42 + 17.8, 0.8, 30, (-17.8 + 5.42) / 2, yTop + 0.4, 3, CONC_D)
@@ -455,20 +486,36 @@ function crown(parent: THREE.Object3D, cx: number, cz: number): void {
   parent.add(sinkMesh(gs, matGlass))
   const deck = mesh(arcTorus(5.4, 0.18, 0, Math.PI * 2), stdMaterial('#FFE0AC', { emissive: '#FFD9A0', emissiveIntensity: 1.3 }))
   deck.position.set(cx, 196.8, cz); parent.add(deck)     // 亭内观景平台发光挑边
-  const halo = mesh(new THREE.TorusGeometry(7, 1.3, 28, 96), matGlow)                    // 原点环
+  const halo = mesh(new THREE.TorusGeometry(7, 1.3, 32, 144), matGlow)                   // 原点环（七轮分段加密）
   halo.rotateX(Math.PI / 2); halo.position.set(cx, 209.8, cz); parent.add(halo)
+  const halo2 = mesh(new THREE.TorusGeometry(5.2, 0.55, 24, 96), matGlow)                // 内辉环（双环辉映）
+  halo2.rotateX(Math.PI / 2); halo2.position.set(cx, 208.4, cz); parent.add(halo2)
   for (const rr of [8.25, 5.75]) {                       // 环内外金边
-    const rim = mesh(new THREE.TorusGeometry(rr, 0.15, 10, 96), stdMaterial('#C9AE8A', { metalness: 0.72, roughness: 0.25 }))
+    const rim = mesh(new THREE.TorusGeometry(rr, 0.15, 12, 144), stdMaterial('#C9AE8A', { metalness: 0.72, roughness: 0.25 }))
     rim.rotateX(Math.PI / 2); rim.position.set(cx, 209.8, cz); parent.add(rim)
   }
   const hang = newSink()                                 // 环下悬吊杆
-  for (let i = 0; i < 6; i++) {
-    const a = (i / 6) * Math.PI * 2
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 + Math.PI / 8
     const g = new THREE.CylinderGeometry(0.07, 0.07, 3.6, 8)
     g.translate(cx + Math.cos(a) * 6.4, 207.9, cz + Math.sin(a) * 6.4)
     pushGeo(hang, g, STEEL)
   }
   parent.add(sinkMesh(hang, matSolid))
+  const coffer = newSink()                               // 观景亭天花金藻井（三环+放射肋）
+  for (const [r, t] of [[3.2, 0.18], [4.4, 0.15], [5.5, 0.12]] as Array<[number, number]>) {
+    const g = arcTorus(r, t, 0, Math.PI * 2, 8, 48)
+    g.translate(cx, 203.9, cz)
+    pushGeo(coffer, g, GOLD)
+  }
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2
+    const g = new THREE.BoxGeometry(5.6, 0.06, 0.12)
+    g.rotateY(-a)
+    g.translate(cx + Math.cos(a) * 2.8, 203.95, cz + Math.sin(a) * 2.8)
+    pushGeo(coffer, g, GOLD_D)
+  }
+  parent.add(sinkMesh(coffer, matSolid))
   for (let i = 0; i < 4; i++) {                          // 航空障碍灯
     const a = (i / 4) * Math.PI * 2 + Math.PI / 4
     const l = mesh(new THREE.SphereGeometry(0.28, 10, 8), stdMaterial('#5A1414', { emissive: '#FF2A2A', emissiveIntensity: 2.2 }))
@@ -544,7 +591,7 @@ function site(parent: THREE.Object3D, rng: () => number): void {
   const st = newSink()
   for (let i = 0; i < 3; i++) box(st, 0.9, 0.12, 0.9, 12.6 + i * 1.35, 0.38, -14.6, PAVE_L)
   parent.add(sinkMesh(st, matPave))
-  const trees: Array<[number, number]> = [[5.2, -16.6], [9.4, -17.6], [13.6, -18.2], [16.8, -4.6], [17.8, -8.8], [18.2, -13.0]]
+  const trees: Array<[number, number]> = [[5.2, -16.6], [9.4, -17.6], [13.6, -18.2], [16.8, -4.6], [17.8, -8.8], [18.2, -13.0], [3.4, -14.6], [17.6, -16.6]]
   trees.forEach(([tx, tz], i) => {                       // 树阵（树池坐凳 + 修剪树）
     parent.add(planterBench({ x: tx, z: tz, size: 2.2 }))
     parent.add(gardenTree({ x: tx, z: tz, scale: 1.25, seed: 11 + i * 7 }))
