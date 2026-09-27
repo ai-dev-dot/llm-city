@@ -9,6 +9,8 @@ export interface SceneBundle {
   scene: THREE.Scene
   camera: THREE.PerspectiveCamera
   controls: OrbitControls
+  /** 渐变天穹（applyAmbience 按预设换天顶/地平线色） */
+  skyDome: THREE.Mesh
   dispose(): void
 }
 
@@ -21,8 +23,36 @@ export function createScene(canvas: HTMLCanvasElement, city: CityData): SceneBun
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
   const scene = new THREE.Scene()
-  scene.background = new THREE.Color('#DFE3E8')
-  scene.fog = new THREE.Fog('#E5E7EB', 500, 1400)
+  // 白天默认基准（ambience.ts day 预设同款）：自然日光 = 渐变天穹 + 轻微远景雾 + 草地大地。
+  // [city-admin] 2026-09-27 四轮探索定稿：灰雾/晴空蓝/草地+平板蓝/纯白棚都「不自然」——
+  // 自然感的关键是天空有渐变、远景有空气透视（雾从 1500 才起、雾色=地平线色，绝不进城）。
+  scene.background = new THREE.Color('#DFE9F0')
+  scene.fog = new THREE.Fog('#DFE9F0', 1500, 2000)
+
+  // 渐变天穹：天顶蓝 → 地平线泛白的真实天空散射感；backside 大球 + 自定义渐变。
+  // 底色与白天雾色严格一致（预设「地平线无缝律」），远处地面雾化后与天穹融为一体。
+  const skyDome = new THREE.Mesh(
+    new THREE.SphereGeometry(3000, 24, 12),
+    new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      depthWrite: false,
+      uniforms: {
+        topColor: { value: new THREE.Color('#6296CE') },
+        bottomColor: { value: new THREE.Color('#DFE9F0') },
+      },
+      vertexShader: `varying vec3 vPos;
+        void main() { vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: `uniform vec3 topColor; uniform vec3 bottomColor; varying vec3 vPos;
+        void main() {
+          float t = smoothstep(0.02, 0.5, normalize(vPos).y);
+          gl_FragColor = vec4(mix(bottomColor, topColor, t), 1.0);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }`,
+    }),
+  )
+  skyDome.renderOrder = -1
+  scene.add(skyDome)
 
   const camera = new THREE.PerspectiveCamera(55, canvas.clientWidth / canvas.clientHeight, 0.5, 4000)
   camera.position.set(260, 180, 260)
@@ -32,6 +62,7 @@ export function createScene(canvas: HTMLCanvasElement, city: CityData): SceneBun
   controls.enableDamping = true
   controls.dampingFactor = 0.08
   controls.maxPolarAngle = Math.PI / 2 - 0.02
+  controls.maxDistance = 1500   // 天穹半径 3000 之内；且白天雾 1500 才起，全城观看始终清晰
 
   // 光照：中性日光
   const sun = new THREE.DirectionalLight('#FFF8F0', 1.35)
@@ -52,10 +83,12 @@ export function createScene(canvas: HTMLCanvasElement, city: CityData): SceneBun
   scene.environmentIntensity = 0.55
   pmrem.dispose()
 
-  // 地面（中性色，不替作品做主）
+  // 城外大地（[city-admin] 2026-09-27 终裁「自然日光」）：比街区草皮略深的郊野绿——
+  // 平板纯色天+硬地平线怎么配都怪，自然感来自渐变天穹+雾化地平线+草地大地的组合。
+  // 5000×5000 铺到雾外（fogFar 2000 处地面完全融入天穹底色，地平线无硬边）
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(1600, 1600),
-    new THREE.MeshStandardMaterial({ color: '#C9C5BD', roughness: 0.95 }),
+    new THREE.PlaneGeometry(5000, 5000),
+    new THREE.MeshStandardMaterial({ color: '#7C9855', roughness: 0.95, emissive: '#3E652E', emissiveIntensity: 0.35 }),
   )
   ground.rotation.x = -Math.PI / 2
   ground.receiveShadow = true
@@ -108,7 +141,7 @@ export function createScene(canvas: HTMLCanvasElement, city: CityData): SceneBun
   window.addEventListener('resize', onResize)
 
   return {
-    renderer, scene, camera, controls,
+    renderer, scene, camera, controls, skyDome,
     dispose() { window.removeEventListener('resize', onResize); controls.dispose(); envRT.dispose(); renderer.dispose() },
   }
 }

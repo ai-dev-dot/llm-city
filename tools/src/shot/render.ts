@@ -22,9 +22,12 @@ export interface Amb {
 }
 
 export const AMBIANTS: Record<'day' | 'dusk' | 'night', Amb> = {
-  day:   { skyZenith: [0.62, 0.78, 0.91], skyHorizon: [0.91, 0.93, 0.95], ground: [0.72, 0.71, 0.67],
+  // [city-admin] 2026-09-27 终裁「自然日光」与网页端同步：渐变天穹（天顶蓝→地平线泛白）
+  // + 草绿大地 + 轻微空气透视。fogK 0.00035：600 距离约 19% 远景雾感（自然地平线），
+  // 建筑主体（<300 距离）雾侵蚀 <10% 不洗白——自评图观感与网页一致，不误导 builder 调立面。
+  day:   { skyZenith: [0.38, 0.59, 0.81], skyHorizon: [0.87, 0.91, 0.94], ground: [0.49, 0.60, 0.33],
            sunDir: [0.45, 0.82, 0.36], sunColor: [1.0, 0.96, 0.88], sunI: 0.95, ambI: 0.45,
-           fog: [0.88, 0.91, 0.94], fogK: 0.0008 },
+           fog: [0.87, 0.91, 0.94], fogK: 0.00035 },
   dusk:  { skyZenith: [0.43, 0.53, 0.72], skyHorizon: [0.95, 0.70, 0.48], ground: [0.56, 0.50, 0.45],
            sunDir: [-0.88, 0.28, 0.18], sunColor: [1.0, 0.69, 0.38], sunI: 0.7, ambI: 0.36,
            fog: [0.90, 0.72, 0.58], fogK: 0.0009 },
