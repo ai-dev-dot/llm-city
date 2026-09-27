@@ -91,8 +91,9 @@ function arcTorus(r: number, tube: number, a0: number, len: number, radSeg = 10,
 
 const C = (h: string) => new THREE.Color(h)
 // [十轮·光泽强化] 银件同步拉高光跳跃（三轮「镜面亮银」经验：受光面高光条是 CBD 质感来源）
-// [十二轮] envMap 0.95→1.1：银件背光面同样吃环境反射（全天候光泽）
-const matSolid = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.62, roughness: 0.09, envMapIntensity: 1.1 })
+// [十七轮·镜面对比] 金属高光三连：metal 0.75 / rough 0.05 / envMap 1.35——银肋巨柱的
+// 受光高光条在暗底玻璃上跳跃
+const matSolid = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.75, roughness: 0.05, envMapIntensity: 1.35 })
 const matPave  = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.06, roughness: 0.92 })
 // [七轮·整幅玻璃] 光泽 = 大片连续玻璃上拉得出的镜面高光长带：分格缝会把高光切碎成格子。
 // [八轮·四调] 背光面病根在 rough 0.06 完美镜面：反射能量集中单方向，背光面从观察角吃不到
@@ -102,19 +103,20 @@ const matPave  = new THREE.MeshStandardMaterial({ vertexColors: true, metalness:
 // [十轮·光泽强化] 银蓝系下反射灰白环境=银白高光：rough 0.16→0.10、metal→0.58、envMap→1.15
 // [十一轮·深镜收敛] 城主四条验收：颜色太淡→深一档饱和 #55789F；透明度太高→实心镜面
 // transparent:false（反射主导，塔身内部结构不再透出）；再高亮→metal 0.62 / envMap 1.35
-// [十二轮·全天候光泽] 城主指图：受光面「光打上去的质感」是目标，背光面无光逊色——镜面
-// 反射只集中在受光角，背光面吃不到环境。手术：emissive 换「天空光」色系提亮（模拟天空对
-// 背光面的漫射补光——全楼任何角度都有光感）+ rough 0.08→0.12（反射锥加宽，背光面也能
-// 吃到 envMap，受光高光仍锐）
-// [十四轮] 城主「背光面光感再强一点」：emissive 0.58→0.72、天光色 #4A6C96→#5476A2 亮半档
-const matGlass = new THREE.MeshStandardMaterial({ color: '#55789F', metalness: 0.62, roughness: 0.12, emissive: '#5476A2', emissiveIntensity: 0.72, envMapIntensity: 1.35, side: THREE.DoubleSide })
+// [十七轮·镜面对比] 城主终判「没有金属质感！没有光泽！」——像素诊断其截图：塔身全域亮度
+// 差 <5%＝一块均匀蓝平板。病根：十二轮以来 emissive 垫光一路提亮（0.35→0.72）+漫反射+
+// 灰白环境反射三均匀源叠加，把「高光带×暗底」的对比度抹平——光泽=对比，不是=亮。
+// 手术反转（碎片大厦式蓝黑镜面）：emissive 0.72→0.18 撤垫光、metal 0.62→0.85 反射主导、
+// rough 0.12→0.05 高光锐利成带（环绕时高光带流动=金属感）、底色加深 #55789F→#3D5A85 暗底
+// 衬亮带、envMap 1.5（RoomEnvironment 亮窗面反射出内容变化）
+const matGlass = new THREE.MeshStandardMaterial({ color: '#3D5A85', metalness: 0.85, roughness: 0.05, emissive: '#2A4468', emissiveIntensity: 0.18, envMapIntensity: 1.5, side: THREE.DoubleSide })
 // [十一轮] 观景亭玻璃拆独立材质：塔身实心镜面后亭子保留微透（亭内楼梯间/藻井是可看的）
-const matGlassPav = new THREE.MeshStandardMaterial({ color: '#55789F', metalness: 0.6, roughness: 0.12, transparent: true, opacity: 0.88, emissive: '#5476A2', emissiveIntensity: 0.62, envMapIntensity: 1.3, side: THREE.DoubleSide })
+const matGlassPav = new THREE.MeshStandardMaterial({ color: '#3D5A85', metalness: 0.85, roughness: 0.06, transparent: true, opacity: 0.88, emissive: '#2A4468', emissiveIntensity: 0.16, envMapIntensity: 1.4, side: THREE.DoubleSide })
 // [九轮] 灯条本体色换暗蓝灰（白天隐入蓝玻璃，夜里 emissive 暖白主导——蓝塔暖灯带对比）
 const matLit   = new THREE.MeshStandardMaterial({ color: '#26364A', emissive: '#FFE0AC', emissiveIntensity: 1.1, side: THREE.DoubleSide })
-// [十三轮·内透灯带] 与塔身玻璃完全同参的「亮窗」材质：白天与玻璃融为一体近隐形（仅暖白
-// 微光如开着灯的楼层），夜里 emissive 暖白主导——灯是玻璃自己的光，非外挂件
-const matGlassLit = new THREE.MeshStandardMaterial({ color: '#55789F', metalness: 0.62, roughness: 0.12, emissive: '#FFE0AC', emissiveIntensity: 0.55, envMapIntensity: 1.35, side: THREE.DoubleSide })
+// [十三轮·内透灯带] 与塔身玻璃同参的「亮窗」材质：白天与玻璃融为一体近隐形，夜里 emissive
+// 暖白主导——灯是玻璃自己的光，非外挂件。[十七轮] 底色同步深钢蓝，暖光微降防暗底过显
+const matGlassLit = new THREE.MeshStandardMaterial({ color: '#3D5A85', metalness: 0.85, roughness: 0.05, emissive: '#FFE0AC', emissiveIntensity: 0.45, envMapIntensity: 1.5, side: THREE.DoubleSide })
 const matGlow  = new THREE.MeshStandardMaterial({ color: '#FFD9A0', emissive: '#FFC878', emissiveIntensity: 2.5 })
 const matGlowW = new THREE.MeshStandardMaterial({ color: '#FFF3DC', emissive: '#FFEED2', emissiveIntensity: 2.1 })
 const matWater = new THREE.MeshStandardMaterial({ color: '#3F6E80', metalness: 0.35, roughness: 0.06, transparent: true, opacity: 0.82 })
