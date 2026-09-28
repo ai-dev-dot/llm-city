@@ -12,7 +12,7 @@ export const PALETTE: readonly string[] = [
 
 export function stdMaterial(
   color: string,
-  o?: { metalness?: number; roughness?: number; emissive?: string; emissiveIntensity?: number; side?: THREE.Side },
+  o?: { metalness?: number; roughness?: number; emissive?: string; emissiveIntensity?: number; envMapIntensity?: number; transparent?: boolean; opacity?: number; side?: THREE.Side },
 ): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({
     color,
@@ -20,6 +20,9 @@ export function stdMaterial(
     roughness: o?.roughness ?? 0.75,
     emissive: o?.emissive ?? '#000000',
     emissiveIntensity: o?.emissiveIntensity ?? 1,
+    envMapIntensity: o?.envMapIntensity ?? 1,
+    transparent: o?.transparent ?? false,
+    opacity: o?.opacity ?? 1,
     side: o?.side ?? THREE.FrontSide,
   })
 }
