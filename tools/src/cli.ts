@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { inspectBuilding, inspectCity } from './inspect'
+import { resolveBuildingHits } from './locate'
 
 const repoRoot = resolve(import.meta.dirname, '../..')
 const [, , cmd, ...args] = process.argv
@@ -9,16 +10,12 @@ function cityDirOf(repoRoot: string, cityId: string) { return resolve(repoRoot, 
 function allCities(repoRoot: string): string[] {
   return readdirSync(resolve(repoRoot, 'cities'), { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)
 }
-/** 参数给出的建筑目录名在哪个城：唯一匹配返回 [cityId, dirName]，否则报错退出 */
-const exists = (p: string) => { try { readdirSync(p); return true } catch { return false } }
+/** 参数给出的建筑在哪个城：接受完整目录名（b-000031-yuguang-yard）或裸 id（b-000031）——
+ *  解析在 ./locate（纯函数，带测试）；唯一匹配返回 [cityId, dirName]，否则报错退出 */
 function locateBuilding(name: string): [string, string] {
-  const hits: [string, string][] = []
-  for (const c of allCities(repoRoot)) {
-    const dir = resolve(repoRoot, 'cities', c, 'buildings', name)
-    if (exists(dir)) hits.push([c, name])
-  }
-  if (hits.length === 0) { console.error(`找不到建筑目录 ${name}（已搜索 cities/*/buildings/）`); process.exit(2) }
-  if (hits.length > 1) { console.error(`建筑目录 ${name} 在多个城出现：${hits.map((h) => h[0]).join(', ')}`); process.exit(2) }
+  const hits = resolveBuildingHits(resolve(repoRoot, 'cities'), name)
+  if (hits.length === 0) { console.error(`找不到建筑 ${name}（已搜 cities/*/buildings/ 的目录名与裸 id b-000031 形态）`); process.exit(2) }
+  if (hits.length > 1) { console.error(`建筑 ${name} 在多个城出现：${hits.map((h) => h[0]).join(', ')}`); process.exit(2) }
   return hits[0]
 }
 

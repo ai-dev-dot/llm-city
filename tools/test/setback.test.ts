@@ -100,19 +100,23 @@ describe('computeSetback（R13 退线 · 宪法第 14 条）', () => {
     expect(computeSetback(root, SIZE).violations).toBe(1)
   })
 
-  it('薄板豁免：厚 ≤0.5m 且顶 ≤3m（如台阶）', () => {
+  // 「薄」指**水平最小维度** ≤0.5m（判据 Math.min(extX, extZ) <= 0.5 && topY <= 3.0），指台阶
+  // 踏步、贴面墙板一类，不是竖向厚度。[city-admin] 2026-09-30 审核回修：此前两例都被遮蔽——
+  // 10×10×0.5 实际走地被层分支（顶 0.5 ≤0.6），10×10 的边界例水平薄向=10m 第一项即不满足，
+  // 把薄板分支整条删掉测试照样全绿。下面第一例 6×0.4×顶 2.5m：顶>0.6、长>1.6，只有薄板兜得住。
+  it('薄板豁免：水平薄向 ≤0.5m 且顶 ≤3m（台阶踏步、贴面墙板一类）', () => {
     const root = new THREE.Group()
-    post(root, 20, 20, 10, 10, 0.5)
+    post(root, 20, 20, 6, 0.4, 2.5)           // 6m 长 × 0.4m 厚 × 顶 2.5m
     expect(computeSetback(root, SIZE).violations).toBe(0)
   })
 
-  it('薄板豁免的边界：厚 0.6m 即不再豁免（哪怕顶只有 0.6m——但那已被地被层兜住，故取顶 3m）', () => {
+  it('薄板豁免的边界：顶超 3m 即不再豁免；水平两向都宽的扁板不算「薄」', () => {
     const root = new THREE.Group()
-    post(root, 20, 20, 10, 10, 3, 0)          // 厚 3m，不薄
+    post(root, 20, 20, 6, 0.4, 0.4, 2.9)     // 同墙板抬到顶 3.3m：薄向仍 0.4，坏在顶超 3m
     expect(computeSetback(root, SIZE).violations).toBe(1)
-    const slab = new THREE.Group()
-    post(slab, 20, 20, 10, 10, 0.4, 2.9)      // 厚 0.4 顶 3.3m：薄但太高
-    expect(computeSetback(slab, SIZE).violations).toBe(1)
+    const flat = new THREE.Group()
+    post(flat, 20, 20, 10, 10, 0.4, 2.9)     // 10×10×0.4 挑空板：水平薄向 10m，哪类豁免都够不着
+    expect(computeSetback(flat, SIZE).violations).toBe(1)
   })
 
   // 下面这条例刻意**避开** 0.05 这个刀刃值：判据 `exceed > 0.05` 里的 exceed 是两个浮点数相减，
