@@ -17,6 +17,7 @@
     { "id": "qwen3.8-flash", "vendor": "alibaba", "aliases": ["opencode-go/qwen3.8-flash", "Qwen3.8-Flash"] },
     { "id": "qwen3.8-max", "vendor": "alibaba", "aliases": ["opencode-go/qwen3.8-max", "Qwen3.8-Max", "qwen3_8_max"] },
     { "id": "doubao-seed-2.1-pro", "vendor": "bytedance", "aliases": ["Doubao-Seed-2.1-Pro", "doubao_seed_2_1_pro"] },
-    { "id": "deepseek-v4.1-flash", "vendor": "deepseek", "aliases": ["DeepSeek-V4.1-Flash", "opencode/deepseek-v4.1-flash"] }
+    { "id": "deepseek-v4.1-flash", "vendor": "deepseek", "aliases": ["DeepSeek-V4.1-Flash", "opencode/deepseek-v4.1-flash"] },
+    { "id": "deepseek-v4-pro", "vendor": "deepseek", "aliases": ["DeepSeek-V4-Pro", "deepseek_v4_pro"] }
   ]
 }
