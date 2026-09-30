@@ -19,7 +19,7 @@ const mesh = (g: THREE.BufferGeometry, m: THREE.Material): THREE.Mesh => {
 const box = (w: number, h: number, d: number, m: THREE.Material): THREE.Mesh => mesh(new THREE.BoxGeometry(w, h, d), m)
 const cyl = (rt: number, rb: number, h: number, seg: number, m: THREE.Material): THREE.Mesh =>
   mesh(new THREE.CylinderGeometry(rt, rb, h, seg), m)
-const site = (o: THREE.Object3D): THREE.Object3D => {
+const site = <T extends THREE.Object3D>(o: T): T => {
   o.userData.site = true
   return o
 }
