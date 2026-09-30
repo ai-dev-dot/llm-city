@@ -153,7 +153,11 @@ export function mountHud(
     for (const blk of nav.blocks) {
       const opt = document.createElement('option')
       opt.value = blk.id
-      opt.textContent = `${blk.id}${blk.name ? ` ${blk.name}` : ''}（${blk.buildings} 栋）`
+      // 模型名前缀（用户关心「哪个模型盖了什么」）；空街区无建造者回退原格式
+      const base = `${blk.id}${blk.name ? ` ${blk.name}` : ''}`
+      opt.textContent = blk.models.length > 0
+        ? `${base} · ${blk.models.join('、')}（${blk.buildings} 栋）`
+        : `${base}（${blk.buildings} 栋）`
       if (blk.id === nav.activeBlock) opt.selected = true
       select.appendChild(opt)
     }

@@ -15,8 +15,9 @@ const city: CityData = {
     lot('E5-05', 'E5', 0, 0),
   ],
   buildings: [
-    { id: 'b-1', lot: 'F4-03', parcel: ['F4-03', 'F4-06'], name: '望湖阁' },
-    { id: 'b-2', lot: 'A1-01', parcel: ['A1-01'], name: '甲' },
+    { id: 'b-1', lot: 'F4-03', parcel: ['F4-03', 'F4-06'], name: '望湖阁', model: 'Doubao-Seed-2.1-Pro', modelId: 'doubao-seed-2.1-pro' },
+    { id: 'b-2', lot: 'A1-01', parcel: ['A1-01'], name: '甲', model: 'GLM-5.3', modelId: 'glm-5.3' },
+    { id: 'b-3', lot: 'A1-02', parcel: ['A1-02'], name: '乙', model: 'glm_5_3', modelId: 'glm-5.3' },
   ] as unknown as BuildingRecord[],
   blockNames: { F4: '灯花栖居街区' },
 }
@@ -47,6 +48,16 @@ describe('collectBlocks 聚合', () => {
     expect(e5.buildings).toBe(0)
     // 排序：有建筑的在前（A1、F4 在 E5 前）
     expect(blocks.findIndex((b) => b.id === 'E5')).toBeGreaterThan(blocks.findIndex((b) => b.id === 'F4'))
+  })
+  it('聚合建造者模型显示名：按 modelId 去重，空街区为空数组', () => {
+    const blocks = collectBlocks(city, city.blockNames)
+    const f4 = blocks.find((b) => b.id === 'F4')!
+    expect(f4.models).toEqual(['Doubao-Seed-2.1-Pro'])
+    // A1 两栋同属 glm-5.3（写法不同）→ 只显示首个登记的写法
+    const a1 = blocks.find((b) => b.id === 'A1')!
+    expect(a1.models).toEqual(['GLM-5.3'])
+    const e5 = blocks.find((b) => b.id === 'E5')!
+    expect(e5.models).toEqual([])
   })
 })
 

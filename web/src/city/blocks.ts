@@ -9,6 +9,7 @@ export interface BlockInfo {
   center: [number, number]
   extent: number               // 街区边长（含邻路半幅）
   buildings: number
+  models: string[]             // 建造者模型显示名（按 modelId 去重取首个写法，登记先后序）
 }
 
 /** lotId → district 查找表（parcel 地块可能分属同街区，取首个命中） */
@@ -39,10 +40,16 @@ export function collectBlocks(city: CityData, names: Record<string, string> = {}
     a.maxZ = Math.max(a.maxZ, l.center[1] + l.size[1] / 2)
   }
   const counts = new Map<string, number>()
+  // 街区 → 建造者模型（modelId 去重：同 canonical 不同登记写法只取首个显示名，同铭牌统计口径）
+  const builders = new Map<string, Map<string, string>>()
   const lookup = districtLookup(city)
   for (const b of city.buildings) {
     const d = districtOfBuilding(city, b, lookup)
-    if (d) counts.set(d, (counts.get(d) ?? 0) + 1)
+    if (!d) continue
+    counts.set(d, (counts.get(d) ?? 0) + 1)
+    let m = builders.get(d)
+    if (!m) { m = new Map(); builders.set(d, m) }
+    if (!m.has(b.modelId)) m.set(b.modelId, b.model)
   }
   return [...acc.entries()]
     .sort((x, y) => (counts.get(y[0]) ?? 0) - (counts.get(x[0]) ?? 0) || x[0].localeCompare(y[0]))
@@ -52,6 +59,7 @@ export function collectBlocks(city: CityData, names: Record<string, string> = {}
       center: [(a.minX + a.maxX) / 2, (a.minZ + a.maxZ) / 2] as [number, number],
       extent: Math.max(a.maxX - a.minX, a.maxZ - a.minZ) + city.grid.roadWidth,
       buildings: counts.get(id) ?? 0,
+      models: [...(builders.get(id)?.values() ?? [])],
     }))
 }
 
