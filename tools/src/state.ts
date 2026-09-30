@@ -78,8 +78,24 @@ export function buildStateReport(citiesRoot: string): StateReport {
       if (n > maxIdNum) maxIdNum = n
     }
     // 空街区建议（[city-admin] 立法 2026-09-26 宪法第 13 条：进驻以街区为单位，
-    // 先有总图后有楼）：无任何建筑且无总图（blockplans/<街区>.md，总图即领地声明）的街区才算空街区
-    const occupiedBlocks = new Set(rows.flatMap((r) => expandParcel(r)).map((l) => l.split('-')[0]))
+    // 先有总图后有楼）：无任何建筑且无总图（blockplans/<街区>.md，总图即领地声明）的街区才算空街区。
+    //
+    // [city-admin] 2026-09-30 口径对齐：官方建筑是市政配套、**中性**——它不构成对街区的领土声明，
+    // 故不使街区退出空街区池。此前本行不过滤 official，与同工具链另两处口径相悖：
+    //   · R15 街区主权（inspect.ts:118）others 显式排除 official —— 别的模型进得去
+    //   · blockResidents（state.ts:59）continue 跳过 official —— 不计入居民构成
+    // 后果：一栋市政建筑会让整街区静默退出建议池，而 R15 又放行进驻——下一个模型看不到这个街区，
+    // 真要进来也不会被拦，街区从谁那儿丢了没人知道。首例：b-000031 愈光庭养护所落 C5-06+09 后
+    // C5 退出建议池，而 C5 无 blockplans/C5.md。
+    //
+    // 注意别把 occupancy.occupied（state.ts:109，用 rows.length）也一起改：那是**土地占用**，
+    // 官方建筑确实占了两块地，应当计入。中性的是**领土声明**，不是物理占地。
+    const occupiedBlocks = new Set(
+      rows
+        .filter((r) => r.builder.model_id !== 'official')
+        .flatMap((r) => expandParcel(r))
+        .map((l) => l.split('-')[0]),
+    )
     const plannedBlocks = new Set(
       existsSync(resolve(cityDir, 'blockplans'))
         ? readdirSync(resolve(cityDir, 'blockplans'))

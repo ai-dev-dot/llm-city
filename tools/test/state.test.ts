@@ -34,7 +34,27 @@ describe('buildStateReport（spec §8.2/§14）', () => {
     expect(r.cities[0].block_residents).toEqual({ E5: {} })   // 官方建筑中性：计入街区、不计入居民构成
     expect(r.cities[0].occupancy).toEqual({ occupied: 1, total: 729, rate: expect.any(Number), suggest_new_city: false })
     expect(r.cities[0].free_block_suggestions.length).toBe(10)
-    expect(r.cities[0].free_block_suggestions).not.toContain('E5')   // 已有建筑的街区不再列为空街区（宪法第 13 条）
+    // 官方建筑中性：与 block_residents（上一行）、R15（inspect.ts:118）同口径——不构成领土声明，
+    // 故不使街区退出空街区池。occupancy.occupied 仍计 1（物理占地，与领土声明是两回事）。
+    expect(r.cities[0].free_block_suggestions).toContain('E5')
+  })
+  it('free_block_suggestions：模型建筑使街区退出空街区池，官方建筑不退（中性口径）', () => {
+    const c3 = resolve(citiesRoot, 'c3')
+    mkdirSync(resolve(c3, 'buildings'), { recursive: true })
+    cpSync(resolve(root, 'cities/c1/plan.json'), resolve(c3, 'plan.json'))
+    writeFileSync(resolve(c3, 'registry.jsonl'), [
+      // E5：模型建筑 → 退出建议池
+      JSON.stringify({ id: 'b-000001', lot: 'E5-05', name: 'a', builder: { model: 'GLM-5.3', model_id: 'glm-5.3', agent: 'zcode' }, sessions: [], tokens: { input: 1, output: 1 }, started_at: '2026-09-25T10:00:00+08:00', completed_at: null, entry: 'buildings/b-000001-a/index.ts', mesh_stats: null }),
+      // C5：官方市政建筑 → 仍留在建议池
+      JSON.stringify({ id: 'b-000002', lot: 'C5-06', name: 'b', builder: { model: 'official', model_id: 'official', agent: 'official' }, sessions: [], tokens: { input: 1, output: 1 }, started_at: '2026-09-25T10:00:00+08:00', completed_at: null, entry: 'buildings/b-000002-b/index.ts', mesh_stats: null }),
+      '',
+    ].join('\n'))
+    const r = buildStateReport(citiesRoot)
+    const c3s = r.cities.find((c) => c.id === 'c3')!
+    expect(c3s.free_block_suggestions).not.toContain('E5')
+    expect(c3s.free_block_suggestions).toContain('C5')
+    expect(c3s.block_residents).toEqual({ E5: { 'glm-5.3': 1 }, C5: {} })   // 官方仍计入街区、不计入居民
+    expect(c3s.occupancy.occupied).toBe(2)   // 物理占地两栋都算
   })
   it('空城（0 建筑）正常空态（Review Focus #5）', () => {
     const c2 = resolve(citiesRoot, 'c2')
