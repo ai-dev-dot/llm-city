@@ -3,13 +3,23 @@
 [![ci](https://github.com/ai-dev-dot/llm-city/actions/workflows/ci.yml/badge.svg)](https://github.com/ai-dev-dot/llm-city/actions/workflows/ci.yml)
 [![🌐 在线城市](https://img.shields.io/website?url=https%3A%2F%2Fai-dev-dot.github.io%2Fllm-city%2F&label=%F0%9F%8C%90%20%E5%9C%A8%E7%BA%BF%E5%9F%8E%E5%B8%82)](https://ai-dev-dot.github.io/llm-city/)
 
-| 白昼航拍 | 入夜街角 |
+| 黄昏航拍 | 入夜街角 |
 |---|---|
-| ![白昼航拍——F4 街区与城市网格](docs/images/block-f4-aerial-day.png) | ![入夜街角——望湖阁点灯](docs/images/block-f4-corner-night.png) |
+| ![黄昏航拍——F4 灯花栖居街区](docs/images/block-f4-aerial-dusk.png) | ![入夜街角——E4 温室之心中央公园](docs/images/block-e4-corner-night.png) |
 
 > 一座存在 git 仓库里的 3D 城市：各大模型通过 coding agent 手动「开工」盖楼，每一栋建筑永久留痕（谁建的、花了多少 token、开工/竣工日期），把用不完的 API 订阅额度沉淀成一部可漫游的 AI 发展史。
 
 **🌐 在线漫游：[ai-dev-dot.github.io/llm-city](https://ai-dev-dot.github.io/llm-city/)**（GitHub Pages，master 分支 CI 绿灯即自动发布）
+
+## 街区巡礼（八大模型 · 各据一坊）
+
+宪法第 10 条：一个街区只归属一家模型——于是八家施工队各自认领一坊、各起一题。
+以下街区图均由 `npm run shot` 软件光栅化渲染（零浏览器、确定性出图）：
+
+| | | | |
+|---|---|---|---|
+| <img src="docs/images/block-e5-corner-dusk.png" width="270"><br>**E5 原点街区** · glm-5.3<br>212m 原点塔领衔的 CBD 双子天际 | <img src="docs/images/block-e4-aerial-dusk.png" width="270"><br>**E4 温室之心** · qwen3.8-flash<br>中央公园玻璃穹顶 + 灯塔坪 | <img src="docs/images/block-f4-corner-night.png" width="270"><br>**F4 灯花栖居** · doubao-seed-2.1-pro<br>灯市楼群入夜满窗灯火 | <img src="docs/images/block-d4-corner-dusk.png" width="270"><br>**D4 西岸商业街区** · mimo-v2.6-flash<br>滨水商业综合体与骑楼食街 |
+| <img src="docs/images/block-e7-aerial-dusk.png" width="270"><br>**E7 中央车站街区** · glm-5.3-flash<br>报时钟楼与拱顶站台轨道带 | <img src="docs/images/block-e6-corner-dusk.png" width="270"><br>**E6 回声街区** · deepseek-v4.1-flash<br>回声剧院与市立图书馆 | <img src="docs/images/block-f5-corner-night.png" width="270"><br>**F5 模都学府街区** · qwen3.8-max<br>红砖学堂·报课钟塔定格 10:10 | <img src="docs/images/block-g5-corner-night.png" width="270"><br>**G5 求索智谷街区** · deepseek-v4-pro<br>双螺旋光轨缠绕的求索塔 |
 
 ## 这是一座什么城
 
@@ -19,11 +29,11 @@
 - **CI 是验收官**：每次 push 跑 R1–R15 建筑法规校验 + 登记簿受限编辑审计，绿灯即「竣工备案 + 自动发布 Pages」；烂尾由城主用 `npm run demolish` 清退。
 - **城市发展史即大模型发展史**：哪家模型先开街、谁家的楼最费 token，`git log` 与登记簿里一目了然。
 
-现状快照（2026-09-27，会持续过时——实时数据以在线铭牌或 `npm run state` 为准）：
+现状快照（2026-09-30，会持续过时——实时数据以在线铭牌或 `npm run state` 为准）：
 
 | 开城 | 建筑 | 已认领街区 | 进驻模型（厂商） |
 |---|---|---|---|
-| 2026-09-24 | 5 栋 | E4 / E5 / F4 | GLM-5.3（智谱）、Qwen3.8-Flash（通义）、Doubao-Seed-2.1-Pro（豆包）+ 官方市政 |
+| 2026-09-24 | 26 栋 | D4 / E4 / E5 / E6 / E7 / F4 / F5 / G5 | GLM-5.3、GLM-5.3-Flash（智谱）、Qwen3.8-Flash、Qwen3.8-Max（通义）、MiMo-V2.6-Flash（小米）、Doubao-Seed-2.1-Pro（豆包）、DeepSeek-V4.1-Flash、DeepSeek-V4-Pro（深度求索）+ 官方市政 |
 
 ## 在线漫游 / 本地起城
 
