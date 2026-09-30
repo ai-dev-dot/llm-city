@@ -155,11 +155,74 @@ async function main() {
     console.log(`● ${city} / ${dir}  ${r.triangles?.toLocaleString()} 三角形，包围盒 ${r.size?.join(' × ')}m，渲染 ${r.shots?.length} 张耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s`)
     for (const s of r.shots ?? []) console.log(`  📷 ${s.view}-${s.amb}.png  (${(s.bytes / 1024).toFixed(0)}KB)  ${s.path}`)
     return
+  }
+  if (cmd === 'probe') {
+    const { compileBuilding } = await import('./compile')
+    const { runHeadless } = await import('./headless/run')
+    const { loadRegistry, expandParcel, parcelDims } = await import('../../lib/registry')
+    const { hashSeed } = await import('../../lib/ctx')
+    // R13 退线自查：inspect 对豁免建筑（官方）只回一句「豁免」就丢掉了实测数字（inspect.ts:183
+    // 走 isOfficial 分支，184-188 那条带数字的分支被整个跳过），此处把 worker 算出的数字原样
+    // 摊开。判定不在此重复实现——与 inspect 共用 headless/setback.ts，故不会与真实判定脱节。
+    const json = args.includes('--json')
+    const target = args.find((a) => !a.startsWith('--'))
+    if (!target) {
+      console.error('用法：npm run probe -- <建筑目录名|建筑id> [--json]（有越界构件时退出码 1）')
+      process.exit(2)
+    }
+    const [city, dir] = locateBuilding(target)
+    const cityDir = cityDirOf(repoRoot, city)
+    const id = dir.match(/^(b-\d{6})-/)?.[1]
+    const row = loadRegistry(cityDir).find((r) => r.id === id)
+    if (!row) {
+      console.error(`登记簿中找不到 ${dir} 的登记行——probe 按登记宗地量核心矩形，请先登记骨架`)
+      process.exit(2)
+    }
+    const outPath = resolve(repoRoot, `node_modules/.cache/llm-city/buildings/${dir}.mjs`)
+    const compiled = await compileBuilding(resolve(cityDir, 'buildings', dir, 'index.ts'), repoRoot, outPath)
+    if (!compiled.ok || !outPath) {
+      console.error(`✗ 编译失败：\n${compiled.errors.map((e) => `  ${e}`).join('\n')}`)
+      process.exit(2)
+    }
+    const parcel = expandParcel(row)
+    const size = parcelDims(row)
+    const head = await runHeadless(outPath, { id: parcel.join('+'), size, maxHeight: 300 }, hashSeed(row.id), 10_000 * parcel.length)
+    if (!head.ok) {
+      console.error(`✗ 无头执行失败：${head.error}${head.stack ? `\n${head.stack}` : ''}`)
+      process.exit(2)
+    }
+    const sb = head.setback
+    if (!sb) { console.error('✗ worker 未返回退线结果'); process.exit(2) }
+    const isOfficial = row.builder.model_id === 'official'
+    if (json) {
+      console.log(JSON.stringify({ city, building: dir, builder: row.builder.model_id, parcel, size, triangles: head.triangles, meshes: head.meshes, exempt: isOfficial, setback: sb }, null, 2))
+    } else {
+      const core = `${(sb.coreHalfX * 2).toFixed(0)}×${(sb.coreHalfZ * 2).toFixed(0)}`
+      console.log(`\n● ${city} / ${dir}  ${row.builder.model_id}`)
+      console.log(`  宗地 ${size[0]}×${size[1]}m（${parcel.join('+')}）→ R13 核心矩形 ${core}m`)
+      console.log(`  三角 ${head.triangles?.toLocaleString()}  mesh ${head.meshes ?? 0}`)
+      if (sb.violations === 0) {
+        console.log(`  ✓ R13 退线达标：无构件越界`)
+      } else {
+        console.log(`  ✗ R13 退线不足：${sb.violations} 个构件越界，最远超出 ${sb.worst.toFixed(2)}m`)
+        for (const it of sb.items) {
+          console.log(`      超出 ${it.over.toFixed(2)}m  ${it.geometry}  世界坐标 ${it.position.map((v) => v.toFixed(1)).join(', ')}  ` +
+            `包围盒 x ${it.box.minX.toFixed(1)}..${it.box.maxX.toFixed(1)}  z ${it.box.minZ.toFixed(1)}..${it.box.maxZ.toFixed(1)}  ` +
+            `顶 ${it.topY.toFixed(1)}m  尺寸 ${it.extX.toFixed(1)}×${it.extZ.toFixed(1)}`)
+        }
+        if (sb.violations > sb.items.length) console.log(`      …… 另有 ${sb.violations - sb.items.length} 个构件未列出（明细上限 ${sb.items.length} 条）`)
+      }
+      if (isOfficial) {
+        console.log(`  ℹ 官方建筑不受 R13 强制约束（inspect R13 显示「官方建筑豁免退线」）——本命令是自愿自查，数字以 R13 为准但不改判定`)
+      }
+    }
+    process.exit(sb.violations === 0 ? 0 : 1)
   } else {
     console.error([
       '用法：',
       '  npm run state',
       '  npm run inspect -- [建筑目录名] [--json] [--complete]',
+      '  npm run probe -- <建筑目录名|建筑id> [--json]   # R13 退线自查（豁免建筑专用；有越界时退出码 1）',
       '  npm run shot -- <建筑目录名|建筑id> [--views ...] [--amb day,dusk,night] [--width 960] [--out 目录] [--eye x,y,z --target x,y,z --fov 度]',
       '  npm run shot -- --block <街区id> [--views ...] [--amb ...] [--width 1280]   # 街区总图：全部建筑同场 + 底图上下文',
       '  npm run demolish -- <建筑目录名|建筑id> [--yes] [--reason 文本]   # 城主拆除',

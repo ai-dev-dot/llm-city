@@ -28,6 +28,7 @@ npm run typecheck             # 根 tsconfig + web/tsconfig 两遍
 npm run preview               # gen:city + 起 5173 开发服（prestate/pregen 钩子自动 browser-reap）
 npm run shot -- <目录|id>     # 单建筑多视角秒级渲染（builder 自评）；--block F4 街区总图渲染
 npm run inspect -- [目录] [--complete]   # R1–R15 规则校验；--complete 竣工封存
+npm run probe -- <目录|id>     # R13 退线自查（逐件列出越界构件）；官方等豁免建筑用——inspect 对它们只回「豁免」不报数字
 npm run check-history         # 登记簿受限编辑审计（改过城市数据/工具后必跑）
 npm run gen:city              # 重新生成 web/src/generated/city-data.ts
 ```

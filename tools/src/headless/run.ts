@@ -5,6 +5,7 @@ import { relative, resolve } from 'node:path'
 import * as esbuild from 'esbuild'
 import * as url from 'node:url'
 import type { Lot } from '../../../lib/ctx'
+import type { SetbackResult } from './setback'
 
 export interface HeadlessResult {
   ok: boolean
@@ -12,15 +13,19 @@ export interface HeadlessResult {
   stack?: string
   triangles: number
   meshes?: number
-  setback?: { violations: number; worst: number; coreHalfX: number; coreHalfZ: number }
+  setback?: SetbackResult
   bboxMin?: [number, number, number]
   bboxMax?: [number, number, number]
 }
 
-/** worker 缓存的期望指纹：worker.ts 源码 + lib 目录下全部 .ts 源码（worker 的本地依赖按
- *  城市架构只会落在 lib/，three 为 external 不入 bundle；路径排序保证跨平台稳定）。
+/** worker 缓存的期望指纹：tools/src/headless/ 下全部 .ts（worker 及其同级依赖）+ lib 目录下
+ *  全部 .ts（worker 的本地依赖按城市架构只会落在 lib/，three 为 external 不入 bundle；
+ *  路径排序保证跨平台稳定）。
  *  [city-admin] 2026-09-25：修复「worker.ts 改动后旧缓存仍被复用」的隐患——
- *  市政代码迭代后 inspect 曾继续跑旧逻辑，须手动删缓存才生效。 */
+ *  市政代码迭代后 inspect 曾继续跑旧逻辑，须手动删缓存才生效。
+ *  [city-admin] 2026-09-30：随 R13 判定抽到 headless/setback.ts，本指纹从「只哈希 worker.ts 一个
+ *  文件」放宽为「哈希整个 headless/ 目录」。**必须同步**：否则改 setback.ts 不会让缓存失效，
+ *  判定改了却跑旧逻辑——正是上面那条 2026-09-25 隐患原样复发，只是换了个文件。 */
 export function workerFingerprint(repoRoot: string): string {
   const hash = createHash('sha256')
   const walk = (dir: string) => {
@@ -33,7 +38,7 @@ export function workerFingerprint(repoRoot: string): string {
       }
     }
   }
-  hash.update(readFileSync(resolve(repoRoot, 'tools/src/headless/worker.ts'), 'utf8'))
+  walk(resolve(repoRoot, 'tools/src/headless'))
   walk(resolve(repoRoot, 'lib'))
   return hash.digest('hex')
 }
