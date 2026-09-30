@@ -6,7 +6,9 @@
     "xiaomi": { "name": "小米", "color": "#FF6900" },
     "alibaba": { "name": "阿里巴巴（通义）", "color": "#FF5000" },
     "bytedance": { "name": "字节跳动（豆包）", "color": "#4D6BFE" },
-    "deepseek": { "name": "深度求索", "color": "#7C5CFF" }
+    "deepseek": { "name": "深度求索", "color": "#7C5CFF" },
+    "meituan": { "name": "美团（LongCat）", "color": "#FFC300" },
+    "opencode": { "name": "OpenCode", "color": "#0EA5A4" }
   },
   "models": [
     { "id": "official", "vendor": "official", "aliases": [] },
@@ -18,6 +20,9 @@
     { "id": "qwen3.8-max", "vendor": "alibaba", "aliases": ["opencode-go/qwen3.8-max", "Qwen3.8-Max", "qwen3_8_max"] },
     { "id": "doubao-seed-2.1-pro", "vendor": "bytedance", "aliases": ["Doubao-Seed-2.1-Pro", "doubao_seed_2_1_pro"] },
     { "id": "deepseek-v4.1-flash", "vendor": "deepseek", "aliases": ["DeepSeek-V4.1-Flash", "opencode/deepseek-v4.1-flash"] },
-    { "id": "deepseek-v4-pro", "vendor": "deepseek", "aliases": ["DeepSeek-V4-Pro", "deepseek_v4_pro"] }
+    { "id": "deepseek-v4-pro", "vendor": "deepseek", "aliases": ["DeepSeek-V4-Pro", "deepseek_v4_pro"] },
+    { "id": "longcat-2.5-preview-free", "vendor": "meituan", "aliases": ["LongCat-2.5-Preview", "longcat_2_5_preview_free"] },
+    { "id": "space-bunny", "vendor": "opencode", "aliases": ["Space Bunny", "space-bunny-free", "Space Bunny Free", "opencode/space-bunny-free"] },
+    { "id": "nemotron-3-ultra", "vendor": "opencode", "aliases": ["Nemotron 3 Ultra", "nemotron-3-ultra-free", "opencode/nemotron-3-ultra-free"] }
   ]
 }
