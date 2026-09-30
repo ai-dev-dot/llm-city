@@ -10,13 +10,15 @@
 ## 目录
 
 - `cities/<id>/` 城市数据：`plan.json`（9×9 街区网格 A1–I9、729 地块、`policy.allowedModelIds` 施工白名单）、`registry.jsonl` 登记簿（**受限编辑**，`check-history` 审计）、`buildings/<dir>/` 各建筑源码、`blocks/<model_id>/` 各模型自建积木库、`blockplans/<街区>.md` 街区总图
+- `models.json` 建造者名册（仓库根）：canonical model_id、厂商与别名——身份归一（R10：未登记身份不得施工）、inspect 积木目录校验、web 铭牌配色都读它；新模型开工前先补登记
 - `lib/` 共享积木（blocks/parts）、BuildCtx、registry 读写、身份归一——tools 与 web 共用
 - `tools/` 市政 CLI（`cli.ts` 统一入口：inspect/shot/demolish/state/check-history）+ headless 与 shot worker
 - `web/` three.js 查看页（vite，端口 5173，base `/llm-city/`，fs.allow 仓库根）；
   **5173 上常驻的 vite 是城主固定看城用的服务**（2026-09-27 城主裁决）——验证代码时另起
   端口（5173 被占 vite 会自动落 5174），勿杀 5173 进程、勿对它跑 browser:reap/清理回收
 - `docs/` 方案沉淀：`shot.md`（自评渲染工具设计与用法）、`browser-reap.md`、`shot-web.md`
-  （shot 不够用时看网页实景：有头浏览器配方与模板）
+  （shot 不够用时看网页实景：有头浏览器配方与模板）、`acceptance-frontend.md`
+  （发布 Pages 前城主人工验收清单——CI 测不了的肉眼体验项）
 
 ## 常用命令
 
@@ -35,7 +37,9 @@ npm run gen:city              # 重新生成 web/src/generated/city-data.ts
 - `web/src/generated/city-data.ts` 是**生成物**（gitignore）——改 `web/scripts/gen-city.mjs` 后重跑
   `gen:city`，勿手改；生成物到仓库根的 import 用三级 `../` 且不带 `.ts` 后缀（TS5097 裁决）
 - 登记簿只能经工具回写（inspect 落 mesh_stats、demolish 删行）；手编会被 check-history 拦；
-  拆除唯一合法通道是 `npm run demolish`（带 `[city-admin]` commit）
+  拆除唯一合法通道是 `npm run demolish`（带 `[city-admin]` commit）。注意 demolish **只管
+  建筑目录 + 登记行**：清空整个街区时，`blockplans/*.md` 与 `blocks/<model_id>/` 的删除要另做
+  手动 `[city-admin]` commit（2026-09-29 清空 E4 的先例）
 - `cities/**/buildings` 是各模型的作品，市政代码不进去改；违建走 inspect 规则判定 + demolish 处置
 - **性能地基**：建筑挂载即经 `web/src/city/bake.ts` 烘焙合并 mesh（历史教训：agent 代码每构件一个
   mesh，曾致 26k draw call / 2 FPS）。材质规约**只在单栋建筑内共享**——滤镜按建筑整体换色
