@@ -1,4 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { availableParallelism } from 'node:os'
 import { relative, resolve } from 'node:path'
 import { loadIdentityTable, resolveModelId } from '../../lib/identity'
 import { localIsoNow, loadRegistry, validateRow, writeRegistry, expandParcel, parcelDims, type RegistryRow } from '../../lib/registry'
@@ -27,6 +28,32 @@ export function loadPlan(cityDir: string): PlanData {
 export function parseBuildingId(dirName: string): string | null {
   const m = dirName.match(/^(b-\d{6})-[a-z0-9-]+$/)
   return m ? m[1] : null
+}
+
+/** inspect 的无头执行并行度：按 CPU 数钳制（下限 2 保小机吞吐，上限 8 防本机 fan-out 过宽）。
+ *  [city-admin] 2026-10-01：此前 inspectCity 对全部建筑 Promise.all 无界并发，城内 30+ 栋楼
+ *  一次性拉起 30+ 个 worker 抢 2 核 CI runner 的 CPU，随机哪栋被饿满 R9 的 10s 墙钟线即
+ *  假超时红灯（b-000011、b-000006 各中一次，本地串行实测 0.8–1.1s 且三角数稳定）——
+ *  每栋楼在跑时至少约分到一核，即回到 R9 时限的设计语义（单地块 build 10s 足够）。 */
+export const INSPECT_CONCURRENCY = Math.max(2, Math.min(8, availableParallelism()))
+
+/** 有界并发 map（保序）：同时至多 limit 个 fn 在飞，结果按输入顺序落位 */
+export async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length)
+  let next = 0
+  const lanes = Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, async () => {
+    for (;;) {
+      const i = next++
+      if (i >= items.length) return
+      results[i] = await fn(items[i]!, i)
+    }
+  })
+  await Promise.all(lanes)
+  return results
 }
 
 export async function inspectBuilding(
@@ -289,9 +316,12 @@ export async function inspectCity(repoRoot: string, cityDir: string): Promise<In
       : [ok('R15', rows.length ? (sovereigntyLines.join('；') || '无建筑') : '城空，任意选址')],
   }
 
-  // 逐建筑 R1–R10（并行执行控制 CI 时长；**共享同一 rows 数组作 registryOverride——mesh_stats/completed_at 全部写进内存数组，Promise.all 后集中落盘一次**，避免各建筑各自 loadRegistry 快照并行 writeRegistry 的丢失更新）
+  // 逐建筑 R1–R10（**有界并发**控制 CI 时长——并行度钳在 INSPECT_CONCURRENCY，无界 Promise.all
+  // 会在 2 核 CI 上饿死个别 worker 误触 R9 超时，见其注释；**共享同一 rows 数组作 registryOverride
+  // ——mesh_stats/completed_at 全部写进内存数组，跑完后集中落盘一次**，避免各建筑各自 loadRegistry
+  // 快照并行 writeRegistry 的丢失更新）
   const dirs = rows.map((r) => r.entry.split('/')[1]).filter(Boolean)
-  const dirResults = await Promise.all(dirs.map((d) => inspectBuilding(repoRoot, cityDir, d, { registryOverride: rows })))
+  const dirResults = await mapWithConcurrency(dirs, INSPECT_CONCURRENCY, (d) => inspectBuilding(repoRoot, cityDir, d, { registryOverride: rows }))
   if (dirs.length) writeRegistry(cityDir, rows)
   return [structResult, blocksResult, sovereigntyResult, ...dirResults]
 }

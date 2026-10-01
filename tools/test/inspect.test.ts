@@ -2,7 +2,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync, cpSync, readFileSync } f
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { inspectBuilding, inspectCity } from '../src/inspect'
+import { inspectBuilding, inspectCity, mapWithConcurrency } from '../src/inspect'
 import { loadRegistry } from '../../lib/registry'
 
 const root = resolve(__dirname, '../..')
@@ -300,5 +300,35 @@ describe('inspectBuilding R1–R12（spec §14 坏建筑样本全拦截）', () 
     } finally {
       rmSync(resolve(cityDir, 'registry.jsonl'), { force: true })
     }
+  })
+})
+
+describe('mapWithConcurrency（[city-admin] 2026-10-01：inspect 无界并发在 2 核 CI 上饿死 worker 误触 R9 超时的修复）', () => {
+  const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+  it('结果按输入顺序落位（与完成先后无关）', async () => {
+    // 越靠后的项越先完成，检验落位不看完成序
+    const out = await mapWithConcurrency([100, 200, 300], 3, async (ms) => {
+      await delay(ms === 100 ? 30 : 5)
+      return ms * 2
+    })
+    expect(out).toEqual([200, 400, 600])
+  })
+
+  it('同时在飞的 fn 不超过 limit', async () => {
+    let active = 0
+    let peak = 0
+    await mapWithConcurrency(Array.from({ length: 12 }, (_, i) => i), 3, async () => {
+      active++
+      peak = Math.max(peak, active)
+      await delay(5)
+      active--
+    })
+    expect(peak).toBe(3)
+  })
+
+  it('limit 大于项数与空数组都不空转出错', async () => {
+    expect(await mapWithConcurrency([1, 2], 8, async (n) => n)).toEqual([1, 2])
+    expect(await mapWithConcurrency([], 4, async () => 0)).toEqual([])
   })
 })
