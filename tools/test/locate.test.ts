@@ -7,8 +7,8 @@ import { resolveBuildingHits } from '../src/locate'
 /**
  * inspect/shot/probe 共用的建筑定位（[city-admin] 2026-09-30 补）——三命令用法文案一直声称
  * 「建筑id」，但解析此前只认完整目录名，实测 b-000031 一律「找不到建筑目录」（只有 demolish
- * 自带 id 解析）。在此钉住各形态：完整目录名、裸 id、裸数字不认（与 demolish 口径一致）、
- * 跨城撞名多命中、未知名/未知 id、没有 buildings 目录的城不炸。
+ * 自带 id 解析）。在此钉住各形态：完整目录名、裸 id、路径（末段归一）、裸数字不认
+ * （与 demolish 口径一致）、跨城撞名多命中、未知名/未知 id、没有 buildings 目录的城不炸。
  */
 
 let root = ''
@@ -29,6 +29,21 @@ describe('resolveBuildingHits（CLI 建筑定位）', () => {
     root = mkdtempSync(resolve(tmpdir(), 'llm-city-locate-'))
     makeCity(root, 't1', 'b-000001-alpha', 'b-000002-beta')
     expect(resolveBuildingHits(root, 'b-000002')).toEqual([['t1', 'b-000002-beta']])
+  })
+
+  it('路径形态：取末段目录名归一——正/反斜杠、带 cities 前缀、尾分隔符、裸 id 都认', () => {
+    root = mkdtempSync(resolve(tmpdir(), 'llm-city-locate-'))
+    makeCity(root, 't1', 'b-000001-alpha', 'b-000002-beta')
+    expect(resolveBuildingHits(root, 'cities/t1/buildings/b-000002-beta')).toEqual([['t1', 'b-000002-beta']])
+    expect(resolveBuildingHits(root, 'cities\\t1\\buildings\\b-000002-beta')).toEqual([['t1', 'b-000002-beta']])
+    expect(resolveBuildingHits(root, 'cities/t1/buildings/b-000002-beta/')).toEqual([['t1', 'b-000002-beta']])
+    expect(resolveBuildingHits(root, 'cities/t1/buildings/b-000002')).toEqual([['t1', 'b-000002-beta']])
+  })
+
+  it('路径末段不是建筑名 → 空（归一只取末段，不做路径语义解析）', () => {
+    root = mkdtempSync(resolve(tmpdir(), 'llm-city-locate-'))
+    makeCity(root, 't1', 'b-000001-alpha')
+    expect(resolveBuildingHits(root, 'cities/t1/buildings/no-such')).toEqual([])
   })
 
   it('裸数字不是 id：2 / b-2 都不认（与 demolish idOfDirName 口径一致）', () => {

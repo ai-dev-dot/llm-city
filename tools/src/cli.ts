@@ -10,11 +10,12 @@ function cityDirOf(repoRoot: string, cityId: string) { return resolve(repoRoot, 
 function allCities(repoRoot: string): string[] {
   return readdirSync(resolve(repoRoot, 'cities'), { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)
 }
-/** 参数给出的建筑在哪个城：接受完整目录名（b-000031-yuguang-yard）或裸 id（b-000031）——
- *  解析在 ./locate（纯函数，带测试）；唯一匹配返回 [cityId, dirName]，否则报错退出 */
+/** 参数给出的建筑在哪个城：接受完整目录名（b-000031-yuguang-yard）、裸 id（b-000031）
+ *  或路径（cities/c1/buildings/… 取末段归一）——解析在 ./locate（纯函数，带测试）；
+ *  唯一匹配返回 [cityId, dirName]，否则报错退出 */
 function locateBuilding(name: string): [string, string] {
   const hits = resolveBuildingHits(resolve(repoRoot, 'cities'), name)
-  if (hits.length === 0) { console.error(`找不到建筑 ${name}（已搜 cities/*/buildings/ 的目录名与裸 id b-000031 形态）`); process.exit(2) }
+  if (hits.length === 0) { console.error(`找不到建筑 ${name}（已搜 cities/*/buildings/ 的目录名、路径末段与裸 id b-000031 形态）`); process.exit(2) }
   if (hits.length > 1) { console.error(`建筑 ${name} 在多个城出现：${hits.map((h) => h[0]).join(', ')}`); process.exit(2) }
   return hits[0]
 }
