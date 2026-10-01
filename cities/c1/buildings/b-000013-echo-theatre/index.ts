@@ -34,7 +34,8 @@ const P = {
   /** 观众厅后墙（后区）与舞台分界 z */
   stageZ: -8,
   /** 舞台塔后墙 z */
-  backZ: -17.4,
+  /** 舞台塔后墙中心 z（内收 0.4m：给塔基货运门/高窗/雨篷留出 R13 退线余量，外墙皮落在 −17.4） */
+  backZ: -17.0,
   /** 观众厅天花（藻井底）标高 */
   hallCeil: 17.6,
   /** 门厅顶板标高 */
@@ -347,12 +348,37 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   ], matWood))
   // 舞台塔体：东西墙 + 后墙 + 北墙（台口上方封塔，塔内吊杆/天桥不外露）+ 顶板
   const flyTop = P.flyTop
+  // 东西墙：下段 + 上段实墙，中段每面两孔拱窗
   for (const s of [-1, 1]) {
-    stage.add(batch([{ x: s * P.flyX, y: (flyTop + P.plinth) / 2, z: -12.7, w: 0.8, h: flyTop - P.plinth, d: 9.4 }], matStone))
+    stage.add(batch([
+      { x: s * P.flyX, y: (17.0 + P.plinth) / 2, z: -12.7, w: 0.8, h: 17.0 - P.plinth, d: 9.4 },
+      { x: s * P.flyX, y: 37.0, z: -12.7, w: 0.8, h: 10.0, d: 9.4 },
+    ], matStone))
+    for (const az of [-15.05, -10.35]) {
+      const ap = ctx.blocks.archWall({ w: 4.3, h: 13.0, archW: 3.0, archH: 13.0, depth: 0.8, color: COLORS.stone, x: 0, y: 17.0, z: 0 })
+      ap.rotation.y = s > 0 ? -Math.PI / 2 : Math.PI / 2
+      ap.position.set(s * (P.flyX + 0.4), 17.0, az)
+      stage.add(ap)
+    }
   }
-  stage.add(batch([{ x: 0, y: (flyTop + P.plinth) / 2, z: P.backZ, w: P.flyX * 2 + 0.8, h: flyTop - P.plinth, d: 0.8 }], matStone))
-  // 北墙（y=13 台口框以上至塔顶，27m 宽封满塔体）
-  stage.add(batch([{ x: 0, y: (flyTop + 13.0) / 2, z: -8.4, w: 27.0, h: flyTop - 13.0, d: 0.8 }], matStone))
+  // 后墙（南面，自三期文化广场回望）：同样开三孔拱窗
+  stage.add(batch([
+    { x: 0, y: (17.0 + P.plinth) / 2, z: P.backZ, w: P.flyX * 2 + 0.8, h: 17.0 - P.plinth, d: 0.8 },
+    { x: 0, y: 37.0, z: P.backZ, w: P.flyX * 2 + 0.8, h: 10.0, d: 0.8 },
+  ], matStone))
+  for (const ax of [-7.5, 0, 7.5]) {
+    stage.add(ctx.blocks.archWall({ w: 7.5, h: 15.0, archW: 3.8, archH: 15.0, depth: 0.8, color: COLORS.stone, x: ax, y: 17.0, z: P.backZ - 0.4 }))
+  }
+  // 北墙：下段实墙（13→17）+ 三孔拱窗（17→32，透过它可见塔内吊杆/天桥/栅顶）
+  // + 上段实墙（32→42）。拱窗是塔身「剧场特征」的正面来源：塔里装的是舞台机械，
+  // 让人看见机械＝让人读出这是剧场而不是厂房（城主 2026-09-28 反馈）。
+  stage.add(batch([
+    { x: 0, y: 15.0, z: -8.4, w: 24.8, h: 4.0, d: 0.8 },
+    { x: 0, y: 37.0, z: -8.4, w: 24.8, h: 10.0, d: 0.8 },
+  ], matStone))
+  for (const ax of [-8.2, 0, 8.2]) {
+    stage.add(ctx.blocks.archWall({ w: 8.2, h: 15.0, archW: 4.2, archH: 15.0, depth: 0.8, color: COLORS.stone, x: ax, y: 17.0, z: -8.8 }))
+  }
   stage.add(batch([{ x: 0, y: flyTop + 0.3, z: -12.6, w: P.flyX * 2 + 1.6, h: 0.6, d: 10.2 }], matStoneDeep))
   // 塔身竖肋（东西后三面，密肋＝石造垂直感）
   {
@@ -360,16 +386,16 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     for (const s of [-1, 1]) {
       for (let i = 0; i < 12; i++) {
         const z = -17.0 + i * 0.78
-        ribs.push({ x: s * (P.flyX + 0.5), y: (flyTop + P.plinth) / 2, z, w: 0.3, h: flyTop - P.plinth, d: 0.34 })
+        ribs.push({ x: s * (P.flyX + 0.5), y: 37.0, z, w: 0.3, h: 10.0, d: 0.34 })
+        ribs.push({ x: s * (P.flyX + 0.5), y: 8.8, z, w: 0.3, h: 16.5, d: 0.34 })
       }
     }
     for (let i = 0; i < 25; i++) {
       const x = -P.flyX + i * 1.0
-      ribs.push({ x, y: (flyTop + P.plinth) / 2, z: P.backZ - 0.3, w: 0.34, h: flyTop - P.plinth, d: 0.3 })
+      ribs.push({ x, y: 37.0, z: P.backZ - 0.3, w: 0.34, h: 10.0, d: 0.3 })
     }
-    // 竖向石缝分层（每 3.7m 一道水平压顶线）
-    for (let k = 1; k < 11; k++) {
-      const y = P.plinth + k * 3.7
+    // 水平压顶线（只在拱窗区之外，避免压住拱窗）
+    for (const y of [4.25, 7.95, 11.65, 15.35, 33.6, 37.3, 41.0]) {
       ribs.push({ x: 0, y, z: P.backZ - 0.34, w: P.flyX * 2 + 0.8, h: 0.16, d: 0.2 })
       for (const s of [-1, 1]) ribs.push({ x: s * (P.flyX + 0.55), y, z: -12.7, w: 0.2, h: 0.16, d: 9.4 })
     }
@@ -484,22 +510,43 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     { x: P.hallX + 0.65, y: P.hallCeil + 1.25, z: hcz, w: 0.7, h: 2.5, d: hz1 - hz0 + 1.2 },
     { x: -P.hallX - 0.65, y: P.hallCeil + 1.25, z: hcz, w: 0.7, h: 2.5, d: hz1 - hz0 + 1.2 },
   ], matStoneDim))
-  // 舞台塔北立面（塔体高于观众厅声壳的一段：竖肋 + 通高百叶 + 顶部檐口）
+  // 舞台塔北立面：拱窗之间的石墩与起拱线 + 拱上高标（剧名灯箱）+ 塔内衬光
   {
-    const nface: BoxSpec[] = []
-    for (let i = 0; i < 19; i++) {
-      nface.push({ x: -12.6 + i * 1.4, y: (flyTop + 20.4) / 2, z: -7.86, w: 0.36, h: flyTop - 20.4, d: 0.36 })
+    const piers: BoxSpec[] = []
+    // 拱窗（x 中心 −8.2/0/8.2，净宽 4.2）之间的分界墩
+    for (const px of [-12.3, -4.1, 4.1, 12.3]) {
+      piers.push({ x: px, y: 24.5, z: -7.86, w: 0.5, h: 15.0, d: 0.36 })
     }
-    nface.push({ x: 0, y: 20.7, z: -7.9, w: 27.0, h: 0.7, d: 0.5 })
-    nface.push({ x: 0, y: flyTop - 0.3, z: -7.9, w: 27.0, h: 0.8, d: 0.6 })
-    root.add(batch(nface, matStoneDim))
-    // 三联盲拱（把下层柱廊的「拱·声」母题抬到塔身，塔身不再是白板）
-    for (const bx of [-8.6, 0, 8.6]) {
-      root.add(ctx.blocks.archPanel({ w: 5.4, h: 14.0, depth: 0.5, color: COLORS.stone, x: bx, y: 21.6, z: -8.2 }))
-      root.add(louvreBand({ w: 2.8, h: 7.0, x: bx, y: 24.0, z: -7.66, slats: 12, material: matDark }))
-      root.add(batch([
-        { x: bx, y: 21.3, z: -8.05, w: 6.4, h: 0.5, d: 0.5 },
-      ], matStoneDim))
+    // 起拱线（通长压顶，给拱窗一条水平基线）+ 顶部檐口
+    piers.push({ x: 0, y: 17.0, z: -7.9, w: 24.9, h: 0.5, d: 0.5 })
+    piers.push({ x: 0, y: flyTop - 0.3, z: -7.9, w: 24.9, h: 0.8, d: 0.6 })
+    root.add(batch(piers, matStoneDim))
+    // 拱上高标（剧名灯箱，夜间发光；自 CBD 南望时的剧场招牌）
+    root.add(ctx.blocks.neonSign({ w: 7.4, h: 1.3, color: '#F2C879', x: 0, y: 34.2, z: -7.72 }))
+    // 塔基（南面下段）不再是白墙：舞台货运门 + 两侧高窗 + 水平腰带
+    root.add(batch([
+      { x: 0, y: 3.1, z: P.backZ - 0.45, w: 6.0, h: 5.2, d: 0.3 },
+      { x: 0, y: 5.9, z: P.backZ - 0.5, w: 7.4, h: 0.4, d: 0.8 },
+      { x: 0, y: 9.6, z: P.backZ - 0.42, w: 22.0, h: 0.5, d: 0.4 },
+      { x: -9.2, y: 12.6, z: P.backZ - 0.45, w: 2.6, h: 2.2, d: 0.3 },
+      { x: 9.2, y: 12.6, z: P.backZ - 0.45, w: 2.6, h: 2.2, d: 0.3 },
+    ], matBronze))
+    root.add(batch([
+      { x: -9.2, y: 12.6, z: P.backZ - 0.56, w: 2.2, h: 1.8, d: 0.1 },
+      { x: 9.2, y: 12.6, z: P.backZ - 0.56, w: 2.2, h: 1.8, d: 0.1 },
+    ], matGlass))
+    // 塔内工作灯（三层灯排，供拱窗内透）——不用整面衬光板：塔身南北都开拱窗，
+    // 任何一面的实心背板都会挡住从另一面看进来的吊杆/天桥。
+    {
+      const workLamps: Array<{ x: number; y: number; z: number; r: number; h: number; seg?: number }> = []
+      for (const y of [19.5, 24.5, 29.5]) {
+        for (let i = 0; i < 7; i++) {
+          for (const z of [-15.4, -11.0]) {
+            workLamps.push({ x: -9.0 + i * 3.0, y, z, r: 0.2, h: 0.45, seg: 8 })
+          }
+        }
+      }
+      root.add(new THREE.Mesh(cylBatch(workLamps, matGlow).geometry, matGlow))
     }
   }
   // 舞台塔顶设备
@@ -521,13 +568,13 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
       // 侧翼外立面：水平缝每 1.2m、竖缝每 1.6m
       for (let k = 1; k < 10; k++) joints.push({ x: s * (P.hx + 0.03), y: P.plinth + k * 1.2, z: wingZ, w: 0.1, h: 0.1, d: wingD })
       for (let k = 1; k < 16; k++) joints.push({ x: s * (P.hx + 0.03), y: (P.wingTop + P.plinth) / 2, z: wingZ0 + (wingD * k) / 16, w: 0.1, h: P.wingTop - P.plinth, d: 0.1 })
-      // 舞台塔东西立面：水平缝每 1.85m、竖缝每 1.5m
-      for (let k = 1; k < 22; k++) joints.push({ x: s * (P.flyX + 0.42), y: P.plinth + k * 1.85, z: -12.7, w: 0.1, h: 0.1, d: 9.4 })
-      for (let k = 1; k < 7; k++) joints.push({ x: s * (P.flyX + 0.42), y: (P.flyTop + P.plinth) / 2, z: P.backZ + (9.4 * k) / 7, w: 0.1, h: P.flyTop - P.plinth, d: 0.1 })
+      // 舞台塔东西立面：分缝只留在拱窗区（17→32）之上，避免与拱窗叠成细网格
+      for (const y of [33.6, 37.3, 41.0]) joints.push({ x: s * (P.flyX + 0.42), y, z: -12.7, w: 0.1, h: 0.1, d: 9.4 })
+      for (let k = 1; k < 7; k++) joints.push({ x: s * (P.flyX + 0.42), y: 37.0, z: P.backZ + (9.4 * k) / 7, w: 0.1, h: 10.0, d: 0.1 })
     }
-    // 舞台塔后立面
-    for (let k = 1; k < 22; k++) joints.push({ x: 0, y: P.plinth + k * 1.85, z: P.backZ - 0.42, w: P.flyX * 2 + 0.8, h: 0.1, d: 0.1 })
-    for (let k = 1; k < 17; k++) joints.push({ x: -P.flyX + (P.flyX * 2 * k) / 17, y: (P.flyTop + P.plinth) / 2, z: P.backZ - 0.42, w: 0.1, h: P.flyTop - P.plinth, d: 0.1 })
+    // 舞台塔后立面：同上，只留在拱窗区之上
+    for (const y of [33.6, 37.3, 41.0]) joints.push({ x: 0, y, z: P.backZ - 0.42, w: P.flyX * 2 + 0.8, h: 0.1, d: 0.1 })
+    for (let k = 1; k < 9; k++) joints.push({ x: -P.flyX + (P.flyX * 2 * k) / 9, y: 37.0, z: P.backZ - 0.42, w: 0.1, h: 10.0, d: 0.1 })
     root.add(batch(joints, matStoneDim))
   }
 
