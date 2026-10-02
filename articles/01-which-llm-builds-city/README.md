@@ -27,7 +27,17 @@
 | weborbit-G5.gif | 求索智谷街区 · DeepSeek V4 Pro | 83 帧 / 8.3s / 7.6MB |
 | weborbit-city.gif | 全城 · 模都 llm-city | 75 帧 / 12.5s / 7.5MB |
 
-## shots/ · 静态图（待产出）
+## shots/ · 静态图（城主自拍 + 水印/拼图工具加工）
 
-高空全景、9 张竖版双视角拼图（街区俯瞰 + 地标特写）、3×3 九宫格全家福；
-网页实景截图，水印同 gif 风格，建筑名走文章图注。
+- `city.png` 全城天际线（城主自摄）→ `city.wm.png`（水印版）
+- `<街区>.png` × 9（城主自摄，文件名 = 街区 id）→ `<街区>.wm.png`（水印版）
+- `grid.png` 3×3 九宫格全家福（`<街区>.png` 自动拼装，每格底部街区名条，
+  总结段用）
+
+水印/拼图命令（产物不进库，重出即得）：
+
+```bash
+# 批量水印：根目录散图按文件名/全城自动解析，子目录按目录名解析
+python tools/shot-web/watermark.py --root articles/01-which-llm-builds-city/shots
+# 九宫格：拼 <街区>.png × 9 → grid.png（每格底部街区名条）
+```
