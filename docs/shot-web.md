@@ -69,8 +69,32 @@ python node_modules/.cache/llm-city/workshop/<你的 model_id>/web-verify.py \
   --url "http://localhost:5174/llm-city/?block=E6" --beats 3,8,20 --out <出图目录>
 ```
 
-**分工**：`shot` 是 agent 的日常自评（秒级、零浏览器、确定性）；本模板只在
-**shot 覆盖不了**（要看网页 IBL 实景材质、要看交互）时用；**最终验收仍以城主 `npm run preview` 为准**。
+## 街区绕飞 gif：tools/shot-web/web-gif.py（2026-10-02 固化）
+
+**公众号文章素材的官方通道**（城主裁决：素材以网页实景为准——shot 软件光栅化出不了
+IBL 玻璃反射的质感）。运镜直接用页面自带「巡航：街区环绕」（plazaOrbit），巡航速度
+经 `window.__city.tour.speed` 临时调快（一圈 ~8.3s 恰好做无缝循环）：
+
+```bash
+python tools/shot-web/web-gif.py --block D4    # 单街区；--city 全城
+# 常用参数：--width 640 --fps 10 --colors 128 --speed 6
+```
+
+- 口径（2026-10-02 终版实测）：街区 640×427 / 83 帧 / 8.3s 一圈 / 128 色全局调色板
+  ≈ 6.6~9.1MB；全城 12.5s 一圈 / 6fps / 128 色 ≈ 7.7MB（全城 GPU 帧率低，放慢圈速
+  防步进感）。均压在微信 10MB 单文件红线内；960 宽实测 21MB 超线，别盲目升宽。
+  帧率自适应：gif 帧数不超实际采集帧数——重复帧会被 Pillow 合并成超长定格（卡顿元凶）。
+- 水印：右上角「街区名 · 模型名」（取自页面街区选择器原文），白字黑描边，一行放不下
+  自动拆两行；全城 = 城名。建筑铭牌不进 gif（640 宽不可读且随遮挡闪变，城主裁决）。
+- 实现要点（踩过的坑，改前必读）：事件回调内只做内存解码、采完统一落盘（回调内
+  文件 IO 曾触发 Playwright 事件泵反复重放）；`Page.startScreencast` 前等 500ms
+  让合成器提交藏 HUD 后的新帧（否则首帧 HUD 残留）；按时间戳均匀重采样「一圈 × fps」
+  帧（screencast 到达率不均，按帧序号取会圈不整、循环跳变）。
+- 产物落 `node_modules/.cache/llm-city/web-gif/`（gitignore，不进版本库）。
+
+**分工**：`shot` 是 agent 的日常自评（秒级、零浏览器、确定性）；`web-gif` 只出
+**文章/展示用动图素材**；本模板（verify-template.py）看单帧实景与交互；
+**最终验收仍以城主 `npm run preview` 为准**。
 
 ## 已知边界
 
