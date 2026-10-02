@@ -6,6 +6,14 @@
 **gifs/ 与 shots/ 下的产物不进版本库**（gitignore）：均为工具可再生产物，重出配方
 见下；手工制作或外部素材请放本目录的 `manual/` 子目录（该目录进库）。
 
+## article/ · 文章正文（spec 驱动）
+
+- `spec.json` 正文文案与素材引用（相对本目录：`../shots/`、`../gifs/`）
+- `article.html` 复制版：截图内嵌 + GIF 平文占位 + 右上角「复制全文」按钮
+  （浏览器打开 → 点复制 → 去公众号编辑器粘贴；GIF 按占位行手动拖入）
+- `article_preview.html` 完整预览版：素材相对路径引用 + 414px 手机壳（本地看）
+- 重建：`python tools/article/build_article.py --spec articles/01-which-llm-builds-city/article/spec.json`
+
 ## gifs/ · 街区绕飞动图
 
 工具：`python tools/shot-web/web-gif.py --block <街区> --out articles/01-which-llm-builds-city/gifs`
