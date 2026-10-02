@@ -68,3 +68,7 @@ npm run gen:city              # 重新生成 web/src/generated/city-data.ts
 - **浏览器一律有头**（照 llm_test 铁律）：无头 = SwiftShader 软渲染，`--virtual-time-budget` 撞上
   动画循环会把整机卡死（2026-09-27 实测事故，一天四次硬重启，一张图 8 分 21 秒）。
   自评首选 `npm run shot`；确需网页实景见 `docs/shot-web.md`；禁用清单见 CITY.md「网页截图禁令」
+- **公众号文章工序**（2026-10-02 城主裁决）：spec 初稿（agent 起草，素材基于 blockplans/registry
+  事实）→ 构建两形态 html（`tools/article/build_article.py`）→ **主动提醒城主：「该阶段，建议找
+  大模型做下修改」**（初稿必经强模型改稿再定稿，01 篇先例）→ 城主改稿/定稿 → 重建 html 交付。
+  产物 html 为 spec 构建产物不入库（gitignore）；素材与配方在各篇 README
