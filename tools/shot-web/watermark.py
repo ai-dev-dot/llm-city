@@ -81,7 +81,9 @@ def main():
             if p.stem.endswith(".wm"):
                 continue   # 跳过已加水印的产物
             if p.parent == root:
-                jobs.append((p, ["模都 llm-city"]))
+                # 根目录散图：文件名是街区 id（如 D4.png）→ 街区水印；否则全城水印
+                bid = p.stem.upper()
+                jobs.append((p, [block_label(bid)] if re.fullmatch(r"[A-I]\d+", bid) else ["模都 llm-city"]))
             else:
                 jobs.append((p, [block_label(p.parent.name.upper())]))
     else:
