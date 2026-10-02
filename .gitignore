@@ -13,4 +13,4 @@ articles/*/shots/
 
 __pycache__/
 # 文章 html 为 spec 构建产物，同裁决不入库（重建命令在各篇 README）
-articles/*/article/article*.html
+articles/*/article/article.html

@@ -9,9 +9,13 @@
 ## article/ · 文章正文（spec 驱动）
 
 - `spec.json` 正文文案与素材引用（相对本目录：`../shots/`、`../gifs/`）
-- `article.html` 复制版：截图内嵌 + GIF 平文占位 + 右上角「复制全文」按钮
-  （浏览器打开 → 点复制 → 去公众号编辑器粘贴；GIF 按占位行手动拖入）
-- `article_preview.html` 完整预览版：素材相对路径引用 + 414px 手机壳（本地看）
+- `article.html` 复制版：**不入库**（gitignore）——截图 base64 内嵌 + GIF 平文占位 +
+  右上角「复制全文」按钮（浏览器打开 → 点复制 → 公众号粘贴；**一次性复制实验结论
+  （2026-10-02）：这是唯一可用通道**，全内嵌 gif 的 preview 版 ~110MB 剪贴板写不进；
+  编辑器「内容结构检测」的行高警告为实测口径误报，源样式与浏览器实测均合规，点
+  「继续插入」即可；GIF 按占位行手动拖入）
+- `article_preview.html` 完整预览版：**入库**——全相对路径轻量形态（0.02MB）+
+  414px 手机壳；注意其引用的 shots/gifs 素材不入库，他机查看需先按配方重出素材
 - 重建：`python tools/article/build_article.py --spec articles/01-which-llm-builds-city/article/spec.json`
 
 ## gifs/ · 街区绕飞动图

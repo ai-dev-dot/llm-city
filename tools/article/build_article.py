@@ -168,9 +168,8 @@ def to_data_uri(path: Path) -> str:
 
 def render_blocks(blocks, spec_dir: Path, mode: str, accent: str):
     """mode='copy'（复制版）：截图 base64 内嵌（已验证可粘贴公众号）、gif 平文占位；
-    mode='preview'（预览版）：截图同样 base64 内嵌（2026-10-02 城主纠正：内嵌是
-    已测试成功的方案，预览版也要能一次性复制），gif 保持相对路径（动图本地直接
-    看，且全量内嵌 ~100MB 不现实）。"""
+    mode='preview'（预览版）：全相对路径引用（2026-10-02 裁决：全内嵌 ~110MB
+    剪贴板写不进、一次性复制实验失败；预览退回轻量形态入库）。"""
     out = []
     for b in blocks:
         t = b["type"]
@@ -182,15 +181,15 @@ def render_blocks(blocks, spec_dir: Path, mode: str, accent: str):
             out.append(para(b["text"]))
         elif t == "img":
             p = (spec_dir / b["src"]).resolve()
-            src = to_data_uri(p) if mode in ("copy", "preview") else b["src"]
+            src = to_data_uri(p) if mode == "copy" else b["src"]
             out.append(img_block(src, b.get("caption")))
         elif t == "gif":
             if mode == "copy":
                 out.append(gif_slot(b["src"], spec_dir))
             else:
-                # 2026-10-02 城主裁决：预览版 gif 也 base64 内嵌（html 会很大，属预期）
-                p = (spec_dir / b["src"]).resolve()
-                out.append(img_block(to_data_uri(p), b.get("caption")))
+                # preview 全相对路径引用（2026-10-02 裁决回退：全内嵌 ~110MB 剪贴板
+                # 写不进、一次性复制实验失败；preview 退回轻量形态入库）
+                out.append(img_block(b["src"], b.get("caption")))
         elif t == "links":
             out.append(links_block(b["items"]))
         else:
