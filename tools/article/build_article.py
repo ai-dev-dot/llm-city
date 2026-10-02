@@ -237,9 +237,13 @@ def main():
     if notes:
         body_p.append(test_notes_block(notes))
     root_p = f'<div id="wx-article" style="{ROOT_STYLE}">{"".join(body_p)}</div>'
+    # 预览版也带复制按钮（2026-10-02 城主要求：试试一次性复制进公众号编辑器）。
+    # 预期与说明：预览版素材是相对路径引用，剪贴板 html 里的 src 粘贴到公众号编辑器
+    # 后按其域名解析会 404——截图大概率丢失，需实验验证；gif 体积过大（全量 base64
+    # 内嵌 ~100MB）无法走内嵌路线，丢失时仍需按 article.html 的占位行手动拖入。
     out2 = spec_dir / "article_preview.html"
     out2.write_text(PHONE_SHELL.format(title=spec["title"], bar="完整预览 · 素材为本地相对引用，仅本机可看",
-                                       body=root_p), encoding="utf-8")
+                                       body=COPY_BUTTON.replace("ACCENT", accent) + root_p), encoding="utf-8")
     print(f"OK 复制版 {out1}（{out1.stat().st_size / 1048576:.1f}MB，截图内嵌+GIF占位+复制按钮）")
     print(f"OK 预览版 {out2}（{out2.stat().st_size / 1048576:.2f}MB，相对路径+手机壳）")
     return 0
