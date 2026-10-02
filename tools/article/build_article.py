@@ -186,11 +186,7 @@ def render_blocks(blocks, spec_dir: Path, embed_images: bool, accent: str):
             if embed_images:
                 out.append(gif_slot(b["src"], spec_dir))
             else:
-                p = (spec_dir / b["src"]).resolve()
                 out.append(img_block(b["src"], b.get("caption")))
-                out.append(f'<p style="margin:4px 0 0;font-size:11px;color:#bbb;'
-                           f'text-align:center;">动图文件：{esc(b["src"])}'
-                           f'（{p.stat().st_size / 1048576:.1f}MB）</p>')
         elif t == "links":
             out.append(links_block(b["items"]))
         else:
