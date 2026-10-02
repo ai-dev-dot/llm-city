@@ -213,7 +213,7 @@ def main():
     for sec in spec.get("sections", []):
         if sec.get("heading"):
             body.append(h2(sec["heading"], accent))
-        body.append(render_blocks(sec.get("blocks", []), spec_dir, True, accent))
+        body.append(render_blocks(sec.get("blocks", []), spec_dir, "copy", accent))
     notes = spec.get("test_notes", list(DEFAULT_TEST_NOTES))
     if notes:
         body.append(test_notes_block(notes))
@@ -237,7 +237,7 @@ def main():
     for sec in spec.get("sections", []):
         if sec.get("heading"):
             body_p.append(h2(sec["heading"], accent))
-        body_p.append(render_blocks(sec.get("blocks", []), spec_dir, False, accent))
+        body_p.append(render_blocks(sec.get("blocks", []), spec_dir, "preview", accent))
     if notes:
         body_p.append(test_notes_block(notes))
     root_p = f'<div id="wx-article" style="{ROOT_STYLE}">{"".join(body_p)}</div>'
