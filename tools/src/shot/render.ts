@@ -23,11 +23,12 @@ export interface Amb {
 
 export const AMBIANTS: Record<'day' | 'dusk' | 'night', Amb> = {
   // [city-admin] 2026-09-27 终裁「自然日光」与网页端同步：渐变天穹（天顶蓝→地平线泛白）
-  // + 草绿大地 + 轻微空气透视。fogK 0.00035：600 距离约 19% 远景雾感（自然地平线），
-  // 建筑主体（<300 距离）雾侵蚀 <10% 不洗白——自评图观感与网页一致，不误导 builder 调立面。
+  // + 草绿大地。fogK 2026-10-02 城主改裁「自然光无雾感」（公众号文章素材要求）：
+  // 0.00035→0.0001，中近景（建筑/街区道路）雾感移除；极远处保留 ~10% 空气透视，
+  // 把地面边缘融进地平线防生硬切线。建筑主体（<300 距离）雾侵蚀 <3% 不改立面观感。
   day:   { skyZenith: [0.38, 0.59, 0.81], skyHorizon: [0.87, 0.91, 0.94], ground: [0.49, 0.60, 0.33],
            sunDir: [0.45, 0.82, 0.36], sunColor: [1.0, 0.96, 0.88], sunI: 0.95, ambI: 0.45,
-           fog: [0.87, 0.91, 0.94], fogK: 0.00035 },
+           fog: [0.87, 0.91, 0.94], fogK: 0.0001 },
   dusk:  { skyZenith: [0.43, 0.53, 0.72], skyHorizon: [0.95, 0.70, 0.48], ground: [0.56, 0.50, 0.45],
            sunDir: [-0.88, 0.28, 0.18], sunColor: [1.0, 0.69, 0.38], sunI: 0.7, ambI: 0.36,
            fog: [0.90, 0.72, 0.58], fogK: 0.0009 },
@@ -95,6 +96,42 @@ export function deriveCameras(bbox: { min: [number, number, number]; max: [numbe
   return cams
 }
 
+/** 绕飞机位序列——与 aerial 静图解耦的自适应轨道：
+ *  距离取「垂直装得下」（超高塔街区必须远）与「水平装得下」（矮胖街区拉近让主体占画）
+ *  的较大者；俯角固定 36°（航拍感）；θ0 与 aerial 同方位，首尾相接 GIF 无缝循环。 */
+export function deriveOrbitCameras(bbox: { min: [number, number, number]; max: [number, number, number] }, frames: number): Camera[] {
+  const cx = (bbox.min[0] + bbox.max[0]) / 2
+  const cz = (bbox.min[2] + bbox.max[2]) / 2
+  const y0 = bbox.min[1]
+  const H = Math.max(1e-3, bbox.max[1] - bbox.min[1])
+  const W = Math.max(1e-3, bbox.max[0] - bbox.min[0])
+  const D = Math.max(1e-3, bbox.max[2] - bbox.min[2])
+  // 画面纵横比固定 3:2（与 renderView 一致）：水平半视场 = atan(tan(fov/2)×1.5)
+  const fov = 50
+  const tanV = Math.tan((fov * Math.PI) / 360)
+  const tanH = tanV * 1.5
+  // 垂直约束（塔顶入画）：视线俯角 pitch、视锥半角 fov/2 时，塔顶方向与视线夹角 ≤ fov/2
+  // 解析解为 dist ≥ H(1−0.4)/(sin36°−cos36°·tan11°) ≈ 1.39H，取 1.5H 留余量
+  const dV = H * 1.5
+  const dH = (Math.hypot(W, D) * 1.4) / (2 * tanH)   // 街区对角入画的水平距离需求（含余量）
+  const dist = Math.max(dV, dH, 30)
+  const ty = y0 + H * 0.4
+  const pitch = (36 * Math.PI) / 180
+  const theta0 = Math.atan2(0.55, 0.75)      // 与 aerial 方位一致（构图习惯统一）
+  const cams: Camera[] = []
+  for (let k = 0; k < frames; k++) {
+    const theta = theta0 + (k / frames) * Math.PI * 2
+    cams.push({
+      eye: [cx + dist * Math.cos(pitch) * Math.sin(theta), ty + dist * Math.sin(pitch), cz + dist * Math.cos(pitch) * Math.cos(theta)],
+      target: [cx, ty, cz],
+      up: [0, 1, 0],
+      fovDeg: fov,
+      orthoH: 0,
+    })
+  }
+  return cams
+}
+
 interface Basis { right: [number, number, number]; up: [number, number, number]; fwd: [number, number, number]; eye: [number, number, number] }
 
 function basisOf(cam: Camera): Basis {
@@ -137,16 +174,26 @@ export function renderView(soup: TriSoup, cam: Camera, amb: Amb, width: number, 
   const near = 0.1
   const far = sceneR * 3 + 100
 
-  // 地面（大平面两三角形）并入渲染；下沉 0.02 防与建筑地被层共面 z-fighting
+  // 地面（网格化大平面）并入渲染；下沉 0.02 防与建筑地被层共面 z-fighting。
+  // 网格化同理：雾按三角形面心取距，整块单一大三角会被按面心距离整体雾化
+  // （近景机位下远端地面假白），32×32 细分后雾沿距离自然渐变
   const gR = sceneR * 2.5
-  const groundSoup: TriSoup = {
-    pos: Float32Array.of(
-      eye[0] - gR, -0.02, eye[2] - gR, eye[0] - gR, -0.02, eye[2] + gR, eye[0] + gR, -0.02, eye[2] + gR,
-      eye[0] - gR, -0.02, eye[2] - gR, eye[0] + gR, -0.02, eye[2] + gR, eye[0] + gR, -0.02, eye[2] - gR),
-    alb: Float32Array.of(...Array(18).fill(0).flatMap(() => amb.ground)),
-    emi: new Float32Array(18),
-    count: 2,
+  const GSEG = 32
+  const gStep = (gR * 2) / GSEG
+  const gPos = new Float32Array(GSEG * GSEG * 2 * 9)
+  const gAlb = new Float32Array(GSEG * GSEG * 2 * 9)
+  const gEmi = new Float32Array(GSEG * GSEG * 2 * 9)
+  for (let gi = 0, t = 0; gi < GSEG; gi++) {
+    for (let gj = 0; gj < GSEG; gj++, t += 18) {
+      const x0 = eye[0] - gR + gi * gStep, z0 = eye[2] - gR + gj * gStep
+      const x1 = x0 + gStep, z1 = z0 + gStep
+      gPos.set([x0, -0.02, z0, x0, -0.02, z1, x1, -0.02, z1, x0, -0.02, z0, x1, -0.02, z1, x1, -0.02, z0], t)
+      for (let v = 0; v < 6; v++) {
+        gAlb.set(amb.ground, t + v * 3)
+      }
+    }
   }
+  const groundSoup: TriSoup = { pos: gPos, alb: gAlb, emi: gEmi, count: GSEG * GSEG * 2 }
 
   const depth = new Float32Array(w * h).fill(Infinity)
   const color = new Float32Array(w * h * 3)

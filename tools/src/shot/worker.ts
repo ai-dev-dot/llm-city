@@ -2,8 +2,9 @@ import { parentPort, workerData } from 'node:worker_threads'
 import * as THREE from 'three'
 import { blocks } from '../../../lib/blocks/index'
 import { mulberry32, type Lot } from '../../../lib/ctx'
-import { AMBIANTS, deriveCameras, renderView, type TriSoup, type ViewName } from './render'
+import { AMBIANTS, deriveCameras, deriveOrbitCameras, renderView, type TriSoup, type ViewName } from './render'
 import { encodePng } from './png'
+import { encodeGif } from './gif'
 
 interface BlockEntry { name: string; moduleUrl: string; position: [number, number]; lot: Lot; seed: number }
 interface BlockContext { lots: Array<[number, number]>; grid: { blocks: number; blockPitch: number; roadWidth: number } }
@@ -12,12 +13,13 @@ const msg = workerData as {
   moduleUrl?: string                                   // 单建筑模式
   lot?: Lot
   seed?: number
-  entries?: BlockEntry[]                               // 街区模式：多建筑按宗地中心摆位
-  context?: BlockContext | null                        // 街区底图：全城草皮瓦 + 道路
+  entries?: BlockEntry[]                               // 街区/全城模式：多建筑按宗地中心摆位
+  context?: BlockContext | null                        // 底图：全城草皮瓦 + 道路
   views: ViewName[]
   ambs: Array<'day' | 'dusk' | 'night'>
   width: number
   custom?: { eye: [number, number, number]; target: [number, number, number]; fov?: number }
+  orbit?: { frames: number; amb: 'day' | 'dusk' | 'night'; maxBytes: number; frameMs: number; gamma?: number }   // 绕飞动画模式
 }
 
 try {
@@ -56,9 +58,11 @@ try {
     const half = (n - 1) / 2
     for (let i = 0; i <= n; i++) {
       const c = (i - half) * blockPitch - blockPitch / 2
-      const rx = new THREE.Mesh(new THREE.PlaneGeometry(roadWidth, span + roadWidth), roadMat)
+      // 长路 plane 沿长轴细分：渲染端雾按三角形面心取距，整条不分段的路会被按
+      // 「面心距离」整体雾化（近景机位下呈白条带、与两侧草皮脱节），细分后雾沿路渐变
+      const rx = new THREE.Mesh(new THREE.PlaneGeometry(roadWidth, span + roadWidth, 1, 48), roadMat)
       rx.rotation.x = -Math.PI / 2; rx.position.set(c, 0.05, 0)
-      const rz = new THREE.Mesh(new THREE.PlaneGeometry(span + roadWidth, roadWidth), roadMat)
+      const rz = new THREE.Mesh(new THREE.PlaneGeometry(span + roadWidth, roadWidth, 48, 1), roadMat)
       rz.rotation.x = -Math.PI / 2; rz.position.set(0, 0.05, c)
       contextRoot.add(rx, rz)
     }
@@ -162,37 +166,62 @@ try {
     }
   }
 
-  // ---- 渲染各视角 × 各环境 ----
-  const cams = deriveCameras({ min: bmin, max: bmax }, msg.views)
-  // 自定义机位：调用方给的相机三件套直接生效（与 deriveCameras 同一渲染路径）；先剔除再追加防重复渲染
-  const viewList: ViewName[] = [...msg.views]
-  {
-    const i = viewList.indexOf('custom')
-    if (i >= 0) viewList.splice(i, 1)
-  }
-  if (msg.custom) {
-    cams.custom = { eye: msg.custom.eye, target: msg.custom.target, up: [0, 1, 0], fovDeg: msg.custom.fov ?? 50, orthoH: 0 }
-    viewList.push('custom')
-  }
-  const shots: Array<{ view: string; amb: string; png: Buffer }> = []
-  for (const ambName of msg.ambs) {
-    const amb = AMBIANTS[ambName]
-    if (!amb) throw new Error(`未知环境：${ambName}（可选 day/dusk/night）`)
-    for (const viewName of viewList) {
-      const cam = cams[viewName]
-      if (!cam) throw new Error(`未知视角：${viewName}（可选 street/corner/aerial/top/front/back/left/right）`)
-      const rgb = renderView(soup, cam, amb, msg.width, Math.round(msg.width * 0.667))
-      shots.push({ view: viewName, amb: ambName, png: encodePng(rgb, msg.width, Math.round(msg.width * 0.667)) })
+  // ---- 渲染：绕飞动画模式（逐帧相机 → GIF，编码也在 worker 内——避免帧数据跨线程搬运） ----
+  const size = [(bmax[0] - bmin[0]).toFixed(1), (bmax[1] - bmin[1]).toFixed(1), (bmax[2] - bmin[2]).toFixed(1)]
+  if (msg.orbit) {
+    const amb = AMBIANTS[msg.orbit.amb]
+    if (!amb) throw new Error(`未知环境：${msg.orbit.amb}（可选 day/dusk/night）`)
+    const frames = Math.min(300, Math.max(2, Math.round(msg.orbit.frames)))   // 300 = 微信单文件帧数上限
+    const cams = deriveOrbitCameras({ min: bmin, max: bmax }, frames)
+    const height = Math.round(msg.width * 0.667)
+    const framesRgb: Uint8Array[] = []
+    for (let i = 0; i < cams.length; i++) {
+      framesRgb.push(renderView(soup, cams[i], amb, msg.width, height))
+      parentPort!.postMessage({ progress: { done: i + 1, total: cams.length } })
     }
-  }
+    // sRGB 提亮（仅 gif 路径）：光栅化输出线性光照值，网页端 three 有 sRGB 输出编码而
+    // 这里没有——gif 面向公众号读者（对比对象是网页截图），编码后观感与网页对齐。
+    // 动静图会打破 2026-09-27 城主终裁的自评口径，故只在 orbit 路径做。
+    const gamma = msg.orbit.gamma ?? 1
+    if (gamma > 0 && gamma !== 1) {
+      const lut = Uint8Array.from({ length: 256 }, (_, v) => Math.round(255 * Math.pow(v / 255, 1 / gamma)))
+      for (const f of framesRgb) for (let i = 0; i < f.length; i++) f[i] = lut[f[i]]
+    }
+    const { buf, meta } = encodeGif(framesRgb, msg.width, height, { frameMs: msg.orbit.frameMs, maxBytes: msg.orbit.maxBytes })
+    parentPort!.postMessage({ ok: true, triangles: soup.count, size, gif: buf, gifMeta: meta })
+  } else {
+    // ---- 渲染各视角 × 各环境 ----
+    const cams = deriveCameras({ min: bmin, max: bmax }, msg.views)
+    // 自定义机位：调用方给的相机三件套直接生效（与 deriveCameras 同一渲染路径）；先剔除再追加防重复渲染
+    const viewList: ViewName[] = [...msg.views]
+    {
+      const i = viewList.indexOf('custom')
+      if (i >= 0) viewList.splice(i, 1)
+    }
+    if (msg.custom) {
+      cams.custom = { eye: msg.custom.eye, target: msg.custom.target, up: [0, 1, 0], fovDeg: msg.custom.fov ?? 50, orthoH: 0 }
+      viewList.push('custom')
+    }
+    const shots: Array<{ view: string; amb: string; png: Buffer }> = []
+    for (const ambName of msg.ambs) {
+      const amb = AMBIANTS[ambName]
+      if (!amb) throw new Error(`未知环境：${ambName}（可选 day/dusk/night）`)
+      for (const viewName of viewList) {
+        const cam = cams[viewName]
+        if (!cam) throw new Error(`未知视角：${viewName}（可选 street/corner/aerial/top/front/back/left/right）`)
+        const rgb = renderView(soup, cam, amb, msg.width, Math.round(msg.width * 0.667))
+        shots.push({ view: viewName, amb: ambName, png: encodePng(rgb, msg.width, Math.round(msg.width * 0.667)) })
+      }
+    }
 
-  parentPort!.postMessage({
-    ok: true,
-    triangles: soup.count,
-    bbox: { min: bmin, max: bmax },
-    size: [(bmax[0] - bmin[0]).toFixed(1), (bmax[1] - bmin[1]).toFixed(1), (bmax[2] - bmin[2]).toFixed(1)],
-    shots,
-  })
+    parentPort!.postMessage({
+      ok: true,
+      triangles: soup.count,
+      bbox: { min: bmin, max: bmax },
+      size,
+      shots,
+    })
+  }
 } catch (e) {
   const err = e as Error
   parentPort!.postMessage({ ok: false, error: err.message ?? String(e), stack: err.stack })

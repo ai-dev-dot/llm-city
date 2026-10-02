@@ -99,14 +99,41 @@ async function main() {
     const width = Number(opt('width')) || undefined
     const outDir = opt('out')
     const block = opt('block')?.toUpperCase()
-    if (block) {
-      // 街区级 shot：定位含该街区的城 → 全部已登记建筑同场出图（总图自评）
-      let cityId: string | null = null
+    const orbit = args.includes('--orbit')
+    const orbitFrames = Number(opt('orbit-frames')) || undefined
+    const orbitFps = Number(opt('fps')) || undefined
+    const locateCityOfBlock = (b: string): string => {
       for (const c of allCities(repoRoot)) {
         const plan = JSON.parse(readFileSync(resolve(repoRoot, 'cities', c, 'plan.json'), 'utf8'))
-        if ((plan.lots as Array<{ district: string }>).some((l) => l.district.toUpperCase() === block)) { cityId = c; break }
+        if ((plan.lots as Array<{ district: string }>).some((l) => l.district.toUpperCase() === b)) return c
       }
-      if (!cityId) { console.error(`所有城的 plan 里都找不到街区 ${block}`); process.exit(2) }
+      console.error(`所有城的 plan 里都找不到街区 ${b}`)
+      process.exit(2)
+    }
+    if (orbit) {
+      // 绕飞动画：--orbit --block 街区id（街区绕飞）或 --orbit --city（全城绕飞）
+      const cityId = args.includes('--city') ? allCities(repoRoot)[0] : block ? locateCityOfBlock(block) : null
+      if (!cityId) { console.error('用法：npm run shot -- --orbit --block 街区id | --orbit --city'); process.exit(2) }
+      const { runOrbitShot } = await import('./shot/run')
+      const t0 = Date.now()
+      const lastLine = ''
+      const r = await runOrbitShot(repoRoot, cityDirOf(repoRoot, cityId), args.includes('--city') ? null : block!, {
+        frames: orbitFrames, fps: orbitFps, amb: (opt('amb') as 'day' | 'dusk' | 'night') ?? undefined, width, outDir,
+        gamma: Number(opt('gamma')) || undefined,
+        onProgress: (done, total) => process.stdout.write(`\r${lastLine}  渲染帧 ${done}/${total}`),
+      })
+      process.stdout.write('\n')
+      if (!r.ok) {
+        console.error(`✗ orbit 失败：${r.error}${r.stack ? `\n${r.stack}` : ''}`)
+        process.exit(2)
+      }
+      console.log(`● ${cityId} / ${args.includes('--city') ? '全城' : `街区 ${block}`}  ${r.triangles?.toLocaleString()} 三角形，包围盒 ${r.size?.join(' × ')}m，绕飞渲染+编码耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s`)
+      console.log(`  🌀 orbit-${opt('amb') ?? 'day'}.gif  ${r.framesUsed}/${r.framesTotal} 帧（step=${r.step}、${r.colors} 色），${(r.bytes! / 1048576).toFixed(2)}MB，播 ${r.durationS?.toFixed(1)}s  ${r.gifPath}`)
+      return
+    }
+    if (block) {
+      // 街区级 shot：定位含该街区的城 → 全部已登记建筑同场出图（总图自评）
+      const cityId = locateCityOfBlock(block)
       const t0 = Date.now()
       const r = await runBlockShot(repoRoot, cityDirOf(repoRoot, cityId), block, { views, ambs, width, outDir })
       if (!r.ok) {
@@ -223,6 +250,7 @@ async function main() {
       '  npm run probe -- <建筑目录名|建筑id> [--json]   # R13 退线自查（豁免建筑专用；有越界时退出码 1）',
       '  npm run shot -- <建筑目录名|建筑id> [--views ...] [--amb day,dusk,night] [--width 960] [--out 目录] [--eye x,y,z --target x,y,z --fov 度]',
       '  npm run shot -- --block <街区id> [--views ...] [--amb ...] [--width 1280]   # 街区总图：全部建筑同场 + 底图上下文',
+      '  npm run shot -- --orbit --block <街区id> | --orbit --city [--frames 50] [--fps 10] [--amb day] [--width 720]   # 绕飞循环 GIF',
       '  npm run demolish -- <建筑目录名|建筑id> [--yes] [--reason 文本]   # 城主拆除',
       '  npm run check-history -- --from=<rev> --to=<rev|WORKTREE>',
     ].join('\n'))
