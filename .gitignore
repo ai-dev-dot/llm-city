@@ -6,3 +6,7 @@ tools/.cache/
 .DS_Store
 .gstack/
 .zcode/
+
+# 文章素材：工具可再生成的产物不进库（重出配方在各篇 README；手工/外部素材放 manual/ 子目录）
+articles/*/gifs/
+articles/*/shots/
