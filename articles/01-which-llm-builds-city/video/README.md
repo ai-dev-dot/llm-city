@@ -4,9 +4,14 @@
 （台词第三稿，逐字定稿）+ `production-script.md`（18 段制作脚本）+ `spec.json`
 （引擎编排，门槛位已全置）。
 
-**成片**：`node_modules/.cache/llm-city/video01/moshi_v1.mp4`（1920×1080 60fps，
-148.8s，volc 咪仔 2.0 终配 + qsv 硬编；大资产不入库）。末尾自动拼 5s 测试说明页
-（文案 = `../article/spec.json` test_notes 四条同源）。
+**成片**：本目录 `moshi_v1.mp4`（1920×1080 60fps，148.8s，volc 咪仔 2.0 终配 +
+qsv 硬编；2026-10-03 城主定稿，产物不入库见 .gitignore）。末尾自动拼 5s 测试
+说明页（文案 = `../article/spec.json` test_notes 四条同源）。
+
+**发布产物**：本目录 `publish/`——双封面（竖 1080×1920 九宫格标题海报 /
+横 1440×1080 全城压字）+ `publish.html`（五平台分卡发布文案页，浏览器打开
+逐字段复制；话题/tags 城主未给留空待补）。重出：`--stage publish`（封面文字
+门槛 cover_locked 已置）。
 
 ## 工具链（本仓 `tools/video/`，编排层）
 
@@ -47,4 +52,5 @@ python D:/APP/llm_test/tools/video_maker.py \
   （tts_confirmed=true）；镜级特例：s18 平和语气 + 正常语速（音调/语速反馈修复）
 - 画面：38 镜；s06 = 空城规划图；s01 镜尾 0.15s（接缝反馈修复）
 - 无 BGM（版权惯例，发布时平台曲库自配）
-- 封面/发布文案：未做（门槛 cover_locked/copy_locked 待城主给文案）
+- 封面/发布文案：已定稿出片（cover_locked/copy_locked=true，2026-10-03 城主给题
+  「让大模型各建一个街区，最后谁盖得最好？」；标题=简介=同句，话题留空）

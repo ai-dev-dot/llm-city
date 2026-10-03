@@ -480,6 +480,22 @@ def main() -> int:
         },
         "overlays": overlays,
         "shots": shots,
+        "publish": {
+            "cover_locked": True,    # 2026-10-03 城主定稿给题
+            "copy_locked": True,
+            "title_lines": ["让大模型各建一个街区，", "最后谁盖得最好？"],
+            "accent_words": ["大模型", "最好"],
+            "cover_vertical": {"still": str(WORK / "layouts/layout_grid9.png")},
+            #   九宫格做竖版图带（1080×608 cover 裁切损失最小；G5 帧塔尖被切，
+            #   2026-10-03 目检换图）；点题「各建一个街区」
+            "cover_horizontal": {"clip": "city", "start": 3.0},  # 全城帧
+            "copy": {
+                "title": "让大模型各建一个街区，最后谁盖得最好？",
+                "description": "让大模型各建一个街区，最后谁盖得最好？",
+                "topics": [],    # 城主未给，留空待补
+                "tags": [],
+            },
+        },
     }
     SPEC_PATH.write_text(
         json.dumps(spec, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")

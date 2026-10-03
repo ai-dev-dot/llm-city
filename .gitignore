@@ -14,3 +14,7 @@ articles/*/shots/
 __pycache__/
 # 文章 html 为 spec 构建产物，同裁决不入库（重建命令在各篇 README）
 articles/*/article/article.html
+
+# 视频/发布产物：成片 mp4 与双封面、发布文案页为工具再生成产物（重出配方在 video/README.md），本地交付不入库
+articles/*/video/*.mp4
+articles/*/video/publish/

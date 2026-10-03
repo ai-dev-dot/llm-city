@@ -17,6 +17,31 @@
  },
  "narration_locked": true,
  "tts_confirmed": true,
+ "publish": {
+  "cover_locked": true,
+  "copy_locked": true,
+  "title_lines": [
+   "让大模型各建一个街区，",
+   "最后谁盖得最好？"
+  ],
+  "accent_words": [
+   "大模型",
+   "最好"
+  ],
+  "cover_vertical": {
+   "still": "D:\\APP\\llm-city\\node_modules\\.cache\\llm-city\\video01\\layouts\\layout_grid9.png"
+  },
+  "cover_horizontal": {
+   "clip": "city",
+   "start": 3.0
+  },
+  "copy": {
+   "title": "让大模型各建一个街区，最后谁盖得最好？",
+   "description": "让大模型各建一个街区，最后谁盖得最好？",
+   "topics": [],
+   "tags": []
+  }
+ },
  "test_notes": {
   "title": "【测试说明】",
   "items": [
