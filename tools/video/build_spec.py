@@ -262,15 +262,17 @@ def ov_overlays() -> list[dict]:
 
 def S(id, narration, *, clip=None, start=0.0, still=None, dark=False,
       still_fit=None, infos=(), hooks=(), annos=(), window_hooks=(),
-      instruction=None, rate=None):
-    """单镜构造：bg 视频镜 / still 静图镜 / dark 纯底镜。instruction/rate =
-    镜级语气指令与语速覆盖（volc 语速同刻度整数，10=+10%、0=正常、负值更慢；
-    指纹含 → 自动单镜重采）。"""
+      instruction=None, rate=None, tail=None):
+    """单镜构造：bg 视频镜 / still 静图镜 / dark 纯底镜。instruction/rate/tail =
+    镜级语气指令/语速/镜尾静默覆盖（volc 语速同刻度整数，10=+10%、0=正常、
+    负值更慢；指纹含 rate/instruction → 自动单镜重采；tail 只影响合成时长）。"""
     d: dict = {"id": id, "narration": narration}
     if instruction:
         d["instruction"] = instruction
     if rate is not None:
         d["rate"] = rate
+    if tail is not None:
+        d["tail"] = tail
     if clip:
         d["bg"] = {"clip": clip, "start": start}
     elif still:
@@ -302,7 +304,8 @@ def build_shots() -> list[dict]:
     shots = [
         # 01 开场
         S("s01", "给大模型一块地，让它自己盖楼，",
-          clip="G5", start=0, hooks=["hook_open"]),
+          clip="G5", start=0, hooks=["hook_open"],
+          tail=0.15),   # 2026-10-03 城主反馈：与 s02 间隔偏长——镜尾收紧
         S("s02", "最后能盖成什么样？", clip="city", start=0),
         # 02 起因
         S("s03", "我之前买了好几个 AI 编程套餐，最近厂商又一直送额度。",
