@@ -117,12 +117,13 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   const rng = ctx.rng
 
   // 地面（宗地 40×20，铺装+草皮满铺）
-  root.add(box(40, 0.2, 20, M(C.pave), 0, -0.1, 0))
-  root.add(box(36, 0.05, 16, M(C.paveDark), 0, 0.025, 0))
-  root.add(box(36, 0.04, 1.4, M(C.grass), 0, 0.02, -8.3))
-  root.add(box(36, 0.04, 1.4, M(C.grass), 0, 0.02, 8.3))
-  root.add(box(36, 0.04, 0.5, M(C.moss), 0, 0.02, -7.4))
-  root.add(box(36, 0.04, 0.5, M(C.moss), 0, 0.02, 7.4))
+  root.add(box(40, 0.2, 20, M(C.brickDeep), 0, -0.1, 0))
+  for (let gx = -19; gx <= 19; gx += 2) {
+    for (let gz = -9; gz <= 9; gz += 2) {
+      const inYard = Math.abs(gx) <= 17 && Math.abs(gz) <= 7
+      root.add(box(1.8, 0.04, 1.8, M(inYard ? C.pave : C.moss), gx, 0.02, gz))
+    }
+  }
 
   // 老茶馆（西院，16×8）+ 手作铺（东院，14×8）+ 连廊
   const tea = new THREE.Group()
@@ -137,8 +138,10 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   tea.add(doorRing(0, 1.2, 4.2))
   tea.add(lattice(-3.5, 1.0, 4.12, 2.2, 1.4))
   tea.add(lattice(3.5, 1.0, 4.12, 2.2, 1.4))
-  tea.add(lattice(-6.1, 1.1, 0, 3, 1.2, Math.PI / 2))
-  tea.add(lattice(6.1, 1.1, 0, 3, 1.2, Math.PI / 2))
+  tea.add(lattice(-6.1, 1.1, -2.2, 3, 1.2, Math.PI / 2))
+  tea.add(lattice(-6.1, 1.1, 2.2, 3, 1.2, Math.PI / 2))
+  tea.add(lattice(6.1, 1.1, -2.2, 3, 1.2, Math.PI / 2))
+  tea.add(lattice(6.1, 1.1, 2.2, 3, 1.2, Math.PI / 2))
   tea.position.set(-11, 0, -2)
   root.add(tea)
 
@@ -154,8 +157,10 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   shop.add(doorRing(0, 1.1, 4.2))
   shop.add(lattice(-3, 1.0, 4.12, 2, 1.2))
   shop.add(lattice(3, 1.0, 4.12, 2, 1.2))
-  shop.add(lattice(-5.1, 1.0, 0, 3, 1.2, Math.PI / 2))
-  shop.add(lattice(5.1, 1.0, 0, 3, 1.2, Math.PI / 2))
+  shop.add(lattice(-5.1, 1.0, -2.2, 3, 1.2, Math.PI / 2))
+  shop.add(lattice(-5.1, 1.0, 2.2, 3, 1.2, Math.PI / 2))
+  shop.add(lattice(5.1, 1.0, -2.2, 3, 1.2, Math.PI / 2))
+  shop.add(lattice(5.1, 1.0, 2.2, 3, 1.2, Math.PI / 2))
   shop.position.set(11, 0, 2)
   root.add(shop)
 

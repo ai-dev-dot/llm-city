@@ -91,15 +91,13 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   const rng = ctx.rng
 
   // 宗地 20×20 满铺草皮+石板步道十字
-  root.add(box(20, 0.2, 20, M(C.grass), 0, -0.1, 0))
-  root.add(box(20, 0.06, 2.4, M(C.paveDark), 0, 0.03, 0))   // 东西步道
-  root.add(box(2.4, 0.06, 20, M(C.paveDark), 0, 0.03, 0))   // 南北步道
-  root.add(box(2.4, 0.06, 2.4, M(C.pave), 0, 0.03, 0))      // 中央石�?
-  // 草皮与步道间的青苔镶边
-  root.add(box(20, 0.04, 0.4, M(C.moss), 0, 0.02, -1.5))
-  root.add(box(20, 0.04, 0.4, M(C.moss), 0, 0.02, 1.5))
-  root.add(box(0.4, 0.04, 20, M(C.moss), -1.5, 0.02, 0))
-  root.add(box(0.4, 0.04, 20, M(C.moss), 1.5, 0.02, 0))
+  root.add(box(20, 0.2, 20, M(C.brickDeep), 0, -0.1, 0))
+  for (let gx = -9; gx <= 9; gx += 2) {
+    for (let gz = -9; gz <= 9; gz += 2) {
+      const onLane = Math.abs(gx) <= 1.2 || Math.abs(gz) <= 1.2
+      root.add(box(1.8, 0.04, 1.8, M(onLane ? C.paveDark : C.pave), gx, 0.02, gz))
+    }
+  }
 
   // 凉棚本体：四木柱 + 双层人字青瓦顶
   const pav = new THREE.Group()

@@ -58,15 +58,17 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   const rng = ctx.rng
 
   // 宗地 20×20 满铺草皮（草坡基底）
-  root.add(box(20, 0.2, 20, M(C.grass), 0, -0.1, 0))
+  root.add(box(20, 0.2, 20, M(C.brickDeep), 0, -0.1, 0))
+  for (let gx = -9; gx <= 9; gx += 2) {
+    for (let gz = -9; gz <= 9; gz += 2) {
+      const onTrack = Math.abs(gz - 7.6) < 1.6 || Math.abs(gz + 7.6) < 1.6 || Math.abs(gx - 7.6) < 1.6 || Math.abs(gx + 7.6) < 1.6
+      const onLawn = Math.abs(gx) <= 6.2 && Math.abs(gz) <= 6.2
+      root.add(box(1.8, 0.04, 1.8, M(onTrack ? C.paveDark : onLawn ? C.grass : C.pave), gx, 0.02, gz))
+    }
+  }
   // 中央抬高草坪（草坡）
   root.add(box(12, 1.2, 12, M(C.grassDeep), 0, 0.6, 0))
   root.add(box(12.4, 0.3, 12.4, M(C.moss), 0, 0.15, 0))
-  // 绕草坡步道（环形石板）
-  root.add(box(20, 0.06, 2.4, M(C.paveDark), 0, 0.03, -7.6))
-  root.add(box(20, 0.06, 2.4, M(C.paveDark), 0, 0.03, 7.6))
-  root.add(box(2.4, 0.06, 20, M(C.paveDark), -7.6, 0.03, 0))
-  root.add(box(2.4, 0.06, 20, M(C.paveDark), 7.6, 0.03, 0))
   // 草坡顶点缀
   root.add(ctx.blocks.tree({ x: -3, z: -3, scale: 1.0, seed: 1 }))
   root.add(ctx.blocks.tree({ x: 3, z: 3, scale: 1.1, seed: 2 }))

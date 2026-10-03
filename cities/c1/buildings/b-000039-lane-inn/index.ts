@@ -147,8 +147,10 @@ function courtHouse(x: number, z: number, w: number, d: number, h: number, facin
   const faceRot = facing === 1 ? 0 : Math.PI
   g.add(lattice(-w / 4, 0.9, fz + facing * 0.05, w / 3.2, 1.2, faceRot))
   g.add(lattice(w / 4, 0.9, fz + facing * 0.05, w / 3.2, 1.2, faceRot))
-  g.add(lattice(-(w / 2 + 0.05), 1.0, 0, d / 3, 1.0, Math.PI / 2))
-  g.add(lattice(w / 2 + 0.05, 1.0, 0, d / 3, 1.0, Math.PI / 2))
+  g.add(lattice(-(w / 2 + 0.05), 1.0, -d / 4, d / 3, 1.0, Math.PI / 2))
+  g.add(lattice(-(w / 2 + 0.05), 1.0, d / 4, d / 3, 1.0, Math.PI / 2))
+  g.add(lattice(w / 2 + 0.05, 1.0, -d / 4, d / 3, 1.0, Math.PI / 2))
+  g.add(lattice(w / 2 + 0.05, 1.0, d / 4, d / 3, 1.0, Math.PI / 2))
   g.position.set(x, 0, z)
   return g
 }
@@ -157,19 +159,14 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   const root = new THREE.Group()
   const rng = ctx.rng
 
-  root.add(box(40, 0.2, 20, M(C.pave), 0, -0.1, 0))
-  root.add(box(40, 0.06, 4.4, M(C.paveDark), 0, 0.03, 0))
-  for (let i = 0; i < 16; i++) {
-    const x = -18 + i * (36 / 15)
-    root.add(box(1.6, 0.08, 2.0, M(i % 2 ? C.pave : C.paveDark), x, 0.06, -1.1 + (i % 2) * 0.2))
-    root.add(box(1.6, 0.08, 2.0, M(i % 2 ? C.paveDark : C.pave), x, 0.06, 1.1 - (i % 2) * 0.2))
+  root.add(box(40, 0.2, 20, M(C.brickDeep), 0, -0.1, 0))
+  for (let gx = -19; gx <= 19; gx += 2) {
+    for (let gz = -9; gz <= 9; gz += 2) {
+      const inLane = Math.abs(gz) <= 2.2
+      const inYard = Math.abs(gz) >= 3.2 && Math.abs(gz) <= 7.6
+      root.add(box(1.8, 0.04, 1.8, M(inLane ? C.paveDark : inYard ? C.pave : C.moss), gx, 0.02, gz))
+    }
   }
-  root.add(box(36, 0.05, 4.4, M(C.pave), 0, 0.025, -5.4))
-  root.add(box(36, 0.05, 4.4, M(C.pave), 0, 0.025, 5.4))
-  root.add(box(36, 0.04, 1.4, M(C.grass), 0, 0.02, -7.3))
-  root.add(box(36, 0.04, 1.4, M(C.grass), 0, 0.02, 7.3))
-  root.add(box(36, 0.04, 0.5, M(C.moss), 0, 0.02, -3.6))
-  root.add(box(36, 0.04, 0.5, M(C.moss), 0, 0.02, 3.6))
 
   const houses: Array<[number, number, number, number, number, 1 | -1]> = [
     [-13, -4.8, 9, 5.2, 5.2, 1],
