@@ -13,8 +13,8 @@ import { lantern } from '../../blocks/fledge-alpha/lantern'
 
 const C = {
   brick: '#8C7A6B', plaster: '#E6DCC8', roof: '#4A4640', roofDeep: '#3B3833',
-  wood: '#6E4F33', pave: '#B8AE9E', paveDark: '#9C9284', moss: '#7E8C72',
-  grass: '#8C9E8B', lantern: '#FFD98A', rock: '#A9A69E',
+  wood: '#6E4F33', pave: '#A89B7F', paveDark: '#5D564A', moss: '#5F6B52',
+  grass: '#7C8A6E', lantern: '#FFD98A', rock: '#A9A69E',
 }
 
 const matCache = new Map<string, THREE.MeshStandardMaterial>()
@@ -91,11 +91,11 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   const rng = ctx.rng
 
   // 宗地 20×20 满铺草皮+石板步道十字
-  root.add(box(20, 0.2, 20, M(C.brickDeep), 0, -0.1, 0))
+  root.add(box(20, 0.24, 20, M(C.brickDeep), 0, 0, 0))
   for (let gx = -9; gx <= 9; gx += 2) {
     for (let gz = -9; gz <= 9; gz += 2) {
       const onLane = Math.abs(gx) <= 1.2 || Math.abs(gz) <= 1.2
-      root.add(box(1.8, 0.04, 1.8, M(onLane ? C.paveDark : C.pave), gx, 0.02, gz))
+      root.add(box(1.8, 0.04, 1.8, M(onLane ? C.paveDark : C.pave), gx, 0.12, gz))
     }
   }
 
@@ -121,8 +121,8 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   root.add(streetLampHigh(6.8, 6.8))
   root.add(streetLampHigh(0, -9))
   root.add(streetLampHigh(0, 9))
-  const l1 = lantern({ x: -6.8, z: 6.8, scale: 0.8 }); l1.position.y = 4.0; root.add(l1)
-  const l2 = lantern({ x: 6.8, z: -6.8, scale: 0.8 }); l2.position.y = 4.0; root.add(l2)
+  const l1 = lantern({ x: -6.8, z: 6.8, scale: 0.8 }); l1.position.y = 0; root.add(l1)
+  const l2 = lantern({ x: 6.8, z: -6.8, scale: 0.8 }); l2.position.y = 0; root.add(l2)
 
   // 行道树与绿篱
   root.add(ctx.blocks.tree({ x: -7.4, z: 0, scale: 0.9, seed: 1 }))

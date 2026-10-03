@@ -26,10 +26,10 @@ const C = {
   roof: '#4A4640',
   roofDeep: '#3B3833',
   wood: '#6E4F33',
-  pave: '#B8AE9E',
-  paveDark: '#9C9284',
-  moss: '#7E8C72',
-  grass: '#8C9E8B',
+  pave: '#A89B7F',
+  paveDark: '#5D564A',
+  moss: '#5F6B52',
+  grass: '#7C8A6E',
   lantern: '#FFD98A',
   rock: '#A9A69E',
 }
@@ -159,12 +159,12 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   const root = new THREE.Group()
   const rng = ctx.rng
 
-  root.add(box(60, 0.2, 20, M(C.brickDeep), 0, -0.1, 0))
+  root.add(box(60, 0.24, 20, M(C.brickDeep), 0, 0, 0))
   for (let gx = -29; gx <= 29; gx += 2) {
     for (let gz = -9; gz <= 9; gz += 2) {
       const inLane = Math.abs(gz) <= 2.2
       const inYard = Math.abs(gz) >= 3.2 && Math.abs(gz) <= 7.6
-      root.add(box(1.8, 0.04, 1.8, M(inLane ? C.paveDark : inYard ? C.pave : C.moss), gx, 0.02, gz))
+      root.add(box(1.8, 0.04, 1.8, M(inLane ? C.paveDark : inYard ? C.pave : C.moss), gx, 0.12, gz))
     }
   }
 
@@ -199,8 +199,8 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     root.add(streetLampHigh(x + 2.9, 2.6))
   }
   for (const x of lampX) {
-    const l1 = lantern({ x, z: -2.6, scale: 0.8 }); l1.position.y = 4.4; root.add(l1)
-    const l2 = lantern({ x: x + 2.9, z: 2.6, scale: 0.8 }); l2.position.y = 4.4; root.add(l2)
+    const l1 = lantern({ x, z: -2.6, scale: 0.8 }); l1.position.y = 0; root.add(l1)
+    const l2 = lantern({ x: x + 2.9, z: 2.6, scale: 0.8 }); l2.position.y = 0; root.add(l2)
   }
   for (let i = 0; i < 6; i++) {
     const x = -22 + i * 9
