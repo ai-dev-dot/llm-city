@@ -9344,7 +9344,8 @@
       "deepseek-v4-pro",
       "longcat-2.5-preview-free",
       "space-bunny",
-      "nemotron-3-ultra"
+      "nemotron-3-ultra",
+      "fledge-alpha"
     ],
     "sharedBlocks": []
   }
