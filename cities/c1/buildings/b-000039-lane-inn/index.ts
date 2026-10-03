@@ -65,6 +65,9 @@ function roof(w: number, d: number, h: number, color: string, x: number, y: numb
   g.add(a); g.add(b)
   // 脊瓦
   g.add(box(w, 0.16, 0.3, M(C.roofDeep), 0, h + 0.05, 0))
+  const endCap = (px: number) => { const s = new THREE.Shape(); s.moveTo(-(d / 2), 0); s.lineTo(d / 2, 0); s.lineTo(0, h); s.closePath(); const geo = new THREE.ExtrudeGeometry(s, { depth: 0.18, bevelEnabled: false }); const m = new THREE.Mesh(geo, M(C.plaster)); m.rotation.y = Math.PI / 2; m.position.set(px, 0, 0); m.castShadow = true; return m }
+  g.add(endCap(-w / 2))
+  g.add(endCap(w / 2 - 0.18))
   g.position.set(x, y, z)
   return g
 }
@@ -134,11 +137,10 @@ function courtHouse(x: number, z: number, w: number, d: number, h: number, facin
   g.add(box(w, h, d, M(C.plaster), 0, h / 2, 0))
   g.add(box(w + 0.2, 0.5, d + 0.2, M(C.brick), 0, 0.25, 0))
   g.add(roof(w + 0.8, d + 0.8, h * 0.55, C.roof, 0, h, 0))
-  g.add(roof(w + 0.4, d + 0.4, h * 0.3, C.roofDeep, 0, h + h * 0.55, 0))
-  g.add(cornerSphere(-(w / 2 + 0.1), h + h * 0.55, -(d / 2 + 0.1)))
-  g.add(cornerSphere(w / 2 + 0.1, h + h * 0.55, -(d / 2 + 0.1)))
-  g.add(cornerSphere(-(w / 2 + 0.1), h + h * 0.55, d / 2 + 0.1))
-  g.add(cornerSphere(w / 2 + 0.1, h + h * 0.55, d / 2 + 0.1))
+  g.add(cornerSphere(-(w / 2 + 0.1), h + 0.1, -(d / 2 + 0.1)))
+  g.add(cornerSphere(w / 2 + 0.1, h + 0.1, -(d / 2 + 0.1)))
+  g.add(cornerSphere(-(w / 2 + 0.1), h + 0.1, d / 2 + 0.1))
+  g.add(cornerSphere(w / 2 + 0.1, h + 0.1, d / 2 + 0.1))
   const fz = facing * (d / 2 + 0.06)
   g.add(box(1.2, 2.2, 0.12, M(C.wood), 0, 1.1, fz))
   g.add(doorRing(0, 1.1, fz + facing * 0.08))

@@ -46,6 +46,9 @@ function roof(w: number, d: number, h: number, color: string, x: number, y: numb
   b.castShadow = true; b.receiveShadow = true
   g.add(a); g.add(b)
   g.add(box(w, 0.16, 0.3, M(C.roofDeep), 0, h + 0.05, 0))
+  const endCap = (px: number) => { const s = new THREE.Shape(); s.moveTo(-(d / 2), 0); s.lineTo(d / 2, 0); s.lineTo(0, h); s.closePath(); const geo = new THREE.ExtrudeGeometry(s, { depth: 0.18, bevelEnabled: false }); const m = new THREE.Mesh(geo, M(C.plaster)); m.rotation.y = Math.PI / 2; m.position.set(px, 0, 0); m.castShadow = true; return m }
+  g.add(endCap(-w / 2))
+  g.add(endCap(w / 2 - 0.18))
   g.position.set(x, y, z)
   return g
 }
@@ -105,7 +108,6 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     col.position.set(px, 1.7, pz); col.castShadow = true; pav.add(col)
   }
   pav.add(roof(6.6, 6.6, 1.8, C.roof, 0, 3.4, 0))
-  pav.add(roof(6.0, 6.0, 1.2, C.roofDeep, 0, 5.2, 0))
   pav.add(lattice(0, 4.6, 3.2, 4.4, 1.0))
   root.add(pav)
 
