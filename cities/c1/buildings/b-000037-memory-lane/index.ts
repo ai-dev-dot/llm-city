@@ -136,6 +136,7 @@ function courtHouse(x: number, z: number, w: number, d: number, h: number, facin
   const g = new THREE.Group()
   g.add(box(w, h, d, M(C.plaster), 0, h / 2, 0))
   g.add(box(w + 0.2, 0.5, d + 0.2, M(C.brick), 0, 0.25, 0))
+  g.add(box(w, 0.4, d, M(C.plaster), 0, h + 0.2, 0))
   g.add(roof(w + 0.8, d + 0.8, h * 0.55, C.roof, 0, h, 0))
   g.add(cornerSphere(-(w / 2 + 0.1), h + 0.1, -(d / 2 + 0.1)))
   g.add(cornerSphere(w / 2 + 0.3, h + 0.1, -(d / 2 + 0.1)))

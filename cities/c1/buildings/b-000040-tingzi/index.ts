@@ -105,6 +105,7 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
     const col = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 3.4, 12), M(C.wood))
     col.position.set(px, 1.7, pz); col.castShadow = true; pav.add(col)
   }
+  pav.add(box(5.6, 0.3, 5.6, M(C.wood), 0, 3.5, 0))
   pav.add(roof(6.6, 6.6, 1.8, C.roof, 0, 3.4, 0))
   pav.add(lattice(0, 4.6, 3.2, 4.4, 1.0))
   root.add(pav)
