@@ -22,10 +22,13 @@ qsv 硬编；2026-10-03 城主定稿，产物不入库见 .gitignore）。末尾
 | `shot_empty_city.py` | 空城截图（有头浏览器运行时隐藏 35 建筑组，s06 用） | `empty_city.png` |
 | `build_spec.py` | **spec 单源**：台词逐字拆 38 镜（脚本核对 863 字一致）+ 信息条/强调字/标注层 | `spec.json`（入库）+ `cards/overlays/anno_*.png` |
 
-**通用视频引擎 = `D:\APP\llm_test\tools\video_maker.py`**（不复制、跨仓调用；
-编码参数 encode_args 单源在 pk_video_maker，缺省 qsv）。适配层约定：spec 的
-`work_dir`/`still` 用绝对路径落本仓缓存区；volc key 随引擎 ROOT 解析
-（`llm_test/tmp/volc_tts_key.json`）。
+**通用视频引擎 = llm_test 的 media_kit 包**（2026-10-03 包化：一次性
+`python -m pip install -e D:\APP\llm_test --no-deps` 后，import 走
+`media_kit.*`、CLI 直跑 `python D:/APP/llm_test/tools/video_maker.py`
+均可用；编码参数 encode_args 单源，缺省 qsv）。适配层约定：spec 的
+`work_dir`/`still` 用绝对路径落本仓缓存区；volc key 优先本仓自管
+（env `VOLC_TTS_API_KEY` / `VOLC_TTS_KEY_FILE`，三级解析，不设则回落
+llm_test/tmp 的母仓 key）。
 
 ## 重跑 / 改镜指南
 
@@ -33,7 +36,7 @@ qsv 硬编；2026-10-03 城主定稿，产物不入库见 .gitignore）。末尾
 python tools/video/build_spec.py        # 改镜表/叠层后重建 spec（门槛位自动继承）
 python D:/APP/llm_test/tools/video_maker.py \
     --spec D:/APP/llm-city/articles/01-which-llm-builds-city/video/spec.json \
-    --stage tts|assemble|publish        # 单段重跑；assemble 加 --draft 出草稿
+    --stage tts|assemble|publish        # 单段重跑（配音 2026-10-03 起直接 volc 终配）
 ```
 
 - **单镜改台词/语速/语气**：build_spec.py 的 `S(...)` 支持 `tts_text` 注音、

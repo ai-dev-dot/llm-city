@@ -33,10 +33,9 @@ sys.stdout.reconfigure(encoding="utf-8")   # Windows cp936 防线（本仓 Pytho
 
 REPO = Path(__file__).resolve().parents[2]
 CACHE = REPO / "node_modules/.cache/llm-city/web-gif/frames"
-LLM_TEST_ROOT = Path(r"D:\APP\llm_test")   # 适配层固化：通用视频引擎唯一源（tools/video_maker.py）
-if str(LLM_TEST_ROOT) not in sys.path:
-    sys.path.insert(0, str(LLM_TEST_ROOT))
-from tools.pk_video_maker import encode_args, ENCODER_DEFAULT   # noqa: E402 编码参数单源
+# 引用姿势切换（2026-10-03 llm_test 包化）：写死 sys.path hack 废除，改
+# media_kit 包（一次性安装：python -m pip install -e D:\APP\llm_test --no-deps）
+from media_kit.pk_video_maker import encode_args, ENCODER_DEFAULT   # noqa: E402 编码参数单源
 
 TARGET_FPS = 30      # 兜底 clip.mp4 网格（video_maker.stage_capture 同款）
 
