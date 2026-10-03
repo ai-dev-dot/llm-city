@@ -939,5 +939,7 @@
    ],
    "tts_text": "以上这九个街区，你最喜欢哪个呢？评论区聊聊。"
   }
- ]
+ ],
+ "tts_confirmed": true,
+ "_tts_note": "2026-10-03 城主验收草稿片后裁决「出正片」：tts_confirmed=true，volc 咪仔 2.0 @10 终配"
 }
