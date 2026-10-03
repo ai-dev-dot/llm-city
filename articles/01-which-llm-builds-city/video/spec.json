@@ -16,6 +16,7 @@
   "_note": "现役音色档案 §2.4（咪仔 2.0 @10）；草稿=edge 晓晓同刻度试听"
  },
  "narration_locked": true,
+ "tts_confirmed": true,
  "test_notes": {
   "title": "【测试说明】",
   "items": [
@@ -263,7 +264,7 @@
   {
    "id": "s06",
    "narration": "我先设计了一张城市地图，每个模型来认领一个街区。",
-   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\city.png",
+   "still": "D:\\APP\\llm-city\\node_modules\\.cache\\llm-city\\video01\\empty_city.png",
    "still_fit": [
     0,
     0,
@@ -492,6 +493,7 @@
   {
    "id": "s18",
    "narration": "你不告诉我，我未必看得出是医院，但这几栋摆在一起，看着就是舒服。",
+   "instruction": "用平和自然的聊天语气说",
    "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\D5.png",
    "overlays": [
     {
@@ -939,7 +941,5 @@
    ],
    "tts_text": "以上这九个街区，你最喜欢哪个呢？评论区聊聊。"
   }
- ],
- "tts_confirmed": true,
- "_tts_note": "2026-10-03 城主验收草稿片后裁决「出正片」：tts_confirmed=true，volc 咪仔 2.0 @10 终配"
+ ]
 }

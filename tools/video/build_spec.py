@@ -261,9 +261,13 @@ def ov_overlays() -> list[dict]:
 # ---------------------------------------------------------------- 镜表
 
 def S(id, narration, *, clip=None, start=0.0, still=None, dark=False,
-      still_fit=None, infos=(), hooks=(), annos=(), window_hooks=()):
-    """单镜构造：bg 视频镜 / still 静图镜 / dark 纯底镜。"""
+      still_fit=None, infos=(), hooks=(), annos=(), window_hooks=(),
+      instruction=None):
+    """单镜构造：bg 视频镜 / still 静图镜 / dark 纯底镜。instruction =
+    镜级语气指令覆盖（volc 2.0 指令遵循；指纹含 → 自动单镜重采）。"""
     d: dict = {"id": id, "narration": narration}
+    if instruction:
+        d["instruction"] = instruction
     if clip:
         d["bg"] = {"clip": clip, "start": start}
     elif still:
@@ -307,7 +311,9 @@ def build_shots() -> list[dict]:
           clip="city", start=7.5,
           window_hooks=[("title_card", "center")]),
         S("s06", "我先设计了一张城市地图，每个模型来认领一个街区。",
-          still=city_png, still_fit=[0, 0, 1200, 1080],
+          still=WORK / "empty_city.png",   # 空城（2026-10-03 城主裁决：没建筑的
+          #   城市截图更贴「设计地图」；shot_empty_city.py 运行时隐藏建筑组）
+          still_fit=[0, 0, 1200, 1080],
           window_hooks=[("mini_grid", [1290, 300])]),
         # 04 玩法：选题
         S("s07", "模型会先看看城里缺什么，", still=SHOTS_DIR / "F4.png",
@@ -339,7 +345,9 @@ def build_shots() -> list[dict]:
           still=SHOTS_DIR / "D5.png", infos=["d5"],
           annos=["anno_d5_green", "anno_d5_garden"]),
         S("s18", "你不告诉我，我未必看得出是医院，但这几栋摆在一起，看着就是舒服。",
-          still=SHOTS_DIR / "D5.png", infos=["d5"], hooks=["hook_comfy"]),
+          still=SHOTS_DIR / "D5.png", infos=["d5"], hooks=["hook_comfy"],
+          instruction="用平和自然的聊天语气说"),   # 2026-10-03 城主反馈：此句
+          # 终配音调突然飙高——镜级指令压平（指纹含指令，只重采本镜）
         # 09 中央车站
         S("s19", "智谱 GLM 5.3 Flash，盖了座火车站。",
           clip="E7", start=0, infos=["e7"]),
