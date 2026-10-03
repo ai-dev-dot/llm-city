@@ -77,7 +77,7 @@ function streetLampHigh(x: number, z: number) {
 
 function lattice(x: number, y: number, z: number, w: number, h: number, rotY = 0) {
   const g = new THREE.Group()
-  const bar = 0.06
+  const bar = 0.12
   const cols = Math.max(2, Math.round(w / 0.5))
   const rows = Math.max(2, Math.round(h / 0.5))
   for (let i = 0; i <= cols; i++) g.add(box(bar, h, bar, M(C.wood), -w / 2 + (w * i) / cols, h / 2, 0))
@@ -91,11 +91,11 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   const rng = ctx.rng
 
   // 宗地 20×20 满铺草皮+石板步道十字
-  root.add(box(20, 0.24, 20, M(C.brickDeep), 0, 0, 0))
+  root.add(box(20, 0.36, 20, M(C.brickDeep), 0, 0, 0))
   for (let gx = -9; gx <= 9; gx += 2) {
     for (let gz = -9; gz <= 9; gz += 2) {
       const onLane = Math.abs(gx) <= 1.2 || Math.abs(gz) <= 1.2
-      root.add(box(1.8, 0.04, 1.8, M(onLane ? C.paveDark : C.pave), gx, 0.12, gz))
+      root.add(box(1.8, 0.04, 1.8, M(onLane ? C.paveDark : C.pave), gx, 0.20, gz))
     }
   }
 

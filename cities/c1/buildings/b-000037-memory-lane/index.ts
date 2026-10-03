@@ -123,7 +123,7 @@ function fence(x0: number, z0: number, x1: number, z1: number) {
 
 function lattice(x: number, y: number, z: number, w: number, h: number, rotY = 0) {
   const g = new THREE.Group()
-  const bar = 0.06
+  const bar = 0.12
   const cols = Math.max(2, Math.round(w / 0.5))
   const rows = Math.max(2, Math.round(h / 0.5))
   for (let i = 0; i <= cols; i++) g.add(box(bar, h, bar, M(C.wood), -w / 2 + (w * i) / cols, h / 2, 0))
@@ -151,6 +151,21 @@ function courtHouse(x: number, z: number, w: number, d: number, h: number, facin
   g.add(lattice(-(w / 2 + 0.05), 1.0, d / 4, d / 3, 1.0, Math.PI / 2))
   g.add(lattice(w / 2 + 0.05, 1.0, -d / 4, d / 3, 1.0, Math.PI / 2))
   g.add(lattice(w / 2 + 0.05, 1.0, d / 4, d / 3, 1.0, Math.PI / 2))
+  // 两层宅第二层拱窗与窗台
+  if (h >= 4.5) {
+    const fz2 = facing * (d / 2 + 0.05)
+    g.add(lattice(-w / 4, 3.3, fz2, w / 3.2, 1.0, faceRot))
+    g.add(lattice(w / 4, 3.3, fz2, w / 3.2, 1.0, faceRot))
+    g.add(box(w / 3.2 + 0.2, 0.08, 0.14, M(C.wood), -w / 4, 3.25, fz2 + facing * 0.03))
+    g.add(box(w / 3.2 + 0.2, 0.08, 0.14, M(C.wood), w / 4, 3.25, fz2 + facing * 0.03))
+    g.add(lattice(-(w / 2 + 0.05), 3.3, -d / 4, d / 3, 1.0, Math.PI / 2))
+    g.add(lattice(-(w / 2 + 0.05), 3.3, d / 4, d / 3, 1.0, Math.PI / 2))
+    g.add(lattice(w / 2 + 0.05, 3.3, -d / 4, d / 3, 1.0, Math.PI / 2))
+    g.add(lattice(w / 2 + 0.05, 3.3, d / 4, d / 3, 1.0, Math.PI / 2))
+  }
+  // 门台阶与门框
+  g.add(box(1.8, 0.16, 0.7, M(C.brick), 0, 0.08, fz + facing * 0.4))
+  g.add(box(1.6, 0.22, 0.18, M(C.wood), 0, 2.35, fz + facing * 0.04))
   g.position.set(x, 0, z)
   return g
 }
@@ -159,12 +174,12 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   const root = new THREE.Group()
   const rng = ctx.rng
 
-  root.add(box(60, 0.24, 20, M(C.brickDeep), 0, 0, 0))
+  root.add(box(60, 0.36, 20, M(C.brickDeep), 0, 0, 0))
   for (let gx = -29; gx <= 29; gx += 2) {
     for (let gz = -9; gz <= 9; gz += 2) {
       const inLane = Math.abs(gz) <= 2.2
       const inYard = Math.abs(gz) >= 3.2 && Math.abs(gz) <= 7.6
-      root.add(box(1.8, 0.04, 1.8, M(inLane ? C.paveDark : inYard ? C.pave : C.moss), gx, 0.12, gz))
+      root.add(box(1.8, 0.04, 1.8, M(inLane ? C.paveDark : inYard ? C.pave : C.moss), gx, 0.20, gz))
     }
   }
 

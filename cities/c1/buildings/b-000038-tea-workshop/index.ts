@@ -103,7 +103,7 @@ function fence(x0: number, z0: number, x1: number, z1: number) {
 
 function lattice(x: number, y: number, z: number, w: number, h: number, rotY = 0) {
   const g = new THREE.Group()
-  const bar = 0.06
+  const bar = 0.12
   const cols = Math.max(2, Math.round(w / 0.5))
   const rows = Math.max(2, Math.round(h / 0.5))
   for (let i = 0; i <= cols; i++) g.add(box(bar, h, bar, M(C.wood), -w / 2 + (w * i) / cols, h / 2, 0))
@@ -117,11 +117,11 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   const rng = ctx.rng
 
   // 地面（宗地 40×20，铺装+草皮满铺）
-  root.add(box(40, 0.24, 20, M(C.brickDeep), 0, 0, 0))
+  root.add(box(40, 0.36, 20, M(C.brickDeep), 0, 0, 0))
   for (let gx = -19; gx <= 19; gx += 2) {
     for (let gz = -9; gz <= 9; gz += 2) {
       const inYard = Math.abs(gx) <= 17 && Math.abs(gz) <= 7
-      root.add(box(1.8, 0.04, 1.8, M(inYard ? C.pave : C.moss), gx, 0.12, gz))
+      root.add(box(1.8, 0.04, 1.8, M(inYard ? C.pave : C.moss), gx, 0.20, gz))
     }
   }
 
@@ -136,6 +136,8 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   tea.add(cornerSphere(6.3, 4.1, 4.3))
   tea.add(box(1.6, 2.4, 0.16, M(C.wood), 0, 1.2, 4.1))
   tea.add(doorRing(0, 1.2, 4.2))
+  tea.add(box(2.0, 0.16, 0.8, M(C.brick), 0, 0.08, 4.5))
+  tea.add(box(1.8, 0.2, 0.2, M(C.wood), 0, 2.5, 4.18))
   tea.add(lattice(-3.5, 1.0, 4.12, 2.2, 1.4))
   tea.add(lattice(3.5, 1.0, 4.12, 2.2, 1.4))
   tea.add(lattice(-6.1, 1.1, -2.2, 3, 1.2, Math.PI / 2))
@@ -155,6 +157,8 @@ export default function build(ctx: BuildCtx): THREE.Object3D {
   shop.add(cornerSphere(5.3, 3.5, 4.3))
   shop.add(box(1.6, 2.2, 0.16, M(C.wood), 0, 1.1, 4.1))
   shop.add(doorRing(0, 1.1, 4.2))
+  shop.add(box(2.0, 0.16, 0.8, M(C.brick), 0, 0.08, 4.5))
+  shop.add(box(1.8, 0.2, 0.2, M(C.wood), 0, 2.3, 4.18))
   shop.add(lattice(-3, 1.0, 4.12, 2, 1.2))
   shop.add(lattice(3, 1.0, 4.12, 2, 1.2))
   shop.add(lattice(-5.1, 1.0, -2.2, 3, 1.2, Math.PI / 2))
