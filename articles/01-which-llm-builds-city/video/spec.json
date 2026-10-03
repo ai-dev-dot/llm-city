@@ -1,0 +1,943 @@
+{
+ "_comment": "模都第一期横屏视频 spec（2026-10-03 build_spec.py 生成）。引擎 = D:/APP/llm_test/tools/video_maker.py（适配层见 llm-city tools/video/）。底片 = web-gif 原始帧缓存转换（prep_clips.py，2026-10-03 城主裁决弃 GIF 用原始帧）；台词 = voiceover-v1.md 第三稿逐字（城主制作基准）；分镜 = production-script.md 18 段。work_dir 用绝对路径落 llm-city 缓存区（生成物不入库）。",
+ "work_dir": "D:\\APP\\llm-city\\node_modules\\.cache\\llm-city\\video01",
+ "accent": "#c2410c",
+ "canvas": [
+  1920,
+  1080
+ ],
+ "tail": 0.45,
+ "output": "moshi_v1.mp4",
+ "tts": {
+  "provider": "volc",
+  "voice": "zh_female_mizai_uranus_bigtts",
+  "rate": 10,
+  "instruction": "用干脆利落、紧凑快速的节奏说",
+  "_note": "现役音色档案 §2.4（咪仔 2.0 @10）；草稿=edge 晓晓同刻度试听"
+ },
+ "narration_locked": true,
+ "test_notes": {
+  "title": "【测试说明】",
+  "items": [
+   "所有大模型都开启思考模式（除非没有思考模式）;",
+   "所有大模型如果有思考强度设置，均使用最高思考强度；",
+   "大模型会尽量使用其官方 Harness，如 GLM 使用 Zcode，但也有使用 Claude Code 或者 OpenCode 的；",
+   "大模型在建造过程中，不能偷看其他大模型的代码；除了默认提供的积木，大模型可以自己建造积木；大模型建造的过程中，我不会给意见。"
+  ],
+  "seconds": 5.0,
+  "_note": "对比/PK 类一律加（全局裁决）；文案 = 文章 spec 同源四条"
+ },
+ "overlays": [
+  {
+   "name": "info_g5",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style>\n<div class=\"card\">\n  <div class=\"model\">DeepSeek V4 Pro</div>\n  <div class=\"block\">求索智谷街区</div>\n</div>",
+   "width": 430
+  },
+  {
+   "name": "info_d5",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style>\n<div class=\"card\">\n  <div class=\"model\">Space Bunny</div>\n  <div class=\"block\">模都医枢</div>\n  <div class=\"extra\">OpenCode 上的匿名模型</div>\n</div>",
+   "width": 430
+  },
+  {
+   "name": "info_e7",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style>\n<div class=\"card\">\n  <div class=\"model\">智谱 GLM 5.3 Flash</div>\n  <div class=\"block\">中央车站街区</div>\n</div>",
+   "width": 430
+  },
+  {
+   "name": "info_d4",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style>\n<div class=\"card\">\n  <div class=\"model\">小米 MiMo V2.6 Flash</div>\n  <div class=\"block\">西岸商业街区</div>\n</div>",
+   "width": 430
+  },
+  {
+   "name": "info_f4",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style>\n<div class=\"card\">\n  <div class=\"model\">豆包 Seed 2.1 Pro</div>\n  <div class=\"block\">灯花栖居街区</div>\n</div>",
+   "width": 430
+  },
+  {
+   "name": "info_e4",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style>\n<div class=\"card\">\n  <div class=\"model\">通义 Qwen 3.8 Flash</div>\n  <div class=\"block\">镜湖中央公园</div>\n</div>",
+   "width": 430
+  },
+  {
+   "name": "info_e5",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style>\n<div class=\"card\">\n  <div class=\"model\">智谱 GLM 5.3</div>\n  <div class=\"block\">原点街区</div>\n</div>",
+   "width": 430
+  },
+  {
+   "name": "info_e6",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style>\n<div class=\"card\">\n  <div class=\"model\">DeepSeek V4.1 Flash</div>\n  <div class=\"block\">回声街区</div>\n</div>",
+   "width": 430
+  },
+  {
+   "name": "info_e3",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style>\n<div class=\"card\">\n  <div class=\"model\">美团 LongCat 2.5 Preview</div>\n  <div class=\"block\">博览中心</div>\n</div>",
+   "width": 430
+  },
+  {
+   "name": "title_card",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"title\" style=\"font-size:170px\">模都</div>",
+   "width": 500
+  },
+  {
+   "name": "hook_open",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\"><span class=\"a\">大模型</span>自己盖楼？</div>",
+   "width": 640
+  },
+  {
+   "name": "hook_quota",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\"><span class=\"a\">额度用不完</span></div>",
+   "width": 460
+  },
+  {
+   "name": "hook_build",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\">那就<span class=\"a\">盖座城</span></div>",
+   "width": 460
+  },
+  {
+   "name": "hook_flow",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\">模型写代码，<span class=\"a\">我验收</span></div>",
+   "width": 700
+  },
+  {
+   "name": "hook_nine",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\"><span class=\"a\">九个街区</span>，看看成品</div>",
+   "width": 700
+  },
+  {
+   "name": "hook_remember",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\"><span class=\"a\">好记</span></div>",
+   "width": 300
+  },
+  {
+   "name": "hook_messy",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\">近看<span class=\"a\">有点乱</span></div>",
+   "width": 500
+  },
+  {
+   "name": "hook_comfy",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\">看着<span class=\"a\">舒服</span></div>",
+   "width": 400
+  },
+  {
+   "name": "hook_station",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\"><span class=\"a\">一眼认出</span>是车站</div>",
+   "width": 640
+  },
+  {
+   "name": "hook_detail",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\">细节做得<span class=\"a\">认真</span></div>",
+   "width": 560
+  },
+  {
+   "name": "hook_lamp",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\">这盏灯，<span class=\"a\">太抢戏</span></div>",
+   "width": 560
+  },
+  {
+   "name": "hook_lake",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:72px\"><span class=\"a\">湖呢？</span></div>",
+   "width": 300
+  },
+  {
+   "name": "hook_stable",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\">稳当，但<span class=\"a\">还不够惊艳</span></div>",
+   "width": 760
+  },
+  {
+   "name": "hook_rework2",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\">这两个，我想让它们<span class=\"a\">改改</span></div>",
+   "width": 760
+  },
+  {
+   "name": "hook_topheavy",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:68px\"><span class=\"a\">头重脚轻</span></div>",
+   "width": 420
+  },
+  {
+   "name": "hook_redo",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:58px\"><span class=\"a\">最想</span>让它返工</div>",
+   "width": 560
+  },
+  {
+   "name": "hook_ask",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"hook\" style=\"font-size:62px\">你<span class=\"a\">最喜欢哪个</span>？<span class=\"a\">评论区</span>聊聊</div>",
+   "width": 900
+  },
+  {
+   "name": "flow_card",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"flow\"><div class=\"step\"><b>1</b>模型提案</div><div class=\"step\"><b>2</b>我点头</div><div class=\"step\"><b>3</b>模型写代码</div><div class=\"step\"><b>4</b>我验收</div></div>",
+   "width": 460
+  },
+  {
+   "name": "mini_grid",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"mini\"><div class=\"cap\">分地示意</div><div class=\"cell\">DeepSeek V4 Pro</div><div class=\"cell\">Space Bunny</div><div class=\"cell\">GLM 5.3 Flash</div></div>",
+   "width": 360
+  },
+  {
+   "name": "tag_住宅",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"tag\">住宅</div>",
+   "width": 150
+  },
+  {
+   "name": "tag_车站",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"tag\">车站</div>",
+   "width": 150
+  },
+  {
+   "name": "tag_公园",
+   "html": "<style>\n* { margin:0; padding:0; box-sizing:border-box; }\nbody { font-family:\"Microsoft YaHei\"; background:transparent; }\n.card { display:inline-block; padding:18px 26px 14px; border-radius:16px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.14);\n  box-shadow:0 8px 24px rgba(0,0,0,0.4); }\n.model { font-size:30px; font-weight:700; color:#fff; }\n.block { font-size:19px; color:rgba(255,255,255,0.72); margin-top:6px; }\n.extra { font-size:14px; color:rgba(255,255,255,0.55); margin-top:6px; }\n.hook { font-weight:700; color:#fff; white-space:nowrap;\n  text-shadow:0 0 4px #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000,\n  -2px -2px 0 #000, 0 4px 14px rgba(0,0,0,0.6); }\n.hook .a { color:#c2410c; }\n.title { font-weight:700; color:#fff; text-shadow:0 0 6px #000,\n  4px 4px 0 #000, -4px 4px 0 #000, 4px -4px 0 #000, -4px -4px 0 #000; }\n.flow { display:inline-block; padding:26px 34px; border-radius:20px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.flow .step { font-size:40px; font-weight:700; color:#fff; padding:12px 0; }\n.flow .step b { color:#c2410c; margin-right:14px; }\n.mini { display:inline-block; padding:20px 24px; border-radius:16px;\n  background:rgba(15,15,20,0.82); border:1px solid rgba(255,255,255,0.14); }\n.mini .cap { font-size:15px; color:rgba(255,255,255,0.55); margin-bottom:12px; }\n.mini .cell { font-size:26px; font-weight:600; color:#fff; padding:10px 14px;\n  border:1px solid rgba(255,255,255,0.2); border-radius:10px; margin-top:8px;\n  text-align:center; }\n.tag { display:inline-block; padding:8px 22px; border-radius:999px;\n  background:rgba(15,15,20,0.78); border:1px solid rgba(255,255,255,0.2);\n  font-size:30px; font-weight:700; color:#fff; }\n</style><div class=\"tag\">公园</div>",
+   "width": 150
+  }
+ ],
+ "shots": [
+  {
+   "id": "s01",
+   "narration": "给大模型一块地，让它自己盖楼，",
+   "bg": {
+    "clip": "G5",
+    "start": 0
+   },
+   "overlays": [
+    {
+     "png": "overlays/hook_open.png",
+     "width": 640,
+     "pos": "top_center"
+    }
+   ],
+   "tts_text": "给大模型一块地，让它自己盖楼，"
+  },
+  {
+   "id": "s02",
+   "narration": "最后能盖成什么样？",
+   "bg": {
+    "clip": "city",
+    "start": 0
+   },
+   "tts_text": "最后能盖成什么样？"
+  },
+  {
+   "id": "s03",
+   "narration": "我之前买了好几个 AI 编程套餐，最近厂商又一直送额度。",
+   "bg": {
+    "clip": "city",
+    "start": 2.2
+   },
+   "overlays": [
+    {
+     "png": "overlays/hook_quota.png",
+     "width": 460,
+     "pos": "top_center"
+    }
+   ],
+   "tts_text": "我之前买了好几个 AI 编程套餐，最近厂商又一直送额度。"
+  },
+  {
+   "id": "s04",
+   "narration": "眼看用不完，我就想：别浪费了，让它们给我盖房子吧。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\city.png",
+   "overlays": [
+    {
+     "png": "overlays/hook_build.png",
+     "width": 460,
+     "pos": "top_center"
+    }
+   ],
+   "tts_text": "眼看用不完，我就想：别浪费了，让它们给我盖房子吧。"
+  },
+  {
+   "id": "s05",
+   "narration": "于是，我就让这些大模型一起造了座城，叫「模都」。",
+   "bg": {
+    "clip": "city",
+    "start": 7.5
+   },
+   "overlays": [
+    {
+     "png": "overlays/title_card.png",
+     "width": 500,
+     "pos": "center"
+    }
+   ],
+   "tts_text": "于是，我就让这些大模型一起造了座城，叫「模督」。"
+  },
+  {
+   "id": "s06",
+   "narration": "我先设计了一张城市地图，每个模型来认领一个街区。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\city.png",
+   "still_fit": [
+    0,
+    0,
+    1200,
+    1080
+   ],
+   "overlays": [
+    {
+     "png": "overlays/mini_grid.png",
+     "width": 360,
+     "pos": [
+      1290,
+      300
+     ]
+    }
+   ],
+   "tts_text": "我先设计了一张城市地图，每个模型来认领一个街区。"
+  },
+  {
+   "id": "s07",
+   "narration": "模型会先看看城里缺什么，",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\F4.png",
+   "overlays": [
+    {
+     "png": "overlays/tag_住宅.png",
+     "width": 150,
+     "pos": [
+      1620,
+      64
+     ]
+    }
+   ],
+   "tts_text": "模型会先看看城里缺什么，"
+  },
+  {
+   "id": "s08",
+   "narration": "自己提案盖住宅、车站，",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\E7.png",
+   "overlays": [
+    {
+     "png": "overlays/tag_车站.png",
+     "width": 150,
+     "pos": [
+      1620,
+      64
+     ]
+    }
+   ],
+   "tts_text": "自己提案盖住宅、车站，"
+  },
+  {
+   "id": "s09",
+   "narration": "还是公园等等。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\E4.png",
+   "overlays": [
+    {
+     "png": "overlays/tag_公园.png",
+     "width": 150,
+     "pos": [
+      1620,
+      64
+     ]
+    }
+   ],
+   "tts_text": "还是公园等等。"
+  },
+  {
+   "id": "s10",
+   "narration": "提案我点头，模型就自己写代码，",
+   "dark": true,
+   "overlays": [
+    {
+     "png": "overlays/flow_card.png",
+     "width": 460,
+     "pos": "center"
+    }
+   ],
+   "tts_text": "提案我点头，模型就自己写代码，"
+  },
+  {
+   "id": "s11",
+   "narration": "盖出能在地图上转着看的三维建筑。我负责最后验收。",
+   "bg": {
+    "clip": "city",
+    "start": 0.8
+   },
+   "overlays": [
+    {
+     "png": "overlays/hook_flow.png",
+     "width": 700,
+     "pos": "top_center"
+    }
+   ],
+   "tts_text": "盖出能在地图上转着看的三维建筑。我负责最后验收。"
+  },
+  {
+   "id": "s12",
+   "narration": "今天带大家看九个街区。先看三个我最喜欢的。",
+   "still": "D:\\APP\\llm-city\\node_modules\\.cache\\llm-city\\video01\\layouts\\layout_grid9.png",
+   "overlays": [
+    {
+     "png": "overlays/hook_nine.png",
+     "width": 700,
+     "pos": "top_center"
+    }
+   ],
+   "tts_text": "今天带大家看九个街区。先看三个我最喜欢的。"
+  },
+  {
+   "id": "s13",
+   "narration": "先看 DeepSeek V4 Pro。这栋叫求索塔，青色螺旋一路绕到楼顶。",
+   "bg": {
+    "clip": "G5",
+    "start": 0.5
+   },
+   "overlays": [
+    {
+     "png": "overlays/info_g5.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    }
+   ],
+   "tts_text": "先看 DeepSeek V4 Pro。这栋叫求索塔，青色螺旋一路绕到楼顶。"
+  },
+  {
+   "id": "s14",
+   "narration": "我看完这么多楼，就这栋特别好记。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\G5.png",
+   "overlays": [
+    {
+     "png": "overlays/info_g5.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/hook_remember.png",
+     "width": 300,
+     "pos": "top_center"
+    }
+   ],
+   "tts_text": "我看完这么多楼，就这栋特别好记。"
+  },
+  {
+   "id": "s15",
+   "narration": "不过凑近了有点乱，装饰再少点，我觉得会更好看。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\G5.png",
+   "overlays": [
+    {
+     "png": "overlays/info_g5.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/hook_messy.png",
+     "width": 500,
+     "pos": "top_center"
+    },
+    {
+     "png": "overlays/anno_g5_helix.png",
+     "pos": [
+      0,
+      0
+     ]
+    }
+   ],
+   "tts_text": "不过凑近了有点乱，装饰再少点，我觉得会更好看。"
+  },
+  {
+   "id": "s16",
+   "narration": "还有 OpenCode 上的匿名模型，Space Bunny。它盖的是医院。",
+   "bg": {
+    "clip": "D5",
+    "start": 0
+   },
+   "overlays": [
+    {
+     "png": "overlays/info_d5.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    }
+   ],
+   "tts_text": "还有 OpenCode 上的匿名模型，Space Bunny。它盖的是医院。"
+  },
+  {
+   "id": "s17",
+   "narration": "白色的楼，隔几层就有一片绿化，楼下还有花园。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\D5.png",
+   "overlays": [
+    {
+     "png": "overlays/info_d5.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/anno_d5_green.png",
+     "pos": [
+      0,
+      0
+     ]
+    },
+    {
+     "png": "overlays/anno_d5_garden.png",
+     "pos": [
+      0,
+      0
+     ]
+    }
+   ],
+   "tts_text": "白色的楼，隔几层就有一片绿化，楼下还有花园。"
+  },
+  {
+   "id": "s18",
+   "narration": "你不告诉我，我未必看得出是医院，但这几栋摆在一起，看着就是舒服。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\D5.png",
+   "overlays": [
+    {
+     "png": "overlays/info_d5.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/hook_comfy.png",
+     "width": 400,
+     "pos": "top_center"
+    }
+   ],
+   "tts_text": "你不告诉我，我未必看得出是医院，但这几栋摆在一起，看着就是舒服。"
+  },
+  {
+   "id": "s19",
+   "narration": "智谱 GLM 5.3 Flash，盖了座火车站。",
+   "bg": {
+    "clip": "E7",
+    "start": 0
+   },
+   "overlays": [
+    {
+     "png": "overlays/info_e7.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    }
+   ],
+   "tts_text": "智谱 GLM 5.3 Flash，盖了座火车站。"
+  },
+  {
+   "id": "s20",
+   "narration": "你看这玻璃拱顶，旁边轨道、列车也都有，不用看名字，就知道是车站。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\E7.png",
+   "overlays": [
+    {
+     "png": "overlays/info_e7.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/hook_station.png",
+     "width": 640,
+     "pos": "top_center"
+    },
+    {
+     "png": "overlays/anno_e7_dome.png",
+     "pos": [
+      0,
+      0
+     ]
+    },
+    {
+     "png": "overlays/anno_e7_track.png",
+     "pos": [
+      0,
+      0
+     ]
+    }
+   ],
+   "tts_text": "你看这玻璃拱顶，旁边轨道、列车也都有，不用看名字，就知道是车站。"
+  },
+  {
+   "id": "s21",
+   "narration": "钟塔是高了点，但放一块儿，还真挺像那么回事。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\E7.png",
+   "overlays": [
+    {
+     "png": "overlays/info_e7.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    }
+   ],
+   "tts_text": "钟塔是高了点，但放一块儿，还真挺像那么回事。"
+  },
+  {
+   "id": "s22",
+   "narration": "接下来这四个，有喜欢的地方，也有想吐槽的。",
+   "still": "D:\\APP\\llm-city\\node_modules\\.cache\\llm-city\\video01\\layouts\\layout_quad.png",
+   "tts_text": "接下来这四个，有喜欢的地方，也有想吐槽的。"
+  },
+  {
+   "id": "s23",
+   "narration": "小米 MiMo V2.6 Flash，盖了个商业街区。",
+   "bg": {
+    "clip": "D4",
+    "start": 0
+   },
+   "overlays": [
+    {
+     "png": "overlays/info_d4.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    }
+   ],
+   "tts_text": "小米 MiMo V2.6 Flash，盖了个商业街区。"
+  },
+  {
+   "id": "s24",
+   "narration": "样子不算新鲜，但窗框、店面这些细节，做得挺认真。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\D4.png",
+   "overlays": [
+    {
+     "png": "overlays/info_d4.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/hook_detail.png",
+     "width": 560,
+     "pos": "top_center"
+    },
+    {
+     "png": "overlays/anno_d4_shop.png",
+     "pos": [
+      0,
+      0
+     ]
+    }
+   ],
+   "tts_text": "样子不算新鲜，但窗框、店面这些细节，做得挺认真。"
+  },
+  {
+   "id": "s25",
+   "narration": "豆包 Seed 2.1 Pro，盖的小区挺像我平时会路过的。",
+   "bg": {
+    "clip": "F4",
+    "start": 0
+   },
+   "overlays": [
+    {
+     "png": "overlays/info_f4.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    }
+   ],
+   "tts_text": "豆包 Seed 2.1 Pro，盖的小区挺像我平时会路过的。"
+  },
+  {
+   "id": "s26",
+   "narration": "就是楼顶这盏大灯，实在太抢戏了。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\F4.png",
+   "overlays": [
+    {
+     "png": "overlays/info_f4.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/hook_lamp.png",
+     "width": 560,
+     "pos": [
+      1180,
+      70
+     ]
+    },
+    {
+     "png": "overlays/anno_f4_lamp.png",
+     "pos": [
+      0,
+      0
+     ]
+    }
+   ],
+   "tts_text": "就是楼顶这盏大灯，实在太抢戏了。"
+  },
+  {
+   "id": "s27",
+   "narration": "通义 Qwen 3.8 Flash，这个玻璃温室漂亮。",
+   "bg": {
+    "clip": "E4",
+    "start": 0
+   },
+   "overlays": [
+    {
+     "png": "overlays/info_e4.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    }
+   ],
+   "tts_text": "通义 Qwen 3.8 Flash，这个玻璃温室漂亮。"
+  },
+  {
+   "id": "s28",
+   "narration": "可你叫「镜湖中央公园」，湖呢？",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\E4.png",
+   "overlays": [
+    {
+     "png": "overlays/info_e4.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/hook_lake.png",
+     "width": 300,
+     "pos": "top_center"
+    }
+   ],
+   "tts_text": "可你叫「镜湖中央公园」，湖呢？"
+  },
+  {
+   "id": "s29",
+   "narration": "缩在后面，倒像植物园附送了个小水池。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\E4.png",
+   "overlays": [
+    {
+     "png": "overlays/info_e4.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/anno_e4_lake.png",
+     "pos": [
+      0,
+      0
+     ]
+    }
+   ],
+   "tts_text": "缩在后面，倒像植物园附送了个小水池。"
+  },
+  {
+   "id": "s30",
+   "narration": "智谱 GLM 5.3，盖了城市中心这两座塔。看着挺稳当，但要说惊艳，我觉得还差点。",
+   "bg": {
+    "clip": "E5",
+    "start": 0.5
+   },
+   "overlays": [
+    {
+     "png": "overlays/info_e5.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/hook_stable.png",
+     "width": 760,
+     "pos": "top_center"
+    }
+   ],
+   "tts_text": "智谱 GLM 5.3，盖了城市中心这两座塔。看着挺稳当，但要说惊艳，我觉得还差点。"
+  },
+  {
+   "id": "s31",
+   "narration": "最后这两个，我就真想让它们再改改了。",
+   "still": "D:\\APP\\llm-city\\node_modules\\.cache\\llm-city\\video01\\layouts\\layout_e6e3.png",
+   "overlays": [
+    {
+     "png": "overlays/hook_rework2.png",
+     "width": 760,
+     "pos": "top_center"
+    }
+   ],
+   "tts_text": "最后这两个，我就真想让它们再改改了。"
+  },
+  {
+   "id": "s32",
+   "narration": "DeepSeek V4.1 Flash，你看这剧院，像不像把一个大盒子架在高柱子上？",
+   "bg": {
+    "clip": "E6",
+    "start": 0
+   },
+   "overlays": [
+    {
+     "png": "overlays/info_e6.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    }
+   ],
+   "tts_text": "DeepSeek V4.1 Flash，你看这剧院，像不像把一个大盒子架在高柱子上？"
+  },
+  {
+   "id": "s33",
+   "narration": "头重脚轻。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\E6.png",
+   "overlays": [
+    {
+     "png": "overlays/info_e6.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/hook_topheavy.png",
+     "width": 420,
+     "pos": [
+      1180,
+      70
+     ]
+    },
+    {
+     "png": "overlays/anno_e6_theatre.png",
+     "pos": [
+      0,
+      0
+     ]
+    }
+   ],
+   "tts_text": "头重脚轻。"
+  },
+  {
+   "id": "s34",
+   "narration": "旁边图书馆也是个厚方块，看着有点闷。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\E6.png",
+   "overlays": [
+    {
+     "png": "overlays/info_e6.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/anno_e6_lib.png",
+     "pos": [
+      0,
+      0
+     ]
+    }
+   ],
+   "tts_text": "旁边图书馆也是个厚方块，看着有点闷。"
+  },
+  {
+   "id": "s35",
+   "narration": "美团 LongCat 2.5 Preview，这个博览中心，我最想让它返工。",
+   "bg": {
+    "clip": "E3",
+    "start": 0
+   },
+   "overlays": [
+    {
+     "png": "overlays/info_e3.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/hook_redo.png",
+     "width": 560,
+     "pos": "top_center"
+    }
+   ],
+   "tts_text": "美团 LongCat 2.5 Preview，这个博览中心，我最想让它返工。"
+  },
+  {
+   "id": "s36",
+   "narration": "几大片白墙从底拉到顶，总觉得还没做完。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\E3.png",
+   "overlays": [
+    {
+     "png": "overlays/info_e3.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/anno_e3_wall.png",
+     "pos": [
+      0,
+      0
+     ]
+    }
+   ],
+   "tts_text": "几大片白墙从底拉到顶，总觉得还没做完。"
+  },
+  {
+   "id": "s37",
+   "narration": "旁边体育馆的穹顶倒是不错，可惜救不了整组。",
+   "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\E3.png",
+   "overlays": [
+    {
+     "png": "overlays/info_e3.png",
+     "width": 430,
+     "pos": [
+      64,
+      64
+     ]
+    },
+    {
+     "png": "overlays/anno_e3_dome.png",
+     "pos": [
+      0,
+      0
+     ]
+    }
+   ],
+   "tts_text": "旁边体育馆的穹顶倒是不错，可惜救不了整组。"
+  },
+  {
+   "id": "s38",
+   "narration": "以上这九个街区，你最喜欢哪个呢？评论区聊聊。",
+   "still": "D:\\APP\\llm-city\\node_modules\\.cache\\llm-city\\video01\\layouts\\layout_grid9.png",
+   "overlays": [
+    {
+     "png": "overlays/hook_ask.png",
+     "width": 900,
+     "pos": "top_center"
+    }
+   ],
+   "tts_text": "以上这九个街区，你最喜欢哪个呢？评论区聊聊。"
+  }
+ ]
+}
