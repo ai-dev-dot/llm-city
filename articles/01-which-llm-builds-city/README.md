@@ -18,6 +18,10 @@
   414px 手机壳；注意其引用的 shots/gifs 素材不入库，他机查看需先按配方重出素材
 - 重建：`python tools/article/build_article.py --spec articles/01-which-llm-builds-city/article/spec.json`
 
+## video/ · 视频台词与制作脚本
+
+视频文案与制作安排见 `video/voiceover-v1.md` 和 `video/production-script.md`：采用第三稿台词、16:9 横屏、约2分59秒，脚本包含逐段口播、镜头、字幕与现有素材索引；尚未生成视频。
+
 ## gifs/ · 街区绕飞动图
 
 工具：`python tools/shot-web/web-gif.py --block <街区> --out articles/01-which-llm-builds-city/gifs`
