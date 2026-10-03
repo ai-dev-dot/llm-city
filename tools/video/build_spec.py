@@ -262,12 +262,15 @@ def ov_overlays() -> list[dict]:
 
 def S(id, narration, *, clip=None, start=0.0, still=None, dark=False,
       still_fit=None, infos=(), hooks=(), annos=(), window_hooks=(),
-      instruction=None):
-    """单镜构造：bg 视频镜 / still 静图镜 / dark 纯底镜。instruction =
-    镜级语气指令覆盖（volc 2.0 指令遵循；指纹含 → 自动单镜重采）。"""
+      instruction=None, rate=None):
+    """单镜构造：bg 视频镜 / still 静图镜 / dark 纯底镜。instruction/rate =
+    镜级语气指令与语速覆盖（volc 语速同刻度整数，10=+10%、0=正常、负值更慢；
+    指纹含 → 自动单镜重采）。"""
     d: dict = {"id": id, "narration": narration}
     if instruction:
         d["instruction"] = instruction
+    if rate is not None:
+        d["rate"] = rate
     if clip:
         d["bg"] = {"clip": clip, "start": start}
     elif still:
@@ -346,8 +349,9 @@ def build_shots() -> list[dict]:
           annos=["anno_d5_green", "anno_d5_garden"]),
         S("s18", "你不告诉我，我未必看得出是医院，但这几栋摆在一起，看着就是舒服。",
           still=SHOTS_DIR / "D5.png", infos=["d5"], hooks=["hook_comfy"],
-          instruction="用平和自然的聊天语气说"),   # 2026-10-03 城主反馈：此句
+          instruction="用平和自然的聊天语气说",   # 2026-10-03 城主反馈：此句
           # 终配音调突然飙高——镜级指令压平（指纹含指令，只重采本镜）
+          rate=0),   # 2026-10-03 城主反馈：语速太快——从全局 +10% 降到正常档
         # 09 中央车站
         S("s19", "智谱 GLM 5.3 Flash，盖了座火车站。",
           clip="E7", start=0, infos=["e7"]),

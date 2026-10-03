@@ -494,6 +494,7 @@
    "id": "s18",
    "narration": "你不告诉我，我未必看得出是医院，但这几栋摆在一起，看着就是舒服。",
    "instruction": "用平和自然的聊天语气说",
+   "rate": 0,
    "still": "D:\\APP\\llm-city\\articles\\01-which-llm-builds-city\\shots\\D5.png",
    "overlays": [
     {
