@@ -32,6 +32,10 @@
       "name": "美团（LongCat）",
       "color": "#FFC300"
     },
+    "moonshot": {
+      "name": "月之暗面（Moonshot AI）",
+      "color": "#1D39C4"
+    },
     "opencode": {
       "name": "OpenCode",
       "color": "#0EA5A4"
@@ -150,6 +154,17 @@
         "Fledge Alpha",
         "fledge-alpha-free",
         "opencode/fledge-alpha-free"
+      ]
+    },
+    {
+      "id": "kimi-k3",
+      "vendor": "moonshot",
+      "aliases": [
+        "Kimi K3",
+        "kimi-k3-1m",
+        "kimi_k3",
+        "moonshotai/kimi-k3",
+        "moonshot/kimi-k3"
       ]
     }
   ]
