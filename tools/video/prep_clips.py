@@ -1,142 +1,117 @@
 # -*- coding: utf-8 -*-
-"""prep-clips · GIF 原始帧缓存 → llm_test video_maker 底片目录
+"""prep-clips · 视频底片契约闸门（DDA 满屏直采固化为唯一通道，2026-10-06 城主裁决）
 
-背景（2026-10-03 城主裁决）：本篇视频动画底片不用 GIF（格式税：640 宽缩放 +
-128 色调色板），改用 web-gif.py 当年采集时落盘的**原始 screencast 帧**（1152×768
-jpeg q100 + monotonic 时间戳，运镜 = 页面 plazaOrbit 巡航，GIF 即由它量化合成）。
-缓存位置 = node_modules/.cache/llm-city/web-gif/frames/<key>/（gitignore）。
+历史职责（web-gif 帧缓存 → clip.mp4 转换）随 DDA 通道固化退役：dda_capture.py
+直采即产出引擎契约三件（raw.mp4 / clip.mp4 / clip.json），本件不再做任何转换，
+只验闸门——每个底片目录必须是 DDA 形态：
+  raw.mp4 + clip.mp4 + clip.json 齐，channel = dda_ddagrab_qsv_f11，
+  分辨率 = 当前满屏物理分辨率。
+「存在 gif 文件/帧图片就复用」的回头路从这里堵死：引擎 assemble 对「有
+raw.mp4」的目录只认 clip.mp4、无视遗留 raw_frames；闸门防的是忘了采 DDA、
+旧 CDP 产物（1152×768 · ~6fps）被静默当底片。
 
-产出对齐 llm_test tools/video_maker.py 的底片契约（assemble 消费）：
-  clips/<key>/raw_frames/frame_000000.jpg + ts.json   # 细网格直建路径（主路径）
-  clips/<key>/clip.mp4                                  # 30fps 兜底（独立播放目检用）
-  clips/<key>/clip.json                                 # span/encode.duration_seconds（钳制用）
-
-编码参数经 llm_test encode_args 单源（qsv 缺省，2026-10-01 GPU 优化裁决）；
-硬链接搬帧零拷贝（同盘 NTFS），失败回退复制。幂等：--force 才重做。
+一期已发布成片（moshi_v1.mp4）不返工；一期 work 下的旧底片（无 raw.mp4 的
+CDP 形态）会被本件如实报缺——重拼一期才需要按指引补采。
 
 用法：
-  python tools/video/prep_clips.py                # 全部 10 处
-  python tools/video/prep_clips.py --keys G5,city # 指定处
-  python tools/video/prep_clips.py --force        # 忽略已完成
+  python tools/video/prep_clips.py                 # 校验 work 下全部底片
+  python tools/video/prep_clips.py --keys G5,city  # 只验指定键
 """
 from __future__ import annotations
 
 import argparse
 import json
-import os
-import shutil
-import subprocess
 import sys
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")   # Windows cp936 防线（本仓 Python 工具惯例）
 
+from media_kit.dda_capture import probe_screen   # noqa: E402  满屏分辨率单源
+
 REPO = Path(__file__).resolve().parents[2]
-CACHE = REPO / "node_modules/.cache/llm-city/web-gif/frames"
-# 引用姿势切换（2026-10-03 llm_test 包化）：写死 sys.path hack 废除，改
-# media_kit 包（一次性安装：python -m pip install -e D:\APP\llm_test --no-deps）
-from media_kit.pk_video_maker import encode_args, ENCODER_DEFAULT   # noqa: E402 编码参数单源
-
-TARGET_FPS = 30      # 兜底 clip.mp4 网格（video_maker.stage_capture 同款）
+DEFAULT_WORK = REPO / "node_modules/.cache/llm-city/video01"
+CHANNEL_DDA = "dda_ddagrab_qsv_f11"   # = media_kit.dda_capture.capture_page 产出
+RES_TOL = 20          # 分辨率容差 px（dpr 尾数溢出兜底，同采集侧视口校验）
 
 
-def ffmpeg() -> str:
-    import imageio_ffmpeg
-    return imageio_ffmpeg.get_ffmpeg_exe()
+def _recapture_hint(key: str) -> str:
+    return f"python tools/video/dda_capture.py --keys {key} --force 重采"
 
 
-def sh(args: list[str]) -> None:
-    subprocess.run([ffmpeg(), "-y", "-loglevel", "error"] + args, check=True)
+def check_key(key: str, out: Path, geo: dict) -> tuple[bool, str]:
+    """验一个底片目录的 DDA 契约。返回 (ok, 摘要/报缺文案)。"""
+    problems = []
+    raw, clip, meta_p = out / "raw.mp4", out / "clip.mp4", out / "clip.json"
 
+    if not (raw.is_file() and raw.stat().st_size > 0):
+        # 无 raw.mp4 = 非 DDA 形态（一期 prep_clips 旧产物或目录缺失）
+        if (out / "raw_frames" / "ts.json").is_file():
+            problems.append("缺 raw.mp4（现存 raw_frames = 一期 CDP 旧底片；"
+                            "一期已定稿无需重拼，确要重拼请 " + _recapture_hint(key) + "）")
+        else:
+            problems.append("缺 raw.mp4（目录不存在或为空）——" + _recapture_hint(key))
+    if not (clip.is_file() and clip.stat().st_size > 0):
+        problems.append("缺 clip.mp4（剪辑底片）——" + _recapture_hint(key))
+    if not meta_p.is_file():
+        problems.append("缺 clip.json（通道元数据，assemble 读它钳制素材长度）——"
+                        + _recapture_hint(key))
+        return False, "；".join(problems)
 
-def link_or_copy(src: Path, dst: Path) -> None:
-    try:
-        os.link(src, dst)
-    except OSError:
-        shutil.copyfile(src, dst)
+    meta = json.loads(meta_p.read_text(encoding="utf-8"))
+    channel = meta.get("channel")
+    if channel != CHANNEL_DDA:
+        problems.append(f"channel={channel!r} ≠ DDA（{CHANNEL_DDA}）——"
+                        + _recapture_hint(key))
+    dur = (meta.get("encode") or {}).get("duration_seconds") or 0
+    if dur <= 0:
+        problems.append("clip.json encode.duration_seconds 异常（assemble 以此钳制 start）")
+    vp = meta.get("viewport") or []
+    want = (geo["phys_w"], geo["phys_h"])
+    if (len(vp) != 2 or abs(vp[0] - want[0]) > RES_TOL
+            or abs(vp[1] - want[1]) > RES_TOL):
+        problems.append(f"底片分辨率 {vp} ≠ 当前满屏 {list(want)}"
+                        f"（换过显示器/他机产物？）——" + _recapture_hint(key))
 
-
-def nearest_resample(frames_dir: Path, seq_dir: Path, span: float) -> int:
-    """最近邻重采样到 TARGET_FPS（video_maker.stage_capture 同款二分最近邻）。"""
-    ts = json.loads((frames_dir / "ts.json").read_text(encoding="utf-8"))
-    rel = [t - ts[0] for t in ts]
-    n_out = int(span * TARGET_FPS)
-    if seq_dir.exists():
-        shutil.rmtree(seq_dir)
-    seq_dir.mkdir(parents=True)
-    for k in range(n_out):
-        target = k / TARGET_FPS
-        lo, hi = 0, len(rel) - 1
-        while lo < hi:
-            mid = (lo + hi) // 2
-            if rel[mid] < target:
-                lo = mid + 1
-            else:
-                hi = mid
-        best = lo if lo == 0 or abs(rel[lo] - target) < abs(rel[lo - 1] - target) else lo - 1
-        link_or_copy(frames_dir / f"frame_{best:06d}.jpg", seq_dir / f"{k:06d}.jpg")
-    return n_out
-
-
-def prep(key: str, work: Path, force: bool, encoder: str) -> None:
-    src = CACHE / key
-    meta = json.loads((src / "meta.json").read_text(encoding="utf-8"))
-    ts = [float(t) for t in meta["timestamps"]]
-    span = round(ts[-1] - ts[0], 3)
-
-    out = work / "clips" / key
-    done_marker = out / "clip.json"
-    if done_marker.is_file() and not force:
-        print(f"[prep] {key} 已完成，跳过")
-        return
-
-    raw = out / "raw_frames"
-    raw.mkdir(parents=True, exist_ok=True)
-    for i, t in enumerate(ts):
-        link_or_copy(src / f"frame_{i:06d}.jpg", raw / f"frame_{i:06d}.jpg")
-    (raw / "ts.json").write_text(json.dumps(ts), encoding="utf-8")
-
-    seq = out / "_seq30"
-    n_out = nearest_resample(raw, seq, span)
-    sh(["-framerate", str(TARGET_FPS), "-i", str(seq / "%06d.jpg"),
-        *encode_args(encoder, 18), str(out / "clip.mp4")])
-    shutil.rmtree(seq)
-
-    clip_meta = {
-        "model": key,
-        "source": "web-gif frame cache（2026-10-02 plazaOrbit 巡航原始帧，"
-                  "docs/shot-web.md；2026-10-03 城主裁决：弃 GIF 用原始帧）",
-        "period_seconds": float(meta["period"]),
-        "label": meta.get("label", ""),
-        "viewport": [1152, 768],
-        "span_seconds": span,
-        "raw_frames": len(ts),
-        "raw_avg_fps": round((len(ts) - 1) / span, 2) if span > 0 else None,
-        "encode": {"target_fps": TARGET_FPS, "frames_out": n_out,
-                   "duration_seconds": round(n_out / TARGET_FPS, 3),
-                   "encoder": encoder},
-    }
-    (out / "clip.json").write_text(
-        json.dumps(clip_meta, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"[prep] {key}: {len(ts)} 帧 / {span:.2f}s / avg {clip_meta['raw_avg_fps']}fps "
-          f"→ clip.mp4 {clip_meta['encode']['duration_seconds']}s（{encoder}）")
+    if problems:
+        return False, "；".join(problems)
+    note = ""
+    if (out / "raw_frames").is_dir():
+        note = "（遗留 raw_frames 引擎已无视，可留可删）"
+    return True, (f"DDA {vp[0]}x{vp[1]} span={meta.get('span_seconds')}s "
+                  f"更新率={meta.get('screen_update_fps')}fps{note}")
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="GIF 帧缓存 → video_maker 底片")
-    ap.add_argument("--work", default=str(REPO / "node_modules/.cache/llm-city/video01"),
-                    help="视频工作目录（缺省 node_modules/.cache/llm-city/video01）")
-    ap.add_argument("--keys", default=",".join(sorted(p.name for p in CACHE.iterdir()
-                                                      if p.is_dir())),
-                    help="逗号分隔的 key（缺省全部）")
-    ap.add_argument("--force", action="store_true")
-    ap.add_argument("--encoder", default=ENCODER_DEFAULT, choices=("x264", "qsv"))
+    ap = argparse.ArgumentParser(
+        description="DDA 底片契约闸门（不再是转换器）")
+    ap.add_argument("--work", default=str(DEFAULT_WORK),
+                    help="底片根（缺省缓存区 video01）")
+    ap.add_argument("--keys", help="逗号分隔（缺省 = work/clips 全部子目录）")
     a = ap.parse_args()
     work = Path(a.work).resolve()
-    work.mkdir(parents=True, exist_ok=True)
-    for key in [k.strip() for k in a.keys.split(",") if k.strip()]:
-        prep(key, work, a.force, a.encoder)
-    print(f"[完成] 底片落 {work / 'clips'}")
+    clips_root = work / "clips"
+    if not clips_root.is_dir():
+        raise SystemExit(f"[abort] 无底片目录 {clips_root}——"
+                         f"先跑 python tools/video/dda_capture.py --spec <spec.json>")
+    keys = ([k.strip() for k in a.keys.split(",") if k.strip()] if a.keys
+            else sorted(p.name for p in clips_root.iterdir() if p.is_dir()))
+    if not keys:
+        raise SystemExit(f"[abort] {clips_root} 下无底片——先跑 dda_capture.py")
+
+    geo = probe_screen()
+    fails = []
+    for key in keys:
+        ok, msg = check_key(key, clips_root / key, geo)
+        mark = "✓" if ok else "✗"
+        print(f"[prep] {mark} {key}: {msg}")
+        if not ok:
+            fails.append(key)
+    if fails:
+        print(f"[prep] {len(fails)}/{len(keys)} 键缺 DDA 契约：{' '.join(fails)}"
+              f"——视频底片一律 DDA 满屏直采（2026-10-06 城主裁决），"
+              f"帧缓存/GIF 不再作为底片来源")
+        return 1
+    print(f"[prep] 底片就绪 ×{len(keys)}（DDA 形态，可进 assemble）")
     return 0
 
 

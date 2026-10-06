@@ -12,9 +12,11 @@ articles/01-which-llm-builds-city/video/spec.json（入库，门槛位回填继�
   anno_*    部位标注层（PIL 直画 1920×1080 透明 PNG，落 work/cards/overlays/）：
             框线/箭头坐标 = 静图 contain 到 16:9 画布的换算值（目检 2026-10-03）
 
-底片 = node_modules/.cache/llm-city/video01/clips（web-gif 原始帧缓存转换，
-prep_clips.py）；静图 = articles/01-which-llm-builds-city/shots（无铭牌版）；
-三张预拼底图 = work/layouts（make_layouts.py）。
+底片 = node_modules/.cache/llm-city/video01/clips（2026-10-06 城主裁决起一律
+DDA 满屏直采：dda_capture.py --spec 按 spec.clips 段采，prep_clips.py 只做
+契约闸门；web-gif 帧缓存通道对视频底片退役）；静图 =
+articles/01-which-llm-builds-city/shots（无铭牌版）；三张预拼底图 =
+work/layouts（make_layouts.py）。
 
 用法：python tools/video/build_spec.py [--force]   # --force 不继承门槛位
 """
@@ -430,10 +432,12 @@ def main() -> int:
                     help="不继承既有 spec 的门槛位（默认继承）")
     a = ap.parse_args()
 
-    # 门槛位继承：重生成不丢城主已确认的锁
-    gates = {}
+    # 门槛位继承：重生成不丢城主已确认的锁（punct_locked 见下：台词逐字未变才随迁）
+    old = None
     if SPEC_PATH.is_file() and not a.force:
         old = json.loads(SPEC_PATH.read_text(encoding="utf-8"))
+    gates = {}
+    if old:
         gates = {k: old[k] for k in
                  ("narration_locked", "tts_confirmed") if k in old}
         old_pub = old.get("publish") or {}
@@ -446,6 +450,19 @@ def main() -> int:
     shots = build_shots()
     for s in shots:   # 注音层：tts_text = 口播写法（字幕文本 narration 不动）
         s["tts_text"] = apply_spoken(s["narration"])
+
+    # 标点门槛锁（llm_test punct_check，2026-10-06 立项）：只绑台词本身——
+    # 重拆镜后 narration 逐字未变才继承，否则视为新台词重新过门槛
+    if old and old.get("punct_locked"):
+        old_narr = "".join(s.get("narration", "") for s in old.get("shots") or [])
+        if old_narr and old_narr == "".join(s["narration"] for s in shots):
+            gates["punct_locked"] = True
+
+    # 底片清单单源（DDA 通道，2026-10-06 城主裁决）：dda_capture.py --spec
+    # 按此逐键满屏直采；每键可手编 {"dda_seconds": n} 覆盖自动时长。
+    # "hook" 片头底片一期未用，见了跳过。
+    clip_keys = sorted({s["bg"]["clip"] for s in shots
+                        if s.get("bg") and s["bg"]["clip"] != "hook"})
 
     # 覆盖词数核对：38 镜必须逐字覆盖 voiceover 正文（防拆镜丢句）
     n_chars = sum(len(s["narration"]) for s in shots)
@@ -478,6 +495,7 @@ def main() -> int:
             "seconds": 5.0,
             "_note": "对比/PK 类一律加（全局裁决）；文案 = 文章 spec 同源四条",
         },
+        "clips": {k: {} for k in clip_keys},
         "overlays": overlays,
         "shots": shots,
         "publish": {
